@@ -1,0 +1,23 @@
+name: 🚀 Deploy website on push
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v2
+
+    - name: 📂 Sync files
+      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      with:
+        server: 'ftp.datainovate.com'
+        username: 'u330229012.ma3rood'
+        password: 'Newpass@2025@'
