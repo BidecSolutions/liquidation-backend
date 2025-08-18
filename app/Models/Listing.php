@@ -1,0 +1,150 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Listing extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'title',
+        'slug',
+        'subtitle',
+        'description',
+        'condition',
+        'start_price',
+        'reserve_price',
+        'buy_now_price',
+        'allow_offers',
+        'quantity',
+        'authenticated_bidders_only',
+        'pickup_option',
+        'shipping_method_id',
+        'payment_method_id',
+        'color',
+        'size',
+        'brand',
+        'style',
+        'memory',
+        'hard_drive_size',
+        'cores',
+        'storage',
+        'category_id',
+        'created_by',
+        'meta_title',
+        'meta_description',
+        'is_featured',
+        'status',
+        'is_active',
+        'expire_at',
+        'sold_at',
+        'note',
+    ];
+
+    protected $casts = [
+        'allow_offers' => 'boolean',
+        'authenticated_bidders_only' => 'boolean',
+        'is_featured' => 'boolean',
+        'expire_at' => 'datetime',
+        'is_active' => 'integer', // ✅ was boolean before
+        'sold_at' => 'datetime',
+    ];
+    
+    protected $appends = ['winning_bid', 'buyer'];
+
+
+    // 🔗 Relationships
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function shippingMethod()
+    {
+        return $this->belongsTo(ShippingMethod::class);
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
+    public function images()
+    {
+        return $this->hasMany(ListingImage::class);
+    }
+
+    public function offers()
+    {
+        return $this->hasMany(ListingOffer::class);
+    }
+
+    public function bids()
+    {
+        return $this->hasMany(Bid::class)->orderByDesc('id')->with(['user']);
+    }
+    
+    public function views() {
+        return $this->hasMany(ListingView::class);
+    }
+
+    public function reports() {
+        return $this->hasMany(ListingReport::class);
+    }
+
+    public function watchers() {
+        return $this->belongsToMany(User::class, 'watchlists');
+    }
+
+    public function winningBid()
+    {
+        return $this->hasOne(Bid::class)->orderByDesc('amount')->with(['user']);
+    }
+    public function winningOffer()
+    {
+        return $this->hasOne(ListingOffer::class)->orderByDesc('amount');
+    }
+
+    // public function getWinningBidAttribute()
+    // {
+    //     if ($this->expire_at && now()->lessThan($this->expire_at)) {
+    //         return null; // hide while auction is active
+    //     }
+
+    //     return $this->bids()->with(['user'])->orderByDesc('amount')->first();
+    // }
+
+    public function getWinningBidAttribute()
+    {
+        if ($this->expire_at && now()->lessThan($this->expire_at)) {
+            return null; // hide while auction is active
+        }
+
+        // Correct way to call the relationship
+        return $this->winningBid()->with('user')->first();
+    }
+
+
+
+    
+    public function buyNowPurchases()
+    {
+        return $this->hasMany(BuyNowPurchase::class);
+    }
+
+    public function getBuyerAttribute()
+{
+    return $this->buyNowPurchases()->with('buyer')->latest()->first()?->buyer;
+}
+
+
+}
