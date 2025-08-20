@@ -14,6 +14,7 @@ class Listing extends Model
         'slug',
         'subtitle',
         'description',
+        'listing_type',
         'condition',
         'start_price',
         'reserve_price',
@@ -52,7 +53,7 @@ class Listing extends Model
         'is_active' => 'integer', // ✅ was boolean before
         'sold_at' => 'datetime',
     ];
-    
+
     protected $appends = ['winning_bid', 'buyer'];
 
 
@@ -92,16 +93,19 @@ class Listing extends Model
     {
         return $this->hasMany(Bid::class)->orderByDesc('id')->with(['user']);
     }
-    
-    public function views() {
+
+    public function views()
+    {
         return $this->hasMany(ListingView::class);
     }
 
-    public function reports() {
+    public function reports()
+    {
         return $this->hasMany(ListingReport::class);
     }
 
-    public function watchers() {
+    public function watchers()
+    {
         return $this->belongsToMany(User::class, 'watchlists');
     }
 
@@ -135,16 +139,29 @@ class Listing extends Model
 
 
 
-    
+
     public function buyNowPurchases()
     {
         return $this->hasMany(BuyNowPurchase::class);
     }
 
     public function getBuyerAttribute()
-{
-    return $this->buyNowPurchases()->with('buyer')->latest()->first()?->buyer;
-}
+    {
+        return $this->buyNowPurchases()->with('buyer')->latest()->first()?->buyer;
+    }
+
+    // Scope for filtering by type (jobs, motors, etc.)
+    public function scopeByType($query, $type)
+    {
+        return $query->whereHas('listingType', fn($q) => $q->where('code', $type));
+    }
+
+
+    public function attributes()
+    {
+        return $this->hasMany(ListingAttribute::class);
+    }
+
 
 
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ListingAttribute;
 use App\Models\UserFeedback;
+use Exception;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Listing;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
+
 
 class ListingController extends Controller
 {
@@ -116,7 +119,7 @@ class ListingController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer',]);
+            $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes']);
 
             // 🔒 Filter by creator if authenticated (user guard)
             $authUserId = auth('api')->check() ? auth('api')->id() : null;
@@ -153,6 +156,11 @@ class ListingController extends Controller
                     $q->where('city', $request->city);
                 });
             }
+
+            if ($request->has('listing_type')) {
+                $query->where('listing_type', $request->listing_type);
+            }
+
 
             // if ($request->has('status')) {
             //     $query->where('status', $request->status);
@@ -234,7 +242,16 @@ class ListingController extends Controller
         }
     }
 
-
+    // Get listings by type (jobs, motors, property, services, marketplace)
+    public function indexByType($type)
+    {
+        try {
+            $listings = Listing::with(['user', 'category'])->byType($type)->get();
+            return response()->json(['status' => true, 'data' => $listings]);
+        } catch (Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Failed to fetch listings by type', 'error' => $e->getMessage()], 500);
+        }
+    }
     private function getAllCategoryIds($categoryId)
     {
         $categoryIds = [$categoryId];
@@ -255,6 +272,7 @@ class ListingController extends Controller
                 'title' => 'required|string|max:255',
                 'subtitle' => 'nullable|string|max:255',
                 'description' => 'required|string',
+                'listing_type' => 'required|string',
                 'condition' => 'required|in:new,used',
                 'start_price' => 'nullable|numeric|min:0',
                 'reserve_price' => 'nullable|numeric|min:0',
@@ -278,6 +296,10 @@ class ListingController extends Controller
                 'meta_description' => 'nullable|string',
                 'expire_at' => 'nullable|date|after:now',
                 'images.*' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'attributes' => 'array', // ✅ extra dynamic attributes
+                'attributes.*.key' => 'required|string',
+                'attributes.*.value' => 'nullable|string',
+
             ]);
 
             if ($validator->fails()) {
@@ -295,6 +317,16 @@ class ListingController extends Controller
             $data['created_by'] = auth('api')->id(); // or auth('admin-api')->id()
 
             $listing = Listing::create($data);
+
+            // Save attributes
+            if (!empty($data['attributes'])) {
+                foreach ($data['attributes'] as $attr) {
+                    $listing->attributes()->create([
+                        'key' => $attr['key'],
+                        'value' => $attr['value'],
+                    ]);
+                }
+            }
 
             // 📁 Ensure directory exists
             $directory = 'listings/images';
@@ -322,7 +354,7 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Listing created successfully',
-                'data' => $listing->load(['images'])
+                'data' => $listing->load(['images', 'attributes'])
             ], 201);
         } catch (\Throwable $e) {
             return response()->json([
@@ -374,7 +406,8 @@ class ListingController extends Controller
                 'creator',
                 'images',
                 'bids.user',
-                'winningBid.user'
+                'winningBid.user',
+                'attributes',
             ])
                 ->where('slug', $slug)
                 ->first();
@@ -466,6 +499,7 @@ class ListingController extends Controller
                 'title' => 'required|string|max:255',
                 'subtitle' => 'nullable|string|max:255',
                 'description' => 'required|string',
+                'listing_type' => 'sometimes|string',
                 'condition' => 'required|in:new,used',
                 'start_price' => 'nullable|numeric|min:0',
                 'reserve_price' => 'nullable|numeric|min:0',
@@ -488,7 +522,11 @@ class ListingController extends Controller
                 'meta_title' => 'nullable|string|max:255',
                 'meta_description' => 'nullable|string',
                 'expire_at' => 'nullable|date|after:now',
-                'images.*' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:2048'
+                'images.*' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'attributes' => 'array',
+                'attributes.*.key' => 'required|string',
+                'attributes.*.value' => 'nullable|string',
+
             ]);
 
             if ($validator->fails()) {
@@ -501,6 +539,15 @@ class ListingController extends Controller
 
             $data = $validator->validated();
             $listing->update($data);
+
+            //  Sync attributes
+            if (!empty($data['attributes'])) {
+                $listing->attributes()->delete();
+                foreach ($data['attributes'] as $attr) {
+                    $listing->attributes()->create($attr);
+                }
+            }
+
 
             // ✅ Only process images if provided
             if ($request->hasFile('images')) {
@@ -529,7 +576,7 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Listing updated successfully',
-                'data' => $listing->load('images')
+                'data' => $listing->load('images', 'attributes')
             ]);
         } catch (\Throwable $e) {
             return response()->json([

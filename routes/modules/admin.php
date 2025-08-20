@@ -89,6 +89,7 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::delete('/{slug}/destroy', 'destroy');
         Route::put('/{slug}/approve', 'approve');
         Route::put('/{slug}/reject', 'reject');
+        Route::get('/type/{type}', 'indexByType');
         // Route::patch('/{slug}/toggle', 'toggleStatus');
     });
 
