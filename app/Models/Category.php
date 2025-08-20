@@ -13,6 +13,7 @@ class Category extends Model
         'name',
         'slug',
         'description',
+        'category_type',
         'is_active',
         'order',
         'status',
