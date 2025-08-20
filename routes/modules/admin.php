@@ -14,6 +14,9 @@ use App\Http\Controllers\Api\{
     WatchlistController,
     AdminAnalyticsController,
     EmailTestController,
+    CodeController,
+    ContactMessageController,
+    ListingAttributeController,
 };
 
 // Admin Auth
@@ -115,4 +118,24 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::post('/ending-soon', 'sendEndingSoonNotifications');
         Route::post('/test-all-notifications', 'testAllNotifications');
     });
+
+    // CodeController Routes
+    Route::prefix('codes')->controller(CodeController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/store', 'store');
+        Route::get('/{id}/show', 'show');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}/delete', 'destroy');
+        Route::post('/{id}/changeactiveInactive', 'toggleStatus');
+    });
+
+    //ListingAttributesController Routes
+    Route::prefix('listing-attributes')->controller(ListingAttributeController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/store', 'store');
+        Route::get('/{id}/show', 'show');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}/delete', 'destroy');
+    });
 });
+
