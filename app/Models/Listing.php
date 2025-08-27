@@ -14,6 +14,7 @@ class Listing extends Model
         'slug',
         'subtitle',
         'description',
+        'listing_type',
         'condition',
         'start_price',
         'reserve_price',
@@ -149,15 +150,21 @@ class Listing extends Model
         return $this->buyNowPurchases()->with('buyer')->latest()->first()?->buyer;
     }
 
-    public function comments()
+    // Scope for filtering by type (jobs, motors, etc.)
+    public function scopeByType($query, $type)
     {
-        return $this->hasMany(Comment::class)->whereNull('parent_id')->with('replies.user');
+        return $query->whereHas('listingType', fn($q) => $q->where('code', $type));
+    }
+
+
+    public function attributes()
+    {
+        return $this->hasMany(ListingAttribute::class);
     }
 
     public function feedbacks()
     {
         return $this->hasMany(UserFeedback::class, 'listing_id');
     }
-
 
 }
