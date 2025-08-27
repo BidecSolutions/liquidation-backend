@@ -16,7 +16,7 @@ class AuctionResultController extends Controller
             ->whereHas('bids', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })
-            ->with(['winningBid','images','buyNowPurchases'])
+            ->with(['winningBid','images','buyNowPurchases', 'feedbacks.reviewedUser'])
             ->get()
             ->filter(function ($listing) use ($userId) {
                 return $listing->winningBid && $listing->winningBid->user_id == $userId;

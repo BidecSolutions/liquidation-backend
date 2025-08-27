@@ -133,6 +133,7 @@ Route::prefix('user')->group(function () {
         //Feedback Controller
         Route::prefix('feedback')->controller(UserFeedbackController::class)->group(function () {
             Route::post('/store' , 'store');
+            Route::patch('{id}/update', 'update');
             Route::get('stats/{user_id}', 'stats');
             });
 
