@@ -69,10 +69,13 @@ use \Illuminate\Support\Facades\Artisan;
     });
 
     Route::get('seed-locations', function () {
+        // dd('here');
     Artisan::call('db:seed', [
         // '--class' => 'PaymentMethodSeeder',
         '--force' => true // Allows running in production
     ]);
+   
+
 
     $output = Artisan::output();
 
@@ -81,3 +84,27 @@ use \Illuminate\Support\Facades\Artisan;
     echo "\n\nLocations have been seeded successfully.";
     echo "</pre>";
 });
+
+ Route::get('seed-categories', function () {
+        // dd('here');
+        try {
+            Artisan::call('db:seed', [
+                '--class' => 'CategorySeeder',
+                '--force' => true,
+            ]);
+
+            $output = Artisan::output();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Seeder executed successfully.',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Seeder failed to execute.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
