@@ -30,6 +30,7 @@ Route::prefix('user')->group(function () {
     Route::controller(UserAuthController::class)->group(function () {
         Route::post('/login', 'login');
         Route::post('/register', 'register');
+        Route::post('/username-check', 'checkUsername');
     });
 
     Route::middleware('auth:api')->group(function () {
