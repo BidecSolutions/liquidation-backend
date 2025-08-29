@@ -22,6 +22,7 @@ class UserAuthController extends Controller
         try {
             $request->validate([
                 'name' => 'required|string',
+                'username' => 'nullable|string|unique:users,username',
                 'first_name' => 'required|string',
                 'last_name' => 'required|string',
                 'email' => 'required|email|unique:users',
@@ -42,6 +43,7 @@ class UserAuthController extends Controller
 
             $user = User::create([
                 'name' => $request->name,
+                'username' => $request->username,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
