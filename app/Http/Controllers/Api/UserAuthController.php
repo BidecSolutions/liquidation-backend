@@ -111,8 +111,41 @@ class UserAuthController extends Controller
     public function checkUsername(Request $request)
     {
         $request->validate([
-            'username' => 'required|string|unique:users,username',
+            'username' => 'required|string',
         ]);
+
+        $username = $request->username;
+        $exists   = \App\Models\User::where('username', $username)->exists();
+
+        if ($exists) {
+            $suggestions = [];
+            $attempts = 0;
+
+            // Generate up to 5 unique suggestions
+            while (count($suggestions) < 5 && $attempts < 20) {
+                $attempts++;
+
+                // Append random number or letters to make it unique
+                $newUsername = $username . rand(100, 999);
+
+                // Optional: add random letters too
+                if (rand(0, 1)) {
+                    $newUsername .= chr(rand(97, 122)); // random lowercase letter
+                }
+
+                // Ensure it's not taken
+                if (!\App\Models\User::where('username', $newUsername)->exists()) {
+                    $suggestions[] = $newUsername;
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Username is already taken',
+                'suggestions' => $suggestions,
+            ], 409);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Username is available',
