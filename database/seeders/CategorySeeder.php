@@ -20,15 +20,23 @@ class CategorySeeder extends Seeder
         }
 
         $data = $response->json();
-        // 2. Save Root category itself
-            $rootCategory = Category::create([
+
+        // 2. Handle Root category
+        $rootSlug = !empty($data['Path']) 
+            ? trim($data['Path'], '/') 
+            : Str::slug($data['Name'] ?? 'Root');
+
+        $rootCategory = Category::firstOrCreate(
+            ['slug' => $rootSlug],
+            [
                 'parent_id'   => null,
                 'name'        => $data['Name'] ?? 'Root',
-                'slug'        => !empty($data['Path']) ? trim($data['Path'], '/') : Str::slug($data['Name'] ?? 'Root'),
                 'status'      => 1,
                 'meta_title'  => $data['Name'] ?? 'Root',
-            ]);
-        // 2. Start recursive import from "Root"
+            ]
+        );
+
+        // 3. Import subcategories recursively
         if (isset($data['Subcategories'])) {
             foreach ($data['Subcategories'] as $subcategory) {
                 $this->importCategory($subcategory, $rootCategory->id);
@@ -38,16 +46,30 @@ class CategorySeeder extends Seeder
 
     private function importCategory(array $data, $parentId = null)
     {
-        // 3. Create category in DB
-        $category = Category::create([
-            'parent_id'   => $parentId,
-            'name'        => $data['Name'] ?? '',
-            'slug'        => !empty($data['Path']) ? trim($data['Path'], '/') : Str::slug($data['Name'] ?? ''),
-            'status'      => 1,
-            'meta_title'  => $data['Name'] ?? '',
-        ]);
+        $slug = !empty($data['Path']) 
+            ? trim($data['Path'], '/') 
+            : Str::slug($data['Name'] ?? '');
 
-        // 4. Recurse if there are children
+        // 1. Check if category already exists
+        $category = Category::where('slug', $slug)->first();
+
+        if ($category) {
+            // 2. If parent_id is wrong, update it
+            if ($category->parent_id !== $parentId) {
+                $category->update(['parent_id' => $parentId]);
+            }
+        } else {
+            // 3. Otherwise create new category
+            $category = Category::create([
+                'parent_id'   => $parentId,
+                'name'        => $data['Name'] ?? '',
+                'slug'        => $slug,
+                'status'      => 1,
+                'meta_title'  => $data['Name'] ?? '',
+            ]);
+        }
+
+        // 4. Always use this category's ID for children
         if (!empty($data['Subcategories'])) {
             foreach ($data['Subcategories'] as $child) {
                 $this->importCategory($child, $category->id);
