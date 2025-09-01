@@ -11,6 +11,7 @@ class CategorySeeder extends Seeder
 {
     public function run()
     {
+        println("Starting Category Seeder...");
         // 1. Fetch API response
         $response = Http::get('https://api.trademe.co.nz/v1/Categories.json');
 
