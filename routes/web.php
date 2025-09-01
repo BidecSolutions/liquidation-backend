@@ -108,3 +108,27 @@ use \Illuminate\Support\Facades\Artisan;
             ], 500);
         }
     });
+
+    Route::get('seed-username', function () {
+        // dd('here');
+        try {
+            Artisan::call('db:seed', [
+                '--class' => 'UpdateUsernamesSeeder',
+                '--force' => true,
+            ]);
+
+            $output = Artisan::output();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Seeder of user name executed successfully.',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Seeder of user name failed to execute.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
