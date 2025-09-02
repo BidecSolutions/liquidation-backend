@@ -40,7 +40,7 @@ class CategorySeeder extends Seeder
         // 3. Import subcategories recursively
         if (isset($data['Subcategories'])) {
             foreach ($data['Subcategories'] as $subcategory) {
-                $this->importCategory($subcategory, $rootCategory->id);
+                $this->importCategory($subcategory);
             }
         }
     }

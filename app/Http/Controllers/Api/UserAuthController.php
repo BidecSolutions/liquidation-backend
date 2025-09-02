@@ -36,11 +36,17 @@ class UserAuthController extends Controller
                 'billing_address' => 'nullable|string|max:500',
                 'customer_number' => 'nullable|string|max:50',
             ]);
-
+            $memberId = $this->generateMemberId();
             //member_number auto generate a random numeric number for memeber identification
             $customerNumber = 'CN' . strtoupper(uniqid());
+            $user_code = $this->generateUniqueCode();
+            // Ensure user_code is unique
+            while (User::where('user_code', $user_code)->exists()) {
+                $user_code = $this->generateUniqueCode();
+            }
             $user = User::create([
                 'name' => $request->name,
+                'user_code' => $user_code,
                 'username' => $request->username,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
@@ -476,7 +482,7 @@ class UserAuthController extends Controller
         }
 
         $token = $user->createToken('user-token')->plainTextToken;
-
+        
         return response()->json([
             'success' => true,
             'message' => 'Login Successfully',
@@ -579,5 +585,20 @@ class UserAuthController extends Controller
             'success' => true,
             'message' => 'Successfully Logged out'
         ], 200);
+    }
+
+    private function generateUniqueCode()
+    {
+        // Characters: digits + uppercase letters
+        $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // Generate 8 random characters
+        $randomString = '';
+        for ($i = 0; $i < 8; $i++) {
+            $randomString .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        // Add dash in the middle (after 4 chars)
+        return substr($randomString, 0, 4) . '-' . substr($randomString, 4, 4);
     }
 }
