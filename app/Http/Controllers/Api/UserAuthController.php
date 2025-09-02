@@ -599,6 +599,6 @@ class UserAuthController extends Controller
         }
 
         // Add dash in the middle (after 4 chars)
-        return substr($randomString, 0, 4) . '-' . substr($randomString, 4, 4);
+        return substr($randomString, 0, 4) . substr($randomString, 4, 4);
     }
 }
