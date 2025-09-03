@@ -85,7 +85,7 @@ use \Illuminate\Support\Facades\Artisan;
     echo "</pre>";
 });
 
- Route::get('seed-categories', function () {
+    Route::get('seed-categories', function () {
         // dd('here');
         try {
             Artisan::call('db:seed', [
@@ -114,6 +114,29 @@ use \Illuminate\Support\Facades\Artisan;
         try {
             Artisan::call('db:seed', [
                 '--class' => 'UpdateUsernamesSeeder',
+                '--force' => true,
+            ]);
+
+            $output = Artisan::output();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Seeder of user name executed successfully.',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Seeder of user name failed to execute.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
+    Route::get('seed-admin', function () {
+        // dd('here');
+        try {
+            Artisan::call('db:seed', [
+                '--class' => 'AdminSeeder',
                 '--force' => true,
             ]);
 
