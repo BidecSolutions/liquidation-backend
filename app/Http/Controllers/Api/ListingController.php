@@ -121,11 +121,11 @@ class ListingController extends Controller
         try {
             $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes']);
 
-            // 🔒 Filter by creator if authenticated (user guard)
-            $authUserId = auth('api')->check() ? auth('api')->id() : null;
-            if ($authUserId) {
-                $query->where('created_by', $authUserId);
-            }
+            // // 🔒 Filter by creator if authenticated (user guard)
+            // $authUserId = auth('api')->check() ? auth('api')->id() : null;
+            // if ($authUserId) {
+            //     $query->where('created_by', $authUserId);
+            // }
 
             // 🔎 Filter by search keyword
             if ($request->has('search')) {
