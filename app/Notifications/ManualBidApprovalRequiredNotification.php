@@ -38,12 +38,15 @@ class ManualBidApprovalRequiredNotification extends Notification implements Shou
         $url = url('/seller/listings/' . $this->listing->id . '/review-bid');
 
         return (new MailMessage)
-            ->subject('Manual Approval Required for Bid')
-            ->greeting('Hello ' . $notifiable->name . ',')
-            ->line("Your listing \"{$this->listing->title}\" received a bid that did not meet the reserve price.")
-            ->line('You can choose to accept or reject this bid manually.')
-            ->action('Review the Bid', $url)
-            ->line('Thank you for using TradeMe!');
+            ->subject('Manual Approval Required for Bid - Ma3rood')
+            ->view('emails.notifications.manual-bid-approval', [
+                'notifiable' => $notifiable,
+                'listing' => $this->listing,
+                'url' => $url,
+                'subject' => 'Manual Approval Required for Bid'
+            ])
+            ->greeting('') // Remove default greeting
+            ->salutation(''); // Remove default salutation
     }
 
     /**

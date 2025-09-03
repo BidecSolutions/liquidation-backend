@@ -28,11 +28,15 @@ class AuctionSoldNotification extends Notification
         $winningBid = $this->listing->bids()->orderByDesc('amount')->first();
 
         return (new MailMessage)
-            ->subject('Your Listing Has Been Sold!')
-            ->line("Your listing '{$this->listing->title}' has been sold.")
-            ->line("Winning bid: \${$winningBid->amount} by {$winningBid->user->name}")
-            ->action('View Listing', url("/listings/{$this->listing->slug}"))
-            ->line('Please contact the buyer or arrange delivery.');
+            ->subject('Your Listing Has Been Sold! - Ma3rood')
+            ->view('emails.notifications.auction-sold', [
+                'notifiable' => $notifiable,
+                'listing' => $this->listing,
+                'winningBid' => $winningBid,
+                'subject' => 'Your Listing Has Been Sold!'
+            ])
+            ->greeting('') // Remove default greeting
+            ->salutation(''); // Remove default salutation
     }
 
     public function toDatabase($notifiable): array

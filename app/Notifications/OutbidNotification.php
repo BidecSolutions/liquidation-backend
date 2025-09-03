@@ -35,12 +35,14 @@ class OutbidNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('You\'ve Been Outbid! - Ma3rood')
+            ->subject('You Have Been Outbid - Ma3rood')
             ->view('emails.notifications.outbid', [
                 'notifiable' => $notifiable,
                 'bid' => $this->bid,
-                'subject' => 'You\'ve Been Outbid!'
-            ]);
+                'subject' => 'You Have Been Outbid'
+            ])
+            ->greeting('') // Remove default greeting
+            ->salutation(''); // Remove default salutation
     }
 
     /**

@@ -41,7 +41,9 @@ class BidPlacedNotification extends Notification
                 'notifiable' => $notifiable,
                 'bid' => $this->bid,
                 'subject' => 'New Bid Placed on Your Listing'
-            ]);
+            ])
+            ->greeting('') // Remove default greeting
+            ->salutation(''); // Remove default salutation
     }
 
     /**

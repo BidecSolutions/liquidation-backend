@@ -27,6 +27,8 @@ class ResetPasswordNotification extends Notification
                 'notifiable' => $notifiable,
                 'token' => $this->token,
                 'subject' => 'Reset Your Password'
-            ]);
+            ])
+            ->greeting('') // Remove default greeting
+            ->salutation(''); // Remove default salutation
     }
 }

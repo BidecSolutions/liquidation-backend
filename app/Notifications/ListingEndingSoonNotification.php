@@ -38,13 +38,15 @@ class ListingEndingSoonNotification extends Notification implements ShouldQueue
         $timeLeft = now()->diffForHumans($this->listing->end_date, true);
         
         return (new MailMessage)
-            ->subject('Auction Ending Soon!')
-            ->greeting("Hello {$notifiable->name},")
-            ->line("The auction for '{$this->listing->title}' is ending in {$timeLeft}!")
-            ->line("Current highest bid: $" . ($this->listing->bids()->max('amount') ?? 'No bids yet'))
-            ->action('Place Your Bid Now', url("/listings/{$this->listing->slug}"))
-            ->line('Don\'t miss out on this opportunity!')
-            ->line('Thank you for using our marketplace!');
+            ->subject('Auction Ending Soon! - Ma3rood')
+            ->view('emails.notifications.listing-ending-soon', [
+                'notifiable' => $notifiable,
+                'listing' => $this->listing,
+                'timeLeft' => $timeLeft,
+                'subject' => 'Auction Ending Soon!'
+            ])
+            ->greeting('') // Remove default greeting
+            ->salutation(''); // Remove default salutation
     }
 
     /**

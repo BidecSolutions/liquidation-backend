@@ -24,13 +24,17 @@ class OfferExpiredNotification extends Notification implements ShouldQueue
         return ['mail', 'database'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Offer Has Expired')
-            ->line("Your offer on listing '{$this->offer->listing->title}' has expired after 24 hours.")
-            ->action('View Listing', url('/listing/' . $this->offer->listing->slug))
-            ->line('Feel free to place a new offer anytime.');
+            ->subject('Your Offer Has Expired - Ma3rood')
+            ->view('emails.notifications.offer-expired', [
+                'notifiable' => $notifiable,
+                'offer' => $this->offer,
+                'subject' => 'Your Offer Has Expired'
+            ])
+            ->greeting('') // Remove default greeting
+            ->salutation(''); // Remove default salutation
     }
 
     public function toDatabase(object $notifiable): array

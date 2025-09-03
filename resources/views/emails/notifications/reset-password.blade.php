@@ -9,7 +9,7 @@
         <p>Click the button below to reset your password:</p>
     </div>
     
-    <a href="{{ config('app.frontend_url') }}/reset-password?token={{ $token }}&email={{ urlencode($notifiable->getEmailForPasswordReset()) }}" class="button">Reset Password</a>
+    <a href="{{ config('app.frontend_url') }}/reset-password?token={{ $token }}&email={{ urlencode($notifiable->email ?? '') }}" class="button">Reset Password</a>
     
     <div class="message">
         <p>This password reset link will expire in 60 minutes.</p>

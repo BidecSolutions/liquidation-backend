@@ -4,17 +4,18 @@
     <div class="greeting">Hello {{ $notifiable->name }},</div>
     
     <div class="message">
-        <p>🎉 Congratulations! You've won the auction for:</p>
+        <p>⏰ The auction for the following listing is ending soon:</p>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">{{ $listing->title }}</h3>
-            <p style="margin: 0; color: #666;">Winning bid: ${{ number_format($winningBid->amount ?? 0, 2) }}</p>
+            <p style="margin: 0; color: #666;">Time remaining: {{ $timeLeft }}</p>
+            <p style="margin: 0; color: #666;">Current highest bid: ${{ number_format($currentHighestBid ?? 0, 2) }}</p>
         </div>
         
-        <p>The seller will contact you soon to arrange payment and delivery details.</p>
+        <p>Don't miss out on this opportunity! Place your bid now.</p>
     </div>
     
-    <a href="{{ config('app.frontend_url') }}/listings/{{ $listing->slug }}" class="button">View Listing</a>
+    <a href="{{ config('app.frontend_url') }}/listings/{{ $listing->slug }}" class="button">Place Your Bid Now</a>
     
     <div class="message">
         <p>Thank you for using Ma3rood!</p>

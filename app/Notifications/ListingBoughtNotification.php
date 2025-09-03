@@ -24,11 +24,18 @@ class ListingBoughtNotification extends Notification
     public function toMail($notifiable)
     {
         $message = $this->role === 'buyer' ? 'You bought a listing!' : 'Your listing was purchased!';
+        $subject = $this->role === 'buyer' ? 'Listing Purchased - Ma3rood' : 'Your Listing Was Sold - Ma3rood';
+        
         return (new MailMessage)
-            ->subject($message)
-            ->line("Listing: {$this->listing->title}")
-            ->line("Price: {$this->listing->buy_now_price}")
-            ->action('View Listing', url("/listing/{$this->listing->slug}"));
+            ->subject($subject)
+            ->view('emails.notifications.listing-bought', [
+                'notifiable' => $notifiable,
+                'listing' => $this->listing,
+                'role' => $this->role,
+                'subject' => $subject
+            ])
+            ->greeting('') // Remove default greeting
+            ->salutation(''); // Remove default salutation
     }
 
     public function toDatabase($notifiable)

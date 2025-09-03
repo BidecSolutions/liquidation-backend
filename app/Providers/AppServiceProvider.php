@@ -3,26 +3,30 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Mail;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
-     *
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
         //
     }
 
     /**
      * Bootstrap any application services.
-     *
-     * @return void
      */
-    public function boot()
+    public function boot(): void
     {
-        //
+        // Customize mail components to use our own styling
+        Mail::alwaysFrom(env('MAIL_FROM_ADDRESS', 'noreply@ma3rood.com'), env('MAIL_FROM_NAME', 'Ma3rood'));
+        
+        // Override default mail components
+        $this->publishes([
+            __DIR__.'/../../resources/views/vendor/mail' => resource_path('views/vendor/mail'),
+        ], 'laravel-mail');
     }
 }
