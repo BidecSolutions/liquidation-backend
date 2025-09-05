@@ -94,6 +94,7 @@ class UserFeedbackController extends Controller
 
         return response()->json([
             'status' => true,
+            'message' =>'Feedback stats fetched successfully.',
             'data' => [
                 'total_feedback' => $total,
                 'average_rating' => $averageRating,
@@ -110,6 +111,7 @@ class UserFeedbackController extends Controller
                         'reviewer' => [
                             'id' => $item->reviewer->id,
                             'name' => $item->reviewer->name,
+                            'username' => $item->reviewer->username,
                             'email' => $item->reviewer->email,
                             'profile_picture' => $item->reviewer->profile_photo,
                         ],
