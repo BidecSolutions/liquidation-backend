@@ -15,7 +15,7 @@ class AuctionSoldNotification extends Notification
 
     public function __construct(Listing $listing)
     {
-        $this->listing = $listing;
+        $this->listing = $listing; 
     }
 
     public function via($notifiable): array

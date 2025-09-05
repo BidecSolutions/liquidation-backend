@@ -21,64 +21,149 @@ class UserAuthController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required|string',
-                'username' => 'nullable|string|unique:users,username',
-                'first_name' => 'required|string',
-                'last_name' => 'required|string',
-                'email' => 'required|email|unique:users',
-                'password' => 'required|string|min:6',
-                'city' => 'nullable|string|max:20',
-                'state' => 'nullable|string|max:20',
-                'country' => 'nullable|string|max:20',
-                'phone' => 'nullable|string|max:20',
-                'gender' => 'nullable|string',
-                'date_of_birth' => 'nullable|date',
-                'billing_address' => 'nullable|string|max:500',
-                'customer_number' => 'nullable|string|max:50',
+                'name'           => 'required|string',
+                'username'       => 'nullable|string|unique:users,username',
+                'first_name'     => 'required|string',
+                'last_name'      => 'required|string',
+                'email'          => 'required|email|unique:users,email',
+                'password'       => 'required|string|min:6',
+                'city'           => 'nullable|string|max:20',
+                'state'          => 'nullable|string|max:20',
+                'country'        => 'nullable|string|max:20',
+                'phone'          => 'nullable|string|max:20',
+                'gender'         => 'nullable|string',
+                'date_of_birth'  => 'nullable|date',
+                'billing_address'=> 'nullable|string|max:500',
+                'customer_number'=> 'nullable|string|max:50',
             ]);
-            $memberId = $this->generateMemberId();
-            //member_number auto generate a random numeric number for memeber identification
-            $customerNumber = 'CN' . strtoupper(uniqid());
-            $user_code = $this->generateUniqueCode();
-            // Ensure user_code is unique
+
+            $memberId      = $this->generateMemberId();
+            $customerNumber= 'CN'.strtoupper(uniqid());
+            $user_code     = $this->generateUniqueCode();
             while (User::where('user_code', $user_code)->exists()) {
                 $user_code = $this->generateUniqueCode();
             }
+
+            // Better RNG for codes
+            $code       = (string) random_int(100000, 999999);
+            $expiration = now()->addMinutes(30);
+
             $user = User::create([
-                'name' => $request->name,
-                'user_code' => $user_code,
-                'username' => $request->username,
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-                'phone' => $request->phone,
-                'gender' => $request->gender,
-                'date_of_birth' => $request->date_of_birth,
-                'billing_address' => $request->billing_address,
-                'customer_number' => $customerNumber,
+                'name'                     => $request->name,
+                'user_code'                => $user_code,
+                'memberId'                 => $memberId,
+                'username'                 => $request->username,
+                'first_name'               => $request->first_name,
+                'last_name'                => $request->last_name,
+                'email'                    => $request->email,
+                'password'                 => Hash::make($request->password),
+                'city'                     => $request->city,
+                'state'                    => $request->state,
+                'country'                  => $request->country,
+                'phone'                    => $request->phone,
+                'gender'                   => $request->gender,
+                'date_of_birth'            => $request->date_of_birth,
+                'billing_address'          => $request->billing_address,
+                'customer_number'          => $customerNumber,
+
+                // verification
+                'verification_code'        => $code,
+                'verification_expires_at'  => $expiration,
+                'is_verified'              => false,
             ]);
+
+            Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+                $message->to($user->email)->subject('Your Login Verification Code');
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully Registered',
+                'email'   => $user->email,
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Registration failed',
+                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    public function emailVerification(Request $request)
+    {
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'verification_code' => 'required|digits:6',
+            ]);
+
+            $user = User::where('email', $request->email)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success'=> false,
+                    'message' => 'You are not registered yet',
+                ], 400);
+            }
+
+            if ($user->is_verified) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Email already verified',
+                ], 200);
+            }
+
+            // If you want to block when no code is set:
+            if (empty($user->verification_code) || empty($user->verification_expires_at)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No active verification code. Please request a new one.',
+                ], 400);
+            }
+
+            // Check expiration first (safer UX)
+            if ($user->verification_expires_at && now()->isAfter($user->verification_expires_at)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Verification code has expired',
+                ], 400);
+            }
+
+            // Check code
+            if ($user->verification_code !== $request->verification_code) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid verification code',
+                ], 400);
+            }
+
+            // Mark verified
+            $user->forceFill([
+                'verification_code'       => null,
+                'verification_expires_at' => null,
+                'is_verified'             => true,
+            ])->save();
 
             $token = $user->createToken('user-token')->plainTextToken;
 
             return response()->json([
                 'success' => true,
-                'message' => "Successfully Registered",
-                'data' => $user,
-                'token' => $token
-            ], 200);
+                'message' => 'Your email is verified successfully',
+                'data'    => $user,
+                'token'   => $token,
+            ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Registration failed',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'Something went wrong during verification',
+                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+            ], 400);
         }
     }
+
     // Update user info
     // public function update(Request $request, $id)
     // {
@@ -473,19 +558,36 @@ class UserAuthController extends Controller
         $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username'; 
 
         $user = User::where($fieldtype, $request->email)->first();
-
+        if($user->is_verified != 1){
+            return response()->json([
+                'success' => false,
+                'message' => 'Emails is not verified yet',  
+            ], 400);
+        }
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials'
             ], 400);
         }
+        $code = rand(100000, 999999);
+        $user->verification_code = $code;
+        $user->verification_expires_at = now()->addMinutes(30);
+        $user->save();
 
+        // Mail::raw(`Your Verification Code is: {$code}`, function ($message) use ($user) {
+        //     $message->to($user->email)->subject('Your Login Verification Code');
+        // });
+        // Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+        //     $message->to($user->email)
+        //     ->subject('Your Login Verification Code');
+        // });
         $token = $user->createToken('user-token')->plainTextToken;
-        
+            // /Verification code sent to your email. Please verify
         return response()->json([
             'success' => true,
-            'message' => 'Login Successfully',
+            'message' => 'Verification code sent to your email. Please verify',
+            // 'email' => $user->email,
             'data' => $user,
             'token' => $token,
         ], 200);

@@ -30,11 +30,14 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'memberId',
         'user_code',
         'first_name',
-        'username',
+        'memberId',
+        'is_verified',
+        'verification_code',
+        'verification_expires_at',
         'last_name',
+        'username',
         'gender',
         'email',
         'phone',
