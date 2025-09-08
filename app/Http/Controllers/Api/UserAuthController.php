@@ -26,7 +26,7 @@ class UserAuthController extends Controller
                 'username'       => 'nullable|string|unique:users,username',
                 'first_name'     => 'required|string',
                 'last_name'      => 'required|string',
-                'email'          => 'required|email',
+                'email'          => 'required|email|unique:users,email',
                 'password'       => 'required|string|min:6',
                 'city'           => 'nullable|string|max:20',
                 'state'          => 'nullable|string|max:20',
@@ -48,10 +48,7 @@ class UserAuthController extends Controller
             // Better RNG for codes
             $code       = (string) random_int(100000, 999999);
             $expiration = now()->addMinutes(30);
-            $existingUser = User::where('email', $request->email)->first();
-            if ($existingUser) {
-                $existingUser->delete();
-            }
+
             $user = User::create([
                 'name'                     => $request->name,
                 'user_code'                => $user_code,
