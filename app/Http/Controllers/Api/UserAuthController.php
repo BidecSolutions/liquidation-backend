@@ -703,4 +703,29 @@ class UserAuthController extends Controller
         // Add dash in the middle (after 4 chars)
         return substr($randomString, 0, 4) . substr($randomString, 4, 4);
     }
+
+    private function generateMemberId()
+    {
+        // Get Year + Month (last 2 digits of year + month)
+        $prefix = now()->format('ym'); // e.g. 2509 for Sept 2025
+
+        // Generate 3 random uppercase letters
+        $letters = strtoupper(Str::random(3));
+
+        // Get the latest memberId number part and increment
+        $lastUser = User::whereNotNull('memberId')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastUser && preg_match('/-(\d{4})$/', $lastUser->memberId, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1001; // starting point
+        }
+
+        // Ensure it's 4 digits (padded with leading zeros)
+        $number = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+        return "{$prefix}{$letters}{$number}";
+    }
 }
