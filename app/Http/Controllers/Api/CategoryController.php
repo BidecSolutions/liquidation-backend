@@ -13,30 +13,49 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        // dd("awd");
         try {
-            $query = Category::with(['parent','listings'])->latest();
+            $limit  = (int) $request->get('limit', 20);   // default 20
+            $offset = (int) $request->get('offset', 0);
+            $query = Category::
+            with(['parent:id,name,slug,parent_id','listings'])->latest();
 
             // Only apply this filter when parent_id is provided
             if ($request->filled('parent_id')) {
                 $query->where('parent_id', $request->parent_id); // child categories only
             }
+            if($request->filled('category_type')){
+                $query->where('category_type', $request->category_type);
+            }
             else
             {
                 $query->wherenull('parent_id'); // top-level categories only
             }
+            
 
             // Apply status filter if provided
             if ($request->has('status')) {
                 $query->where('status', $request->status);
             }
 
-            $categories = $query->get();
+                // clone the query for count
+            $total = $query->count();
+
+            // apply offset & limit
+            $categories = $query
+                ->orderByDesc('id')
+                ->skip($offset)
+                ->take($limit)
+                ->get();
 
             return response()->json([
                 'status' => true,
                 'message' => 'Categories fetched successfully',
-                'data' => $categories
+                'data' => $categories,
+                'meta' => [
+                    'total' => $total,
+                    'limit' => $limit,
+                    'offset' => $offset
+                ]
             ]);
         } catch (\Throwable $e) {
             return response()->json([

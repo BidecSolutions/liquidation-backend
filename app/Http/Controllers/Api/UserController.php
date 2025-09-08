@@ -8,23 +8,23 @@ use App\Models\User;
 
 class UserController extends Controller
 {
-   public function index()
-{
-    try {
-        $users = User::all(); //removed mapping needed all data of users
+    public function index()
+    {
+        try {
+            $users = User::all(); //removed mapping needed all data of users
 
-        return response()->json([
-            'success' => true,
-            'message' => "Successfully Fetched",
-            'data' => $users,
-        ], 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => "Something went wrong: " . $e->getMessage(),
-        ], 500);
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully Fetched",
+                'data' => $users,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Something went wrong: " . $e->getMessage(),
+            ], 500);
+        }
     }
-}
 
 
     public function show($id)
@@ -50,9 +50,9 @@ class UserController extends Controller
         }
     }
 
-        public function store(Request $request)
-        {
-            try {
+    public function store(Request $request)
+    {
+        try {
                 $request->validate([
                     'name' => 'required|string|max:255',
                     'email' => 'required|email|unique:users,email',
@@ -75,42 +75,42 @@ class UserController extends Controller
                 // Always assign default hashed password if not provided
                 $data['password'] = bcrypt($request->input('password', '123456'));
 
-            $user = \DB::transaction(function () use ($data) {
-            // Get latest customer_number and extract numeric part
-            $lastUser = User::orderByDesc('id')->first();
-            $lastNumber = 1000;
+                $user = \DB::transaction(function () use ($data) {
+                    // Get latest customer_number and extract numeric part
+                    $lastUser = User::orderByDesc('id')->first();
+                    $lastNumber = 1000;
 
-            if ($lastUser && preg_match('/CN-(\d+)/', $lastUser->customer_number, $matches)) {
-                $lastNumber = (int)$matches[1];
+                    if ($lastUser && preg_match('/CN-(\d+)/', $lastUser->customer_number, $matches)) {
+                        $lastNumber = (int)$matches[1];
+                    }
+
+                    $nextNumber = $lastNumber + 1;
+                    $customerNumber = 'CN-' . $nextNumber;
+
+                    // Check uniqueness in case of concurrent inserts
+                    while (User::where('customer_number', $customerNumber)->exists()) {
+                        $nextNumber++;
+                        $customerNumber = 'CN-' . $nextNumber;
+                    }
+
+                    $data['customer_number'] = $customerNumber;
+                    $data['created_by'] = auth()->id();
+
+                    return User::create($data);
+                });
+
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User created successfully',
+                    'data' => $user,
+                ], 201);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Something went wrong: ' . $e->getMessage(),
+                ], 500);
             }
-
-            $nextNumber = $lastNumber + 1;
-            $customerNumber = 'CN-' . $nextNumber;
-
-            // Check uniqueness in case of concurrent inserts
-            while (User::where('customer_number', $customerNumber)->exists()) {
-                $nextNumber++;
-                $customerNumber = 'CN-' . $nextNumber;
-            }
-
-            $data['customer_number'] = $customerNumber;
-            $data['created_by'] = auth()->id();
-
-            return User::create($data);
-        });
-
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User created successfully',
-                'data' => $user,
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong: ' . $e->getMessage(),
-            ], 500);
-         }
     }
 
     public function update(Request $request, $id)
@@ -158,10 +158,6 @@ class UserController extends Controller
             ], 500);
         }
     }
-
-
-
-
 
     public function changeactiveInactive($id)
     {
