@@ -9,12 +9,12 @@ use App\Models\Category;
 
 class CategorySeeder extends Seeder
 {
-    // Categories that should go to ROOT (not under Marketplace) + their category_type
+    // Categories that we will SKIP completely (don’t import them at all)
     private $rootExceptions = [
-        ['name' => 'Trade Me Property', 'path' => '/Trade-Me-Property', 'type' => 'property'],
-        ['name' => 'Trade Me Motors',   'path' => '/Trade-Me-Motors',   'type' => 'motors'],
-        ['name' => 'Trade Me Jobs',     'path' => '/Trade-Me-Jobs',     'type' => 'jobs'],
-        ['name' => 'Services',          'path' => '/Services',          'type' => 'services'],
+        ['name' => 'Trade Me Property', 'path' => '/Trade-Me-Property'],
+        ['name' => 'Trade Me Motors',   'path' => '/Trade-Me-Motors'],
+        ['name' => 'Trade Me Jobs',     'path' => '/Trade-Me-Jobs'],
+        ['name' => 'Services',          'path' => '/Services'],
     ];
 
     public function run()
@@ -31,30 +31,16 @@ class CategorySeeder extends Seeder
 
         $data = $response->json();
 
-        // 2. Create Marketplace root
-        $marketplace = Category::firstOrCreate(
-            ['slug' => 'marketplace'],
-            [
-                'parent_id'     => null,
-                'name'          => 'Market place',
-                'status'        => 1,
-                'meta_title'    => 'Marketplace',
-                'category_type' => 'marketplace',
-            ]
-        );
-
-        // 3. Loop over subcategories of Root
+        // 2. Loop over top-level subcategories of Root
         if (isset($data['Subcategories'])) {
             foreach ($data['Subcategories'] as $subcategory) {
-                $exception = $this->getRootException($subcategory);
-
-                if ($exception) {
-                    // Direct root category (with special category_type)
-                    $this->importCategory($subcategory, null, $exception['type']);
-                } else {
-                    // Goes under Marketplace, all should be type marketplace
-                    $this->importCategory($subcategory, $marketplace->id, 'marketplace');
+                // Skip root exceptions (don’t import them at all)
+                if ($this->isRootException($subcategory)) {
+                    continue;
                 }
+
+                // Import top-level category directly as root (no parent_id)
+                $this->importCategory($subcategory, null, 'marketplace');
             }
         }
     }
@@ -77,7 +63,7 @@ class CategorySeeder extends Seeder
             ]
         );
 
-        // 2. Ensure correct parent & type if already exists
+        // 2. Update if parent/type changed
         $updates = [];
         if ($category->parent_id !== $parentId) {
             $updates['parent_id'] = $parentId;
@@ -89,7 +75,7 @@ class CategorySeeder extends Seeder
             $category->update($updates);
         }
 
-        // 3. Recursively import children (inherit type from parent)
+        // 3. Import children recursively (inherit parent’s type)
         if (!empty($data['Subcategories'])) {
             foreach ($data['Subcategories'] as $child) {
                 $this->importCategory($child, $category->id, $categoryType);
@@ -99,7 +85,7 @@ class CategorySeeder extends Seeder
         return $category;
     }
 
-    private function getRootException($category)
+    private function isRootException($category)
     {
         foreach ($this->rootExceptions as $exception) {
             if (
@@ -107,9 +93,9 @@ class CategorySeeder extends Seeder
                 $category['Name'] === $exception['name'] &&
                 $category['Path'] === $exception['path']
             ) {
-                return $exception;
+                return true;
             }
         }
-        return null;
+        return false;
     }
 }
