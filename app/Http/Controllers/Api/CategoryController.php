@@ -22,14 +22,14 @@ class CategoryController extends Controller
             // Only apply this filter when parent_id is provided
             if ($request->filled('parent_id')) {
                 $query->where('parent_id', $request->parent_id); // child categories only
+            }else
+            {
+                $query->wherenull('parent_id'); // top-level categories only
             }
             if($request->filled('category_type')){
                 $query->where('category_type', $request->category_type);
             }
-            else
-            {
-                $query->wherenull('parent_id'); // top-level categories only
-            }
+            
             
 
             // Apply status filter if provided

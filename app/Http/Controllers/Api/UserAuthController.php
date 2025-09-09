@@ -593,6 +593,48 @@ class UserAuthController extends Controller
             'token' => $token,
         ], 200);
     }
+    
+    public function verifyCode(Request $request){
+        // dd("awd");
+        $request->validate([
+            'email' => 'required|string',
+            'verification_code' => 'required|string',
+        ]);
+        $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username'; 
+
+        $user = User::where($fieldtype, $request->email)->first();
+
+        if(!$user){
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+        if($user->verification_code !== $request->verification_code){
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification code'
+            ], 400);
+        }
+        if(now()->greaterThan($user->verification_expires_at)){
+            return response()->json([
+                'success' => false,
+                'message' => 'Verification code has expired'
+            ], 400);
+        }
+
+        // Clear verification code and expiry
+        $user->verification_code = null;
+        $user->verification_expires_at = null;
+        $user->save();
+        $token = $user->createToken('user-token')->plainTextToken;
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'data' => $user,
+            'token' => $token,
+        ], 200);
+    }
 
     // User profile
     public function profile(Request $request)

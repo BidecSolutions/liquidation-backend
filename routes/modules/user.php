@@ -31,6 +31,7 @@ Route::prefix('user')->group(function () {
         Route::post('/login', 'login');
         Route::post('/register', 'register');
         Route::post('/username-check', 'checkUsername');
+        Route::post('/email-verification', 'emailVerification');
     });
 
     Route::middleware('auth:api')->group(function () {
@@ -48,6 +49,7 @@ Route::prefix('user')->group(function () {
             Route::post('/profile-update', 'updateProfileDetails');
             Route::post('/forgot-password', 'sendResetLinkEmail');
             Route::post('/reset-password', 'resetPassword');
+            
 
 
         });
