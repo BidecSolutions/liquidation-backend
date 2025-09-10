@@ -633,6 +633,22 @@ class UserAuthController extends Controller
 
         $user = User::where($fieldtype, $request->email)->first();
         if($user->is_verified != 1){
+            $code = rand(100000, 999999);
+            $user->verification_code = $code;
+            $user->verification_expires_at = now()->addMinutes(30);
+            $expiration = now()->addMinutes(30);
+            $user->save();
+
+            $user->forceFill([
+                'verification_code'        => $code,
+                'verification_expires_at'  => $expiration,
+            ])->save();
+
+            // Send OTP email
+            Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+                $message->to($user->email)
+                        ->subject('Your Verification Code');
+            });
             return response()->json([
                 'success' => false,
                 'message' => 'Emails is not verified yet', 
@@ -645,18 +661,7 @@ class UserAuthController extends Controller
                 'message' => 'Invalid credentials'
             ], 400);
         }
-        // $code = rand(100000, 999999);
-        // $user->verification_code = $code;
-        // $user->verification_expires_at = now()->addMinutes(30);
-        // $user->save();
-
-        // Mail::raw(`Your Verification Code is: {$code}`, function ($message) use ($user) {
-        //     $message->to($user->email)->subject('Your Login Verification Code');
-        // });
-        // Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
-        //     $message->to($user->email)
-        //     ->subject('Your Login Verification Code');
-        // });
+        
         $token = $user->createToken('user-token')->plainTextToken;
             // /Verification code sent to your email. Please verify
         return response()->json([
