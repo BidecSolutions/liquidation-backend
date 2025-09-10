@@ -661,7 +661,7 @@ class UserAuthController extends Controller
             // /Verification code sent to your email. Please verify
         return response()->json([
             'success' => true,
-            'message' => 'Verification code sent to your email. Please verify',
+            'message' => 'login successfull',
             // 'email' => $user->email,
             'data' => $user,
             'token' => $token,
