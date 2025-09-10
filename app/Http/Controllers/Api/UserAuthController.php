@@ -91,6 +91,58 @@ class UserAuthController extends Controller
             ], 500);
         }
     }
+    public function resendOtp(Request $request)
+    {
+        try {
+            $request->validate([
+                'email' => 'required|email',
+            ]);
+
+            $user = User::where('email', $request->email)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email not registered',
+                ], 400);
+            }
+
+            if ($user->is_verified) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Email is already verified',
+                ], 200);
+            }
+
+            // Generate a new 6-digit OTP
+            $code = (string) random_int(100000, 999999);
+            $expiration = now()->addMinutes(30);
+
+            // Update user with new verification code
+            $user->forceFill([
+                'verification_code'        => $code,
+                'verification_expires_at'  => $expiration,
+            ])->save();
+
+            // Send OTP email
+            Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+                $message->to($user->email)
+                        ->subject('Your Verification Code');
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Verification code sent successfully',
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to resend OTP',
+                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
 
     public function emailVerification(Request $request)
     {

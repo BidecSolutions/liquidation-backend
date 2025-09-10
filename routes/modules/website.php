@@ -26,6 +26,7 @@ Route::prefix('options')->group(function () {
 // ListingController works
     Route::prefix('listings')->controller(ListingController::class)->group(function () {
         Route::get('/', 'index');
+        Route::get('/filters', 'filterListings ');
         Route::get('/{slug}/show', 'show');
     });
 

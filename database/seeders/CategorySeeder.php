@@ -17,6 +17,14 @@ class CategorySeeder extends Seeder
         ['name' => 'Services',          'path' => '/Services'],
     ];
 
+    // Map of root category to desired category_type for its children
+    private $rootCategoryTypeMap = [
+        '/Trade-Me-Property' => 'property',
+        '/Trade-Me-Motors'   => 'motors',
+        '/Trade-Me-Jobs'     => 'job',
+        '/Services'          => 'services',
+    ];
+
     public function run()
     {
         echo "Starting Category Import...\n";
@@ -34,12 +42,20 @@ class CategorySeeder extends Seeder
         // 2. Loop over top-level subcategories of Root
         if (isset($data['Subcategories'])) {
             foreach ($data['Subcategories'] as $subcategory) {
-                // Skip root exceptions (don’t import them at all)
+
+                // Check if this category is a root exception
                 if ($this->isRootException($subcategory)) {
+                    // Import only its subcategories under specific category_type
+                    if (!empty($subcategory['Subcategories'])) {
+                        $categoryType = $this->rootCategoryTypeMap[$subcategory['Path']] ?? 'marketplace';
+                        foreach ($subcategory['Subcategories'] as $child) {
+                            $this->importCategory($child, null, $categoryType);
+                        }
+                    }
                     continue;
                 }
 
-                // Import top-level category directly as root (no parent_id)
+                // Otherwise, import top-level category directly as root (default marketplace)
                 $this->importCategory($subcategory, null, 'marketplace');
             }
         }

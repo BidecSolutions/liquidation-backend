@@ -242,6 +242,41 @@ class ListingController extends Controller
         }
     }
 
+    public function filterListings(Request $request)
+    {
+        $query = Listing::query()
+            ->with(['images', 'category', 'creator'])
+            ->where('listing_type', $request->listing_type);
+
+        // ✅ Filter by category
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // ✅ Dynamic attribute filters
+        if ($request->filled('filters') && is_array($request->filters)) {
+            foreach ($request->filters as $key => $value) {
+                $query->whereHas('attributes', function ($q) use ($key, $value) {
+                    $q->where('key', $key)->where('value', $value);
+                });
+            }
+        }
+
+        // ✅ Price range (example of numeric filter)
+        if ($request->filled('min_price')) {
+            $query->where('buy_now_price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('buy_now_price', '<=', $request->max_price);
+        }
+        $listings = $query->paginate(20);
+        return response()->json([
+            'status' => true,
+            'message' => 'Filtered listings fetched successfully',
+            'data' => $listings
+        ]);
+    }
+
     // Get listings by type (jobs, motors, property, services, marketplace)
     public function indexByType($type)
     {
@@ -618,7 +653,39 @@ class ListingController extends Controller
             ], 500);
         }
     }
+    public function filters()
+    {
+        try {
+            $conditions = Listing::select('condition')
+                ->distinct()
+                ->pluck('condition');
 
+            $categories = Category::whereHas('listings')
+                ->withCount('listings')
+                ->get();
+
+            $priceRange = [
+                'min' => Listing::min('start_price'),
+                'max' => Listing::max('start_price'),
+            ];
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Filters fetched successfully',
+                'data' => [
+                    'conditions' => $conditions,
+                    'categories' => $categories,
+                    'price_range' => $priceRange,
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error fetching filters',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     public function toggleStatus($slug)
     {
@@ -647,7 +714,6 @@ class ListingController extends Controller
             ]
         ]);
     }
-
 
     public function destroy($slug)
     {

@@ -32,6 +32,7 @@ Route::prefix('user')->group(function () {
         Route::post('/register', 'register');
         Route::post('/username-check', 'checkUsername');
         Route::post('/email-verification', 'emailVerification');
+        Route::post('/resend-otp', 'resendOtp');
     });
 
     Route::middleware('auth:api')->group(function () {
