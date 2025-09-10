@@ -320,9 +320,6 @@ class UserAuthController extends Controller
         ], 400);
     }
 
-
-
-
     public function updateProfile(Request $request)
     {
         try {
@@ -398,9 +395,7 @@ class UserAuthController extends Controller
         }
     }
 
-
-//update profile method to add occupation, about_me, and favourite quote
-
+    //update profile method to add occupation, about_me, and favourite quote
     public function updateProfileDetails(Request $request)
     {
         try {
@@ -640,7 +635,8 @@ class UserAuthController extends Controller
         if($user->is_verified != 1){
             return response()->json([
                 'success' => false,
-                'message' => 'Emails is not verified yet',  
+                'message' => 'Emails is not verified yet', 
+                'is_verified' => 0,
             ], 400);
         }
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -649,10 +645,10 @@ class UserAuthController extends Controller
                 'message' => 'Invalid credentials'
             ], 400);
         }
-        $code = rand(100000, 999999);
-        $user->verification_code = $code;
-        $user->verification_expires_at = now()->addMinutes(30);
-        $user->save();
+        // $code = rand(100000, 999999);
+        // $user->verification_code = $code;
+        // $user->verification_expires_at = now()->addMinutes(30);
+        // $user->save();
 
         // Mail::raw(`Your Verification Code is: {$code}`, function ($message) use ($user) {
         //     $message->to($user->email)->subject('Your Login Verification Code');
