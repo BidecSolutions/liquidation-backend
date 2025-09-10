@@ -255,46 +255,72 @@ class UserAuthController extends Controller
     public function checkUsername(Request $request)
     {
         $request->validate([
-            'username' => 'required|string',
+            'username' => 'nullable|string',
+            'email'    => 'nullable|email',
         ]);
 
-        $username = $request->username;
-        $exists   = \App\Models\User::where('username', $username)->exists();
+        // If username is provided
+        if ($request->filled('username')) {
+            $username = $request->username;
+            $exists   = \App\Models\User::where('username', $username)->exists();
 
-        if ($exists) {
-            $suggestions = [];
-            $attempts = 0;
+            if ($exists) {
+                $suggestions = [];
+                $attempts = 0;
 
-            // Generate up to 5 unique suggestions
-            while (count($suggestions) < 5 && $attempts < 20) {
-                $attempts++;
+                // Generate up to 5 unique suggestions
+                while (count($suggestions) < 5 && $attempts < 20) {
+                    $attempts++;
+                    $newUsername = $username . rand(100, 999);
 
-                // Append random number or letters to make it unique
-                $newUsername = $username . rand(100, 999);
+                    if (rand(0, 1)) {
+                        $newUsername .= chr(rand(97, 122)); // random lowercase letter
+                    }
 
-                // Optional: add random letters too
-                if (rand(0, 1)) {
-                    $newUsername .= chr(rand(97, 122)); // random lowercase letter
+                    if (!\App\Models\User::where('username', $newUsername)->exists()) {
+                        $suggestions[] = $newUsername;
+                    }
                 }
 
-                // Ensure it's not taken
-                if (!\App\Models\User::where('username', $newUsername)->exists()) {
-                    $suggestions[] = $newUsername;
-                }
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Username is already taken',
+                    'suggestions' => $suggestions,
+                ], 409);
             }
 
             return response()->json([
-                'success' => false,
-                'message' => 'Username is already taken',
-                'suggestions' => $suggestions,
-            ], 409);
+                'success' => true,
+                'message' => 'Username is available',
+            ], 200);
         }
 
+        // If email is provided
+        if ($request->filled('email')) {
+            $email = $request->email;
+            $exists = \App\Models\User::where('email', $email)->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email is already taken',
+                ], 409);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email is available',
+            ], 200);
+        }
+
+        // If neither is provided
         return response()->json([
-            'success' => true,
-            'message' => 'Username is available',
-        ], 200);
+            'success' => false,
+            'message' => 'Please provide username or email to check',
+        ], 400);
     }
+
+
 
 
     public function updateProfile(Request $request)
