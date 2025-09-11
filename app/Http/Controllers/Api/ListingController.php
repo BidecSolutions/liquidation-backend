@@ -499,8 +499,6 @@ class ListingController extends Controller
             ])
                 ->where('slug', $slug)
                 ->first();
-                // $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
-                // $merged = array_merge($attributes);
             if (!$listing) {
                 return response()->json([
                     'status' => false,
@@ -551,11 +549,13 @@ class ListingController extends Controller
                 ? round(($positiveFeedbackCount / $totalFeedbackCount) * 100, 1)
                 : 0;
 
+            $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
+            $listingData = array_merge($listing->toArray(), $attributes);
             return response()->json([
                 'status' => true,
                 'message' => 'Listing fetched successfully',
                 'data' => [
-                    'listing' => $listing,
+                    'listing' => $listingData,
                     'buying_offers' => $buyingOffers,
                     'selling_offers' => $sellingOffers,
                     'creator_feedback_percentage' => $positiveFeedbackPercentage,
