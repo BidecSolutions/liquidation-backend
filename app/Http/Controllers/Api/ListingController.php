@@ -243,68 +243,91 @@ class ListingController extends Controller
     }
 
     public function filterListings(Request $request)
-{
-    $query = Listing::query()
-        ->with(['images', 'category', 'creator'])
-        ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
+    {
+        $query = Listing::query()
+            ->with(['images', 'category', 'creator'])
+            ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
 
-    // ✅ Filter by category_id
-    if ($request->filled('category_id')) {
-        $query->where('category_id', $request->category_id);
-    }
-
-    // ✅ Filter by category_type (join with categories table)
-    if ($request->filled('type')) {
-        $query->where('listing_type', $request->type);
-    }
-
-    // ✅ Predefined keys that should use range logic (besides price)
-    $rangeKeys = ['year', 'odometer', 'land_size', 'bedrooms', 'bathrooms'];
-
-    // ✅ Dynamic attribute filters
-    if ($request->filled('filters') && is_array($request->filters)) {
-        foreach ($request->filters as $key => $value) {
-            $query->whereHas('attributes', function ($q) use ($key, $value, $rangeKeys) {
-                // Multiple values -> IN
-                if (is_array($value) && !isset($value['min']) && !isset($value['max'])) {
-                    $q->where('key', $key)->whereIn('value', $value);
-                }
-                // Range filter (for predefined keys)
-                elseif (is_array($value) && (isset($value['min']) || isset($value['max'])) && in_array($key, $rangeKeys)) {
-                    $q->where('key', $key);
-                    if (isset($value['min'])) {
-                        $q->where('value', '>=', $value['min']);
-                    }
-                    if (isset($value['max'])) {
-                        $q->where('value', '<=', $value['max']);
-                    }
-                }
-                // Single value
-                else {
-                    $q->where('key', $key)->where('value', $value);
-                }
-            });
+        // ✅ Filter by category_id
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
         }
+
+        // ✅ Filter by category_type (join with categories table)
+        if ($request->filled('type')) {
+            $query->where('listing_type', $request->type);
+        }
+
+        // ✅ Predefined keys that should use range logic (besides price)
+        $rangeKeys = ['year', 'odometer', 'land_size', 'bedrooms', 'bathrooms'];
+
+        // ✅ Dynamic attribute filters
+        if ($request->filled('filters') && is_array($request->filters)) {
+            foreach ($request->filters as $key => $value) {
+                $query->whereHas('attributes', function ($q) use ($key, $value, $rangeKeys) {
+                    // Multiple values -> IN
+                    if (is_array($value) && !isset($value['min']) && !isset($value['max'])) {
+                        $q->where('key', $key)->whereIn('value', $value);
+                    }
+                    // Range filter (for predefined keys)
+                    elseif (is_array($value) && (isset($value['min']) || isset($value['max'])) && in_array($key, $rangeKeys)) {
+                        $q->where('key', $key);
+                        if (isset($value['min'])) {
+                            $q->where('value', '>=', $value['min']);
+                        }
+                        if (isset($value['max'])) {
+                            $q->where('value', '<=', $value['max']);
+                        }
+                    }
+                    // Single value
+                    else {
+                        $q->where('key', $key)->where('value', $value);
+                    }
+                });
+            }
+        }
+
+        // ✅ Price range
+        if ($request->filled('min_price')) {
+            $query->where('buy_now_price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('buy_now_price', '<=', $request->max_price);
+        }
+
+        // ✅ Pagination
+        $perPage = $request->input('pagination.per_page', 20);
+        $listings = $query->paginate($perPage);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Filtered listings fetched successfully',
+            'data' => $listings
+        ]);
     }
 
-    // ✅ Price range
-    if ($request->filled('min_price')) {
-        $query->where('buy_now_price', '>=', $request->min_price);
-    }
-    if ($request->filled('max_price')) {
-        $query->where('buy_now_price', '<=', $request->max_price);
-    }
+    public function filtersMetadata(Request $request)
+    {
+        $listingType = $request->input('listing_type');
+        
+        $filters = ListingAttribute::query()
+               ->whereHas('listing', function($q) use ($listingType){
+                  $q->where('listing_type', $listingType);
+               })
+               ->select('key', 'value')
+               ->distinct()
+               ->get()
+               ->groupBy('key')
+               ->map(function ($items) {
+                return $items->pluck('value')->unique()->values();
+               });
 
-    // ✅ Pagination
-    $perPage = $request->input('pagination.per_page', 20);
-    $listings = $query->paginate($perPage);
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Filtered listings fetched successfully',
-        'data' => $listings
-    ]);
-}
+               return response()->json([
+                'status' => true,
+                'listing_type' => $listingType,
+                'filters' => $filters
+               ]);
+    }
 
 
     // Get listings by type (jobs, motors, property, services, marketplace)
@@ -476,7 +499,8 @@ class ListingController extends Controller
             ])
                 ->where('slug', $slug)
                 ->first();
-
+                // $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
+                // $merged = array_merge($attributes);
             if (!$listing) {
                 return response()->json([
                     'status' => false,
