@@ -29,6 +29,9 @@ class CategoryController extends Controller
             if($request->filled('category_type')){
                 $query->where('category_type', $request->category_type);
             }
+            if($request->filled('name')){
+                $query->where('name', $request->name);
+            }
             
             
 
