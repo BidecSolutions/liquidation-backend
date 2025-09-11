@@ -146,7 +146,7 @@ class CategoryController extends Controller
                 'category_type' => 'required|string|max:255',
                 'parent_id' => 'nullable|exists:categories,id',
                 'image' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:2048',
-                'icon' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:1024',
+                'icon' => 'nullable|mimes:jpeg,png,jpg,gif,svg,webp|max:1024',
                 'order' => 'nullable|integer',
                 'status' => 'required|in:0,1',
                 'meta_title' => 'nullable|string|max:255',
