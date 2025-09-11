@@ -111,7 +111,7 @@ class CategoryController extends Controller
     public function show($slug)
     {
         try {
-            $category = Category::with('parent')->where('slug', $slug)->first();
+            $category = Category::with('parent:id,name,slug,parent_id','listings')->where('slug', $slug)->first();
 
             if (!$category) {
                 return response()->json([
