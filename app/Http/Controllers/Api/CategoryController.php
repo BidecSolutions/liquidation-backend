@@ -23,9 +23,6 @@ class CategoryController extends Controller
             if ($request->filled('parent_id')) {
                 $query->where('parent_id', $request->parent_id); // child categories only
             }
-            if($request->filled('name')){
-                $query->where('name', $request->name);
-            }
             else
             {
                 $query->wherenull('parent_id'); // top-level categories only
