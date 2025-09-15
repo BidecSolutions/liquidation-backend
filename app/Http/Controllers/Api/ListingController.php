@@ -250,7 +250,12 @@ class ListingController extends Controller
 
         // ✅ Filter by category_id
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $category = Category::with('children')->find($request->category_id);
+
+            if($category){
+                $categoryIds = $category->getAllCategoryIds();
+                $query->whereIn('category_id', $categoryIds);
+            }
         }
 
         // // ✅ Filter by category_type (join with categories table)

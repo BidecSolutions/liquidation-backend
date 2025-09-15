@@ -14,8 +14,6 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $limit  = (int) $request->get('limit', 20);   // default 20
-            $offset = (int) $request->get('offset', 0);
             $query = Category::
             with(['parent:id,name,slug,parent_id','listings'])->latest();
 
@@ -43,10 +41,13 @@ class CategoryController extends Controller
             $total = $query->count();
 
             // apply offset & limit
+            if($request->filled('limit') && $request->filled('offset')){
+                $limit  = (int) $request->get('limit', 20);   // default 20
+                $offset = (int) $request->get('offset', 0);
+                $query->skip($offset)->take($limit);
+            }
             $categories = $query
                 ->orderByDesc('id')
-                ->skip($offset)
-                ->take($limit)
                 ->get();
 
             return response()->json([

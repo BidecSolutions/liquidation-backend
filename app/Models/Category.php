@@ -58,4 +58,13 @@ class Category extends Model
         return $this->hasMany(Listing::class, 'category_id')->with('images');
     }
 
+    public function allchildrenIds()
+    {
+        $ids = collect([$this->id]);
+        foreach($this->children as $child) {
+            $ids = $ids->merge($child->allchildrenIds());
+        }
+        return $ids;
+    }
+
 }
