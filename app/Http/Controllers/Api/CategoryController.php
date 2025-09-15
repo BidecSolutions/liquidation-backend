@@ -14,49 +14,45 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Category::
-            with(['parent:id,name,slug,parent_id','listings'])->latest();
+            // initialize so meta always has values
+            $limit = null;
+            $offset = null;
 
-            // Only apply this filter when parent_id is provided
+            $query = Category::with(['parent:id,name,slug,parent_id','listings'])->latest();
+
             if ($request->filled('parent_id')) {
-                $query->where('parent_id', $request->parent_id); // child categories only
+                $query->where('parent_id', $request->parent_id);
+            } else {
+                $query->whereNull('parent_id');
             }
-            else
-            {
-                $query->wherenull('parent_id'); // top-level categories only
-            }
-            if($request->filled('category_type')){
+
+            if ($request->filled('category_type')) {
                 $query->where('category_type', $request->category_type);
             }
-            
-            
-            
 
-            // Apply status filter if provided
             if ($request->has('status')) {
                 $query->where('status', $request->status);
             }
 
-                // clone the query for count
+            // clone for count before applying limit/offset
             $total = $query->count();
 
-            // apply offset & limit
-            if($request->filled('limit') && $request->filled('offset')){
-                $limit  = (int) $request->get('limit', 20);   // default 20
+            // apply offset & limit only when limit is provided
+            if ($request->filled('limit')) {
+                $limit  = (int) $request->get('limit', 20);
                 $offset = (int) $request->get('offset', 0);
                 $query->skip($offset)->take($limit);
             }
-            $categories = $query
-                ->orderByDesc('id')
-                ->get();
+
+            $categories = $query->orderByDesc('id')->get();
 
             return response()->json([
                 'status' => true,
                 'message' => 'Categories fetched successfully',
                 'data' => $categories,
                 'meta' => [
-                    'total' => $total,
-                    'limit' => $limit,
+                    'total'  => $total,
+                    'limit'  => $limit,
                     'offset' => $offset
                 ]
             ]);
@@ -68,6 +64,7 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+
 
     public function tree()
     {
