@@ -253,7 +253,7 @@ class ListingController extends Controller
             $category = Category::with('children')->find($request->category_id);
 
             if($category){
-                $categoryIds = $category->getAllCategoryIds();
+                $categoryIds = $category->allchildrenIds();
                 $query->whereIn('category_id', $categoryIds);
             }
         }
