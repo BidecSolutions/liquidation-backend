@@ -36,6 +36,7 @@ class UserAuthController extends Controller
                 'date_of_birth'  => 'nullable|date',
                 'billing_address'=> 'nullable|string|max:500',
                 'customer_number'=> 'nullable|string|max:50',
+                'account_type'  =>  'nullable|in:business,personal',
             ]);
 
             $memberId      = $this->generateMemberId();
@@ -66,7 +67,7 @@ class UserAuthController extends Controller
                 'date_of_birth'            => $request->date_of_birth,
                 'billing_address'          => $request->billing_address,
                 'customer_number'          => $customerNumber,
-
+                'account_type'            => $request->account_type ?? 'personal',
                 // verification
                 'verification_code'        => $code,
                 'verification_expires_at'  => $expiration,
@@ -143,7 +144,6 @@ class UserAuthController extends Controller
             ], 500);
         }
     }
-
     public function emailVerification(Request $request)
     {
         try {
@@ -216,6 +216,39 @@ class UserAuthController extends Controller
             ], 400);
         }
     }
+    public function upgradeToBusiness(Request $request)
+    {
+        $request->validate([
+            'business_name'   => 'required|string|max:255',
+            'tax_id'          => 'nullable|string|max:50',
+            'business_license'=> 'nullable|string|max:100',
+            // 'store_description' => 'nullable|string',
+        ]);
+
+        $user = auth()->user();
+        if($user->account_type === 'business'){
+            return resposne()->json([
+                'success' => false, 
+                'message' => 'Your account is already a business account',
+                'user'    => $user
+            ]);
+        }
+
+        $user->update([
+            'account_type'    => 'business',
+            'business_name'   => $request->business_name,
+            'tax_id'          => $request->tax_id,
+            'business_license'=> $request->business_license,
+            // 'store_description'=> $request->store_description,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Account upgraded to business successfully',
+            'user' => $user
+        ]);
+    }
+
 
     // Update user info
     // public function update(Request $request, $id)

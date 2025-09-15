@@ -253,10 +253,10 @@ class ListingController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        // ✅ Filter by category_type (join with categories table)
-        if ($request->filled('type')) {
-            $query->where('listing_type', $request->type);
-        }
+        // // ✅ Filter by category_type (join with categories table)
+        // if ($request->filled('type')) {
+        //     $query->where('listing_type', $request->type);
+        // }
 
         // ✅ Predefined keys that should use range logic (besides price)
         $rangeKeys = ['year', 'odometer', 'land_size', 'bedrooms', 'bathrooms'];
@@ -294,6 +294,24 @@ class ListingController extends Controller
         if ($request->filled('max_price')) {
             $query->where('buy_now_price', '<=', $request->max_price);
         }
+        if($request->filled('condition')){
+            $query->where('condition', $request->condition);
+        }
+        if($request->filled('city')){
+            $query->whereHas('creator', function($q) use ($request) {
+                $q->where('city', $request->city);
+            });
+        }
+        if($request->filled('search')){
+            // $query->where('title', 'LIKE', '%'. $request->search. '%');
+
+            $search = $request->search;
+            $query->where(function ($q) use ($search){
+                 $q->where('title', 'LIKE', "%{$search}%");
+                //  ->orWhere('subtitle', 'LIKE', "%{$search}%")
+            });
+        }
+        
 
         // ✅ Pagination
         $perPage = $request->input('pagination.per_page', 20);

@@ -42,6 +42,7 @@ Route::prefix('user')->group(function () {
             Route::get('/profile', 'profile');
             Route::post('/logout', 'logout');
             Route::post('/{id}/edit-contact-details', 'updateProfile');
+            Route::post('/upgrade-to-business', 'upgradeToBusiness');
             Route::post('/change-password', 'changePassword');
             Route::post('/upload-profile', 'uploadProfilePhoto');
             Route::post('/upload-background', 'uploadBackgroundPhoto');
