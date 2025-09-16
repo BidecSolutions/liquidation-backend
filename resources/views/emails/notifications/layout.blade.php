@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,40 +15,48 @@
             padding: 20px;
             background-color: #f4f4f4;
         }
+
         .email-container {
             background: white;
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             text-align: center;
         }
+
         .logo {
             font-size: 28px;
             font-weight: bold;
             margin-bottom: 10px;
         }
+
         .tagline {
             font-size: 16px;
             opacity: 0.9;
         }
+
         .content {
             padding: 30px;
             background: white;
         }
+
         .greeting {
             font-size: 18px;
             margin-bottom: 20px;
             color: #333;
         }
+
         .message {
             margin-bottom: 20px;
             color: #555;
         }
+
         .button {
             display: inline-block;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -58,6 +67,7 @@
             margin: 20px 0;
             font-weight: bold;
         }
+
         .footer {
             background: #f8f9fa;
             padding: 20px 30px;
@@ -66,34 +76,41 @@
             font-size: 14px;
             border-top: 1px solid #e9ecef;
         }
+
         .footer-links {
             margin-bottom: 15px;
         }
+
         .footer-links a {
             color: #667eea;
             text-decoration: none;
             margin: 0 10px;
         }
+
         .footer-links a:hover {
             text-decoration: underline;
         }
+
         .copyright {
             color: #999;
             font-size: 12px;
         }
     </style>
 </head>
+
 <body>
     <div class="email-container">
         <div class="header">
-            <div class="logo">Ma3rood</div>
+            <div class="logo">
+                <img src="{{ asset('images/Ma3rood-logo-green.webp') }}" alt="Ma3rood Logo" style="max-height: 60px;">
+            </div>
             <div class="tagline">Find Everything You Need in One Place</div>
         </div>
-        
+
         <div class="content">
             @yield('content')
         </div>
-        
+
         <div class="footer">
             <div class="footer-links">
                 <a href="{{ config('app.frontend_url') }}">Home</a>
@@ -108,4 +125,5 @@
         </div>
     </div>
 </body>
+
 </html>
