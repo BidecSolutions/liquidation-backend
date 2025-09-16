@@ -101,28 +101,30 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <div class="logo">                
-                <img src="{{ url('images/ma3rood-logo.png') }}" alt="Ma3rood Logo" style="max-height: 60px;">
-            </div>
-            <div class="tagline">Find Everything You Need in One Place</div>
+            <div class="logo">Ma3rood</div>
+
+            {{-- <img src="{{ asset('images/ma3rood-logo.png') }}" alt="Ma3rood Logo" style="max-height: 60px;"> --}}
         </div>
 
-        <div class="content">
-            @yield('content')
-        </div>
+        <div class="tagline">Find Everything You Need in One Place</div>
+    </div>
 
-        <div class="footer">
-            <div class="footer-links">
-                <a href="{{ config('app.frontend_url') }}">Home</a>
-                <a href="{{ config('app.frontend_url') }}/about">About</a>
-                <a href="{{ config('app.frontend_url') }}/contact">Contact</a>
-                <a href="{{ config('app.frontend_url') }}/help">Help</a>
-            </div>
-            <div class="copyright">
-                &copy; {{ date('Y') }} Ma3rood. All rights reserved.<br>
-                This email was sent to {{ $notifiable->email ?? 'you' }}
-            </div>
+    <div class="content">
+        @yield('content')
+    </div>
+
+    <div class="footer">
+        <div class="footer-links">
+            <a href="{{ config('app.frontend_url') }}">Home</a>
+            <a href="{{ config('app.frontend_url') }}/about">About</a>
+            <a href="{{ config('app.frontend_url') }}/contact">Contact</a>
+            <a href="{{ config('app.frontend_url') }}/help">Help</a>
         </div>
+        <div class="copyright">
+            &copy; {{ date('Y') }} Ma3rood. All rights reserved.<br>
+            This email was sent to {{ $notifiable->email ?? 'you' }}
+        </div>
+    </div>
     </div>
 </body>
 
