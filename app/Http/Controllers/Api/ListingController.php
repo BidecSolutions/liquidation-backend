@@ -245,11 +245,11 @@ class ListingController extends Controller
     public function filterListings(Request $request)
     {
         $query = Listing::query()
-            ->with(['images', 'category', 'creator'])
+            ->with(['images', 'category', 'creator', 'attributes'])
             ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
 
         // ✅ Filter by category_id
-        if ($request->filled('category_id')) {
+        if ($request->filled('category_id')) { 
             $category = Category::with('children')->find($request->category_id);
 
             if($category){
@@ -321,6 +321,13 @@ class ListingController extends Controller
         // ✅ Pagination
         $perPage = $request->input('pagination.per_page', 20);
         $listings = $query->paginate($perPage);
+        $listingData = $listings->getCollection()->map(function($listing){
+            $listingArray = $listing->toArray();
+            unset($listingArray['attributes']);
+            $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
+            return array_merge($listingArray, $attributes);
+        });
+        return $listingData;
 
         return response()->json([
             'status' => true,
