@@ -98,7 +98,7 @@
             <div class="footer-links">
                 <a href="{{ config('app.frontend_url') }}">Home</a>
                 <a href="{{ config('app.frontend_url') }}/about">About</a>
-                <a href="{{ config('app.frontend_url') }}/contact">Contact</a>
+                <a href="{{ config('app.frontend_url') }}/contact-us">Contact</a>
                 <a href="{{ config('app.frontend_url') }}/help">Help</a>
             </div>
             <div class="copyright">
