@@ -102,7 +102,7 @@
     <div class="email-container">
         <div class="header">
             <div class="logo">                
-                <img src="{{ public_path('images/ma3rood-logo.png') }}" alt="Ma3rood Logo" style="max-height: 60px;">
+                <img src="{{ url('images/ma3rood-logo.png') }}" alt="Ma3rood Logo" style="max-height: 60px;">
             </div>
             <div class="tagline">Find Everything You Need in One Place</div>
         </div>
