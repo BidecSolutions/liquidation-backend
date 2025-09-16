@@ -398,7 +398,7 @@ class ListingController extends Controller
                 'allow_offers' => 'boolean',
                 'quantity' => 'integer|min:1',
                 'authenticated_bidders_only' => 'boolean',
-                'pickup_option' => 'required|in:no_pickup,pickup_available,must_pickup',
+                'pickup_option' => 'nullable|in:no_pickup,pickup_available,must_pickup',
                 'shipping_method_id' => 'nullable|exists:shipping_methods,id',
                 'payment_method_id' => 'nullable|exists:payment_methods,id',
                 'color' => 'nullable|string|max:100',
@@ -414,7 +414,7 @@ class ListingController extends Controller
                 'meta_description' => 'nullable|string',
                 'expire_at' => 'nullable|date|after:now',
                 'images.*' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:2048',
-                'attributes' => 'array', // ✅ extra dynamic attributes
+                'attributes' => 'array', 
                 'attributes.*.key' => 'required|string',
                 'attributes.*.value' => 'nullable|string',
 
