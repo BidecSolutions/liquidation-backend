@@ -101,8 +101,8 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <div class="logo">
-                <img src="{{ asset('images/Ma3rood-logo-green.webp') }}" alt="Ma3rood Logo" style="max-height: 60px;">
+            <div class="logo">                
+                <img src="{{ asset('images/ma3rood-logo.png') }}" alt="Ma3rood Logo" style="max-height: 60px;">
             </div>
             <div class="tagline">Find Everything You Need in One Place</div>
         </div>
@@ -115,7 +115,7 @@
             <div class="footer-links">
                 <a href="{{ config('app.frontend_url') }}">Home</a>
                 <a href="{{ config('app.frontend_url') }}/about">About</a>
-                <a href="{{ config('app.frontend_url') }}/contact-us">Contact</a>
+                <a href="{{ config('app.frontend_url') }}/contact">Contact</a>
                 <a href="{{ config('app.frontend_url') }}/help">Help</a>
             </div>
             <div class="copyright">
