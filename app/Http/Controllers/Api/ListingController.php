@@ -428,6 +428,16 @@ class ListingController extends Controller
             }
 
             $data = $validator->validated();
+            $category = Category::find($data['category_id']);
+            // return $category;
+            if($data['listing_type'] != $category->category_type){
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Must Select the same category as the listing type',
+                    'data' => null
+                ], 422);
+            }
             $data['slug'] = Str::slug($request->title . '-' . uniqid());
             $data['status'] = 1;
             $data['is_active'] = 1;
