@@ -327,12 +327,11 @@ class ListingController extends Controller
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
             return array_merge($listingArray, $attributes);
         });
-        return $listingData;
 
         return response()->json([
             'status' => true,
             'message' => 'Filtered listings fetched successfully',
-            'data' => $listings
+            'data' => $listingData
         ]);
     }
 
