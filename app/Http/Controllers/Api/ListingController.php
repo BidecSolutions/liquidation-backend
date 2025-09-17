@@ -412,7 +412,7 @@ class ListingController extends Controller
                 'meta_title' => 'nullable|string|max:255',
                 'meta_description' => 'nullable|string',
                 'expire_at' => 'nullable|date|after:now',
-                'images.*' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'images.*' => 'nullable|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
                 'attributes' => 'array', 
                 'attributes.*.key' => 'required|string',
                 'attributes.*.value' => 'nullable|string',
@@ -431,7 +431,6 @@ class ListingController extends Controller
             $category = Category::find($data['category_id']);
             // return $category;
             if($data['listing_type'] != $category->category_type){
-
                 return response()->json([
                     'status' => false,
                     'message' => 'Must Select the same category as the listing type',
