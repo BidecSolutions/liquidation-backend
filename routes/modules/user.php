@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\{
     NotificationController,
     DeliveryAddressController,
     AuctionResultController,
+    CommentController,
     FavoriteController,
     ListingBuyController,
     UserFeedbackController,
@@ -147,6 +148,15 @@ Route::prefix('user')->group(function () {
             Route::post('/store', 'store');
             Route::get('/stats/{listing_id}', 'showStats');
             Route::get('/' , 'index');
+        });
+
+        //Comment Controller Route
+        Route::prefix('comments')->controller(CommentController::class)->group(function () {
+            Route::get('/{listing}',  'index');
+            Route::post('/{listing}/comment',  'store');
+            Route::post('/{comment}/reply', 'reply');
+            Route::post('/{comment}/update',  'update');
+            Route::delete('/{comment}/delete',  'destroy');
         });
 
     });
