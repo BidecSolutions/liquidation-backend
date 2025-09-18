@@ -534,6 +534,8 @@ class ListingController extends Controller
                 'bids.user',
                 'winningBid.user',
                 'attributes',
+                'comments.user:id,name,profile_photo',
+                'comments.replies.user:id,name,profile_photo',
             ])
                 ->where('slug', $slug)
                 ->first();
