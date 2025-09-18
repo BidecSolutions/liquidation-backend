@@ -602,7 +602,7 @@ class ListingController extends Controller
             ->when($listingData['is_active'] ?? null, fn($q, $IsActive) => 
                  $q->where('is_active', $IsActive)
             )
-            ->select('id', 'title', 'slug', 'description')
+            ->select('id', 'title', 'slug', 'description', 'listing_type', 'condition', 'start_price', 'buy_now_price', 'created_by')
             ->limit(4)
             ->get();
             return response()->json([
