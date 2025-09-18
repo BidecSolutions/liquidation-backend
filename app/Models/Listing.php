@@ -166,5 +166,9 @@ class Listing extends Model
     {
         return $this->hasMany(UserFeedback::class, 'listing_id');
     }
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
 
 }
