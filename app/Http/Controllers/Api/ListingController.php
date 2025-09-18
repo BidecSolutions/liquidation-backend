@@ -591,6 +591,7 @@ class ListingController extends Controller
 
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
             $listingData = array_merge($listing->toArray(), $attributes);
+            unset($listingData['attributes']);
             return response()->json([
                 'status' => true,
                 'message' => 'Listing fetched successfully',
