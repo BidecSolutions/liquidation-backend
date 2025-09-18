@@ -174,7 +174,6 @@ class ListingController extends Controller
                 $statuses = is_array($request->status)
                     ? $request->status
                     : explode(',', $request->status);
-
                 $query->whereIn('status', $statuses);
             }
 
@@ -256,6 +255,11 @@ class ListingController extends Controller
                 $categoryIds = $category->allchildrenIds();
                 $query->whereIn('category_id', $categoryIds);
             }
+        }
+        if($request->filled('status')){
+            $query->where('status', $request->status);
+        }else{
+            $query->where('status', 1); 
         }
 
         // // ✅ Filter by category_type (join with categories table)
