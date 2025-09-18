@@ -592,8 +592,19 @@ class ListingController extends Controller
             $listingData = array_merge($listing->toArray(), $attributes);
             unset($listingData['attributes']);
 
-            $dealersListing = Listing::with('images:id,listing_id,image_path')->where('created_by', $listingData['created_by'])
-            ->select('id', 'title', 'slug', 'description')->get();
+            $dealersListing = Listing::with('images:id,listing_id,image_path')
+            ->when($listingData['created_by'] ?? null, fn($q, $created_by)=> 
+                 $q->where('created_by', $created_by)
+            )
+            ->when($listingData['listing_type'] ?? null, fn($q, $listingType) => 
+                 $q->where('listing_type', $listingType)
+            )            
+            ->when($listingData['is_active'] ?? null, fn($q, $IsActive) => 
+                 $q->where('is_active', $IsActive)
+            )
+            ->select('id', 'title', 'slug', 'description')
+            ->limit(4)
+            ->get();
             return response()->json([
                 'status' => true,
                 'message' => 'Listing fetched successfully',
