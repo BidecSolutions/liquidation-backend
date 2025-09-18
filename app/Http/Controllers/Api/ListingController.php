@@ -523,7 +523,6 @@ class ListingController extends Controller
         return response()->json(['status' => true, 'message' => 'Note deleted successfully']);
     }
 
-
     public function show($slug)
     {
         try {
@@ -592,6 +591,9 @@ class ListingController extends Controller
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
             $listingData = array_merge($listing->toArray(), $attributes);
             unset($listingData['attributes']);
+
+            $dealersListing = Listing::with('images:id,listing_id,image_path')->where('created_by', $listingData['created_by'])
+            ->select('id', 'title', 'slug', 'description')->get();
             return response()->json([
                 'status' => true,
                 'message' => 'Listing fetched successfully',
@@ -600,6 +602,7 @@ class ListingController extends Controller
                     'buying_offers' => $buyingOffers,
                     'selling_offers' => $sellingOffers,
                     'creator_feedback_percentage' => $positiveFeedbackPercentage,
+                    'dealers_other_listings' => $dealersListing,
                 ]
             ]);
         } catch (\Throwable $e) {
@@ -610,7 +613,6 @@ class ListingController extends Controller
             ], 500);
         }
     }
-
 
     public function update(Request $request, $slug)
     {
