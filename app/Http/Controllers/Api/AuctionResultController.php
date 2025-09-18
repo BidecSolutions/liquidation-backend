@@ -13,15 +13,30 @@ class AuctionResultController extends Controller
         $userId = auth('api')->id();
 
         $listings = Listing::where('status', 3) // sold
-            ->whereHas('bids', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
+            ->where(function ($q) use ($userId) {
+                // Case 1: User won via bidding
+                $q->whereHas('winningBid', function ($sub) use ($userId) {
+                    $sub->where('user_id', $userId);
+                })
+                // Case 2: User bought via Buy Now
+                ->orWhereHas('buyNowPurchases', function ($sub) use ($userId) {
+                    $sub->where('buyer_id', $userId);
+                })
+                // Case 3: User made an offer that was accepted
+                ->orWhereHas('winningOffer', function ($sub) use ($userId) {
+                    $sub->where('user_id', $userId)
+                        ->where('status', 'accepted'); // assuming "accepted" means won
+                });
             })
-            ->with(['winningBid','images','buyNowPurchases', 'feedbacks.reviewedUser'])
-            ->get()
-            ->filter(function ($listing) use ($userId) {
-                return $listing->winningBid && $listing->winningBid->user_id == $userId;
-            })
-            ->values();
+            ->with([
+                'winningBid.user',
+                'images',
+                'buyNowPurchases.buyer',
+                'winningOffer.user',
+                'feedbacks.reviewedUser'
+            ])
+            ->get();
+
 
         return response()->json([
             'status' => true,
