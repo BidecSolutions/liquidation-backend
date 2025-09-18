@@ -13,7 +13,7 @@ class AuctionResultController extends Controller
         $userId = auth('api')->id();
 
         $listings = Listing::where('status', 3) // sold
-            ->whereHas('winningBid', function ($q) use ($userId) {
+            ->whereHas('bids', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })
             ->with(['winningBid','images','buyNowPurchases', 'feedbacks.reviewedUser'])
