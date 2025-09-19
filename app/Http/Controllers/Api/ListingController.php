@@ -246,17 +246,17 @@ class ListingController extends Controller
         $query = Listing::query()
             ->with([
                 'images', 
-                'category:id,name,slug,parent_id', 
-                'category.parentRecursive:id,name,slug,parent_id',
+                'category',
                 'creator', 
                 'attributes'
                 ])
             ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
 
         // ✅ Filter by category_id
+        $categoryTree = null;
         if ($request->filled('category_id')) { 
             $category = Category::with('children')->find($request->category_id);
-
+            $categoryTree = Category::with('parentRecurisive')->find($request->category_id);
             if($category){
                 $categoryIds = $category->allchildrenIds();
                 $query->whereIn('category_id', $categoryIds);
@@ -341,7 +341,8 @@ class ListingController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Filtered listings fetched successfully',
-            'data' => $listingData
+            'data' => $listingData,
+            'category_tree' => $categoryTree,
         ]);
     }
 
