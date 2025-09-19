@@ -244,7 +244,13 @@ class ListingController extends Controller
     public function filterListings(Request $request)
     {
         $query = Listing::query()
-            ->with(['images', 'category', 'creator', 'attributes'])
+            ->with([
+                'images', 
+                'category:id,name,slug,parent_id', 
+                'category.parentRecursive:id,name,slug,parent_id',
+                'creator', 
+                'attributes'
+                ])
             ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
 
         // ✅ Filter by category_id
