@@ -44,7 +44,7 @@ class CategoryController extends Controller
                 $query->skip($offset)->take($limit);
             }
 
-            $categories = $query->orderByDesc('id')->get();
+            $categories = $query->orderBy('name', 'asc')->get();
 
             return response()->json([
                 'status' => true,
