@@ -18,7 +18,7 @@ class CategoryController extends Controller
             $limit = null;
             $offset = null;
 
-            $query = Category::with(['parent:id,name,slug,parent_id','listings'])->latest();
+            $query = Category::with(['parent:id,name,slug,parent_id','listings']);
 
             if ($request->filled('parent_id')) {
                 $query->where('parent_id', $request->parent_id);
