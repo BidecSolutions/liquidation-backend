@@ -256,7 +256,7 @@ class ListingController extends Controller
         $categoryTree = null;
         if ($request->filled('category_id')) { 
             $category = Category::with('children')->find($request->category_id);
-            $categoryTree = Category::with('parentRecurisive')->find($request->category_id);
+            $categoryTree = Category::with('parentRecursive')->find($request->category_id);
             if($category){
                 $categoryIds = $category->allchildrenIds();
                 $query->whereIn('category_id', $categoryIds);
