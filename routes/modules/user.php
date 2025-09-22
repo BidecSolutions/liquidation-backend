@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
+    AppointmentController,
     UserAuthController,
     ListingController,
     ListingOfferController,
@@ -98,6 +99,13 @@ Route::prefix('user')->group(function () {
 
         Route::prefix('listings')->controller(ListingBuyController::class)->group(function () {
             Route::post('{slug}/buy-now', 'buyNow'); // Buy Now
+        });
+
+        Route::prefix('appointments')->controller(AppointmentController::class)->group(function () {
+            Route::post('/store', 'store');                     // 📌 Buyer: Create a new appointment request
+            Route::get('/seller-appointments', 'sellerAppointments'); // 📌 Seller: View all appointment requests for their listings
+            Route::post('/{id}/confirm', 'confirm'); // 📌 Seller: Confirm an appointment
+            Route::post('/{id}/decline', 'decline'); // 📌 Seller: Decline an appointment
         });
 
         Route::prefix('watchlist')->controller(WatchlistController::class)->group(function () {

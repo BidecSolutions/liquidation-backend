@@ -100,6 +100,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Listing::class, 'created_by');
     }
+    public function buyer_id()
+    {
+        return $this->hasMany(Appointment::class, 'buyer_id');
+    }
+    public function seller_id()
+    {
+        return $this->hasMany(Appointment::class, 'seller_id');
+    }
 
     public function bids()
     {

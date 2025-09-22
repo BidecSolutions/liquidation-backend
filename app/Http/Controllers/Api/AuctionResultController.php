@@ -25,7 +25,7 @@ class AuctionResultController extends Controller
                 // Case 3: User made an offer that was accepted
                 ->orWhereHas('winningOffer', function ($sub) use ($userId) {
                     $sub->where('user_id', $userId)
-                        ->where('status', 'accepted'); // assuming "accepted" means won
+                        ->where('status', 'approved'); // assuming "accepted" means won
                 });
             })
             ->with([
