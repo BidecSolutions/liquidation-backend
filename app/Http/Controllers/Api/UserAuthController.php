@@ -216,38 +216,38 @@ class UserAuthController extends Controller
             ], 400);
         }
     }
-    public function upgradeToBusiness(Request $request)
-    {
-        $request->validate([
-            'business_name'   => 'required|string|max:255',
-            'tax_id'          => 'nullable|string|max:50',
-            'business_license'=> 'nullable|string|max:100',
-            // 'store_description' => 'nullable|string',
-        ]);
+    // public function upgradeToBusiness(Request $request)
+    // {
+    //     $request->validate([
+    //         'business_name'   => 'required|string|max:255',
+    //         'tax_id'          => 'nullable|string|max:50',
+    //         'business_license'=> 'nullable|string|max:100',
+    //         // 'store_description' => 'nullable|string',
+    //     ]);
 
-        $user = auth()->user();
-        if($user->account_type === 'business'){
-            return resposne()->json([
-                'success' => false, 
-                'message' => 'Your account is already a business account',
-                'user'    => $user
-            ]);
-        }
+    //     $user = auth()->user();
+    //     if($user->account_type === 'business'){
+    //         return resposne()->json([
+    //             'success' => false, 
+    //             'message' => 'Your account is already a business account',
+    //             'user'    => $user
+    //         ]);
+    //     }
 
-        $user->update([
-            'account_type'    => 'business',
-            'business_name'   => $request->business_name,
-            'tax_id'          => $request->tax_id,
-            'business_license'=> $request->business_license,
-            // 'store_description'=> $request->store_description,
-        ]);
+    //     $user->update([
+    //         'account_type'    => 'business',
+    //         'business_name'   => $request->business_name,
+    //         'tax_id'          => $request->tax_id,
+    //         'business_license'=> $request->business_license,
+    //         // 'store_description'=> $request->store_description,
+    //     ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Account upgraded to business successfully',
-            'user' => $user
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Account upgraded to business successfully',
+    //         'user' => $user
+    //     ]);
+    // }
 
 
     // Update user info
@@ -685,6 +685,7 @@ class UserAuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Emails is not verified yet', 
+                'email' => $user->email,
                 'is_verified' => 0,
             ], 400);
         }
