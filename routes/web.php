@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use \Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
     Route::get('/', function () {
         return view('welcome');
@@ -155,3 +156,27 @@ use \Illuminate\Support\Facades\Artisan;
             ], 500);
         }
     });
+    Route::get('seed-vehicle-makes', function () {
+    try {
+        Artisan::call('db:seed', [
+            '--class' => 'VehicleMakeSeeder',
+            '--force' => true,
+        ]);
+
+        $output = Artisan::output();
+        $total = DB::table('vehicle_data')->count();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Vehicle makes seeded successfully.',
+            'total_entries' => $total,
+            'output'  => $output,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Seeder failed to execute.',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+});
