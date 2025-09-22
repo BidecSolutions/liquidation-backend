@@ -667,31 +667,31 @@ class UserAuthController extends Controller
         $user = User::where($fieldtype, $request->email)->first();
         if($user->is_verified == null){
             if($user->is_verified != 1){
-            $code = rand(100000, 999999);
-            $user->verification_code = $code;
-            $user->verification_expires_at = now()->addMinutes(30);
-            $expiration = now()->addMinutes(30);
-            $user->save();
+                $code = rand(100000, 999999);
+                $user->verification_code = $code;
+                $user->verification_expires_at = now()->addMinutes(30);
+                $expiration = now()->addMinutes(30);
+                $user->save();
 
-            $user->forceFill([
-                'verification_code'        => $code,
-                'verification_expires_at'  => $expiration,
-            ])->save();
+                $user->forceFill([
+                    'verification_code'        => $code,
+                    'verification_expires_at'  => $expiration,
+                ])->save();
 
-            // Send OTP email
-            Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
-                $message->to($user->email)
-                        ->subject('Your Verification Code');
-            });
-            return response()->json([
-                'success' => false,
-                'message' => 'Emails is not verified yet', 
-                'email' => $user->email,
-                'is_verified' => 0,
-            ], 400);
-        }
+                // Send OTP email
+                Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+                    $message->to($user->email)
+                            ->subject('Your Verification Code');
+                });
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Emails is not verified yet', 
+                    'email' => $user->email,
+                    'is_verified' => 0,
+                ], 400);
+            }
         }else{
-             $code = rand(100000, 999999);
+            $code = rand(100000, 999999);
             $user->verification_code = $code;
             $user->verification_expires_at = now()->addMinutes(30);
             $expiration = now()->addMinutes(30);
