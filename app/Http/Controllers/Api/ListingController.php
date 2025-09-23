@@ -344,6 +344,47 @@ class ListingController extends Controller
         ]);
     }
 
+    public function homePastSearches()
+    {
+        if(!auth('api')->check()){
+            return response()->json([
+                'status' => false,
+                'message' => 'Login Required for the past searches',
+                'data' => [],
+            ], 404);
+        }
+
+        $userId = auth('api')->id();
+
+        $pastSearches = SearchHistory::where('user_id', $userId)
+            ->orderBy('updated_at', 'desc')   // latest search first
+            ->orderBy('created_at', 'desc')   // ensure fresh single searches aren’t skipped
+            ->limit(5)
+            ->get();
+        $searchResults = [];
+
+        foreach($pastSearches as $search){
+            $keyword = $search->keyword;
+
+            $listings = Listing::with(['images', 'category', 'creator'])->withCount('views')
+            ->where('status', 1)
+            ->where(function ($q) use ($keyword) {
+                $q->where('title', 'LIKE', "%{$keyword}%")
+                ->orWhere('description', 'LIKE', "%{$keyword}%");
+            })->limit(5)->get();
+
+            $searchResults[] = [
+                'keyword' => $keyword,
+                'listings' => $listings,
+            ];
+        }
+         return response()->json([
+            'status' => true,
+            'message' => 'Home suggestions fetched successfully',
+            'data' => $searchResults,
+        ]);
+    }
+
 
 
     public function filtersMetadata(Request $request)
