@@ -108,6 +108,7 @@ class Listing extends Model
     {
         return $this->belongsToMany(User::class, 'watchlists');
     }
+    
 
     public function winningBid()
     {

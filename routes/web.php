@@ -156,27 +156,29 @@ use Illuminate\Support\Facades\DB;
             ], 500);
         }
     });
-    Route::get('seed-vehicle-makes', function () {
-    try {
-        Artisan::call('db:seed', [
-            '--class' => 'VehicleMakeSeeder',
-            '--force' => true,
-        ]);
+   Route::get('seed-vehicle-makes', function () {
+    Artisan::call('db:seed', ['--class' => 'VehicleMakeSeeder', '--force' => true]);
+    return [
+        'status' => true,
+        'message' => 'Makes seeded.',
+        'total' => DB::table('vehicle_data')->whereNull('model')->count(),
+    ];
+   });
 
-        $output = Artisan::output();
-        $total = DB::table('vehicle_data')->count();
+    Route::get('seed-vehicle-models', function () {
+        Artisan::call('db:seed', ['--class' => 'VehicleModelSeeder', '--force' => true]);
+        return [
+            'status' => true,
+            'message' => 'Models seeded.',
+            'total' => DB::table('vehicle_data')->whereNotNull('model')->whereNull('year')->count(),
+        ];
+    });
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Vehicle makes seeded successfully.',
-            'total_entries' => $total,
-            'output'  => $output,
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status'  => false,
-            'message' => 'Seeder failed to execute.',
-            'error'   => $e->getMessage()
-        ], 500);
-    }
-});
+    Route::get('seed-vehicle-years', function () {
+        Artisan::call('db:seed', ['--class' => 'VehicleYearSeeder', '--force' => true]);
+        return [
+            'status' => true,
+            'message' => 'Years seeded.',
+            'total' => DB::table('vehicle_data')->whereNotNull('model')->whereNotNull('year')->count(),
+        ];
+    });

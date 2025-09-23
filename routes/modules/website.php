@@ -29,6 +29,7 @@ Route::prefix('options')->group(function () {
         Route::post('/filters', 'filterListings');
         Route::get('/filters-metadata', 'filtersMetadata');
         Route::get('/{slug}/show', 'show');
+        Route::get('suggestions', 'suggestions');
     });
 
 // ContactMessageController works

@@ -18,7 +18,9 @@ class CategoryController extends Controller
             $limit = null;
             $offset = null;
 
-            $query = Category::with(['parent:id,name,slug,parent_id','listings']);
+            $query = Category::with(['parent:id,name,slug,parent_id','listings' => function($q) {
+                $q->withCount('views', 'watchers')->with('paymentMethod:id,name', 'shippingMethod:id,name');
+            }]);
 
             if ($request->filled('parent_id')) {
                 $query->where('parent_id', $request->parent_id);

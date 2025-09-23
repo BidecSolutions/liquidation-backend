@@ -12,114 +12,20 @@ use App\Models\Listing;
 use App\Models\ListingView;
 use App\Models\ListingImage;
 use App\Models\ListingOffer;
+use App\Models\SearchHistory;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
-
+use Illuminate\Support\Facades\DB;
 
 class ListingController extends Controller
 {
-    // public function index(Request $request)
-    // {
-    //     try {
-    //         $query = Listing::with(['category', 'creator', 'images', 'bids.user']);
-    //         // ->where('status', '!=', 3) // Exclude deleted listings
-    //         // ->where('expire_at', '>', now()); // Only active listings
-
-    //         // 🔒 Filter by creator if authenticated (user guard)
-    //         if (auth('api')->check()) {
-    //             $query->where('created_by', auth('api')->id());
-    //         }
-
-    //         // 📌 Filter by search
-    //         if ($request->has('search')) {
-    //             $query->where('title', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('description', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('subtitle', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('brand', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('color', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('size', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('style', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('memory', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('hard_drive_size', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('cores', 'like', '%' . $request->search . '%')
-    //                 ->orWhere('storage', 'like', '%' . $request->search . '%')
-    //                 ->orWhereHas('category', function ($q) use ($request) {
-    //                     $q->where('name', 'like', '%' . $request->search . '%');
-    //                 });
-    //         }
-
-    //         // 📌 Filter by slug
-    //         if ($request->has('slug')) {
-    //             $query->where('slug', $request->slug);
-    //         }
-
-    //         // 📌 Filter by status
-    //         if ($request->has('status')) {
-    //             $query->where('status', $request->status);
-    //         }
-
-    //         // 📌 Filter by status
-    //         if ($request->has('not_equal_status')) {
-    //             $query->where('status', '!=', $request->not_equal_status);
-    //         }
-
-    //         // 📌 Filter by isactive status
-    //         if ($request->has('is_active')) {
-    //             $query->where('is_active', $request->is_active);
-    //         }
-
-    //         // 📌 Filter by reserve price
-    //         if ($request->has('reserve_price')) {
-    //             $query->where('reserve_price', $request->reserve_price);
-    //         }
-
-    //         // 📌 Filter by category + child categories
-    //         if ($request->filled('category_id')) {
-    //             $categoryIds = $this->getAllCategoryIds($request->category_id);
-    //             $query->whereIn('category_id', $categoryIds);
-    //         }
-
-    //         // 📌 Filter by condition (new/used)
-    //         if ($request->filled('condition')) {
-    //             $query->where('condition', $request->condition);
-    //         }
-
-    //         // 📌 Filter by price range
-    //         if ($request->filled('price_from')) {
-    //             $query->where('start_price', '>=', $request->price_from);
-    //         }
-
-    //         if ($request->filled('price_to')) {
-    //             $query->where('start_price', '<=', $request->price_to);
-    //         }
-
-    //         $listings = $query->latest()->paginate(20);
-    //         $listings->each(function ($listing) {
-    //             $listing->bid_count = $listing->bids()->count();
-    //             $listing->view_count = $listing->views()->count();
-    //             // $listing->is_watched = auth('api')->check() ? $listing->watchlists()->where('user_id', auth('api')->id())->exists() : false;
-    //         });
-
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Listings fetched successfully',
-    //             'data' => $listings
-    //         ]);
-    //     } catch (\Throwable $e) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Error fetching listings',
-    //             'data' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 
     public function index(Request $request)
     {
         try {
-            $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes']);
+            $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes'])->withCount('views');
 
             // 🔒 Filter by creator if authenticated (user guard)
             $authUserId = auth('api')->check() ? auth('api')->id() : null;
@@ -248,8 +154,11 @@ class ListingController extends Controller
                 'images', 
                 'category',
                 'creator', 
-                'attributes'
-                ])
+                'attributes',
+                'watchers',
+                'paymentMethod:id,name',
+                'shippingMethod:id,name'
+                ])->withCount('views', 'watchers')
             ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
 
         // ✅ Filter by category_id
@@ -349,6 +258,93 @@ class ListingController extends Controller
             'category_tree' => $categoryTree,
         ]);
     }
+    public function suggestions(Request $request)
+    {
+        $request->validate([
+            'query' => 'required|string|max:255',
+        ]);
+
+        $query = $request->query('query');
+
+        // ✅ Fetch suggestions from listings
+        $suggestions = Listing::where('status', 1)
+            ->where('title', 'LIKE', "%{$query}%")
+            ->limit(10)
+            ->pluck('title');
+
+        // ✅ Past searches only if user is logged in
+        $pastSearches = [];
+        if (auth('api')->check()) {
+            $pastSearches = SearchHistory::where('user_id', auth('api')->id())
+                ->orderBy('updated_at', 'desc')
+                ->limit(5)
+                ->pluck('keyword');
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Suggestions fetched successfully',
+            'suggestions' => $suggestions,
+            'past_searches' => $pastSearches,
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $request->validate([
+            'keyword' => 'required|string|max:255',
+        ]);
+
+        $keyword = strtolower(trim($request->keyword));
+
+        // ✅ Base query
+        $query = Listing::with(['images', 'category', 'creator'])->withCount('views')
+            ->where('status', 1)
+            ->where(function ($q) use ($keyword) {
+                $q->where('title', 'LIKE', "%{$keyword}%")
+                ->orWhere('description', 'LIKE', "%{$keyword}%");
+            });
+
+        // ✅ Apply limit & offset (manual pagination)
+        $limit = $request->input('limit');
+        $offset = $request->input('offset');
+
+        if ($limit !== null && $offset !== null) {
+            $results = $query->limit((int)$limit)->offset((int)$offset)->get();
+        } else {
+            $results = $query->get(); // return all if no limit/offset
+        }
+
+        // ✅ Transform results (merge attributes like in filterListings)
+        $listingData = $results->map(function ($listing) {
+            $listingArray = $listing->toArray();
+            unset($listingArray['attributes']);
+            $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
+            return array_merge($listingArray, $attributes);
+        });
+
+        // ✅ Save search history
+        if (auth('api')->check()) {
+            SearchHistory::updateOrCreate(
+                [
+                    'user_id' => auth('api')->id(),
+                    'keyword' => $keyword,
+                ],
+                [
+                    'count' => DB::raw('count + 1'),
+                ]
+            );
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Search results fetched successfully',
+            'data' => $listingData,
+            'total' => $query->count(), // total matching rows
+        ]);
+    }
+
+
 
     public function filtersMetadata(Request $request)
     {
@@ -384,6 +380,7 @@ class ListingController extends Controller
             return response()->json(['status' => false, 'message' => 'Failed to fetch listings by type', 'error' => $e->getMessage()], 500);
         }
     }
+
     private function getAllCategoryIds($categoryId)
     {
         $categoryIds = [$categoryId];
@@ -396,7 +393,10 @@ class ListingController extends Controller
 
         return $categoryIds;
     }
-
+    public function recentViewedListings()
+    {
+        
+    }
     public function store(Request $request)
     {
         try {
@@ -554,8 +554,9 @@ class ListingController extends Controller
                 'comments.user:id,name,profile_photo',
                 'comments.replies.user:id,name,profile_photo',
             ])
-                ->where('slug', $slug)
-                ->first();
+            ->withCount('views')
+            ->where('slug', $slug)
+            ->first();
             if (!$listing) {
                 return response()->json([
                     'status' => false,
