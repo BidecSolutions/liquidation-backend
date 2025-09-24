@@ -89,11 +89,11 @@ Route::prefix('user')->group(function () {
             Route::post('note/{id}', 'updateNote');
             Route::delete('note/{id}', 'deleteNote');
             Route::delete('/images/{id}', 'deleteImage');
-            Route::get('suggestions', 'suggestions');
-            Route::get('search', 'search');
-            Route::get('recentview', 'recentViewedListings');            
-            Route::get('homePastSearches', 'homePastSearches');     
-            Route::get('searchById/{id}', 'searchById');     
+            Route::get('/suggestions', 'suggestions');
+            Route::get('/search', 'search');
+            Route::get('/recentview', 'recentViewedListings');            
+            Route::get('/homePastSearches', 'homePastSearches');     
+            Route::get('/searchById/{id}', 'searchById');     
 
         });
 
