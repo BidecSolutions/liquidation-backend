@@ -55,7 +55,7 @@ class Category extends Model
     }
     public function listings()
     {
-        return $this->hasMany(Listing::class, 'category_id')->with('images');
+        return $this->hasMany(Listing::class, 'category_id')->with(['images','creator']);
     }
     public function parentRecursive()
     {
