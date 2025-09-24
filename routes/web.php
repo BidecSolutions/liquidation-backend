@@ -182,3 +182,30 @@ use Illuminate\Support\Facades\DB;
             'total' => DB::table('vehicle_data')->whereNotNull('model')->whereNotNull('year')->count(),
         ];
     });
+    // 🚗 Seed Promotions
+Route::get('seed-promotions', function () {
+    Artisan::call('db:seed', [
+        '--class' => 'PromotionSeeder',
+        '--force' => true
+    ]);
+
+    return [
+        'status' => true,
+        'message' => 'Promotions seeded.',
+        'total' => DB::table('promotions')->count(),
+    ];
+});
+
+// 📘 Seed Instructions
+Route::get('seed-instructions', function () {
+    Artisan::call('db:seed', [
+        '--class' => 'InstructionSeeder',
+        '--force' => true
+    ]);
+
+    return [
+        'status' => true,
+        'message' => 'Instructions seeded.',
+        'total' => DB::table('instructions')->count(),
+    ];
+});
