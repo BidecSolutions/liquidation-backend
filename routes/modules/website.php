@@ -29,7 +29,9 @@ Route::prefix('options')->group(function () {
         Route::post('/filters', 'filterListings');
         Route::get('/filters-metadata', 'filtersMetadata');
         Route::get('/{slug}/show', 'show');
-        Route::get('suggestions', 'suggestions');
+        Route::get('/suggestions', 'suggestions');
+        Route::get('/coolAuctions', 'coolAuctions');
+
     });
 
 // ContactMessageController works

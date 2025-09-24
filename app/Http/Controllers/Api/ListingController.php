@@ -22,6 +22,58 @@ use Illuminate\Support\Facades\DB;
 class ListingController extends Controller
 {
 
+    // 🔹 Reusable query for Cool Auctions
+    private function getCoolAuctions($userId = null, $limit = 10)
+    {
+        $listings = Listing::with(['category', 'creator', 'images'])
+            ->withCount('bids')
+            ->whereNotNull('start_price') // has an end time
+            ->where('start_price', '>', 0)
+            ->has('bids')
+            ->orderByDesc('bids_count')
+            ->take(20)
+            ->get();
+            // dd($listings);
+
+        // if ($userId) {
+        //     $query->where('created_by', $userId);
+        // }
+
+        return $listings;
+    }
+
+    // 🔹 Reusable query for Hot Listings
+    private function getHotListings($userId = null, $limit = 10)
+    {
+        $query = Listing::with(['category', 'creator', 'images'])
+            ->withCount(['views', 'watchers'])
+            ->orderByDesc('views_count')
+            ->orderByDesc('watchers_count')
+            ->take($limit);
+
+        // if ($userId) {
+        //     $query->where('created_by', $userId);
+        // }
+
+        return $query->get();
+    }
+
+    // 🔹 Reusable query for Closing Soon
+    private function getClosingSoon($userId = null, $limit = 10)
+    {
+        $listings = Listing::with(['category', 'creator', 'images'])
+            ->whereNotNull('start_price') 
+            ->where('expire_at', '>', now())
+            ->orderBy('expire_at', 'asc')
+            ->take(20)
+            ->get();
+        // if ($userId) {
+        //     $query->where('created_by', $userId);
+        // }
+
+        return $listings;
+    }
+
     public function index(Request $request)
     {
         try {
@@ -147,6 +199,68 @@ class ListingController extends Controller
         }
     }
 
+    public function coolAuctions(Request $request)
+    {
+        try {
+            $limit = $request->input('limit');
+            $userId = auth('api')->check() ? auth('api')->id() : null;
+            $listings = $this->getCoolAuctions($userId, $limit);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Cool auctions fetched successfully',
+                'data' => $listings
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error fetching cool auctions',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function hotListings(Request $request)
+    {
+        try {
+            $userId = auth('api')->check() ? auth('api')->id() : null;
+            $listings = $this->getHotListings($userId);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Hot listings fetched successfully',
+                'data' => $listings
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error fetching hot listings',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function closingSoon(Request $request)
+    {
+        try {
+            $userId = auth('api')->check() ? auth('api')->id() : null;
+            $listings = $this->getClosingSoon($userId);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Closing soon listings fetched successfully',
+                'data' => $listings
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error fetching closing soon listings',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function filterListings(Request $request)
     {
         $query = Listing::query()
@@ -260,17 +374,20 @@ class ListingController extends Controller
     }
     public function suggestions(Request $request)
     {
-        $request->validate([
-            'query' => 'required|string|max:255',
-        ]);
 
         $query = $request->query('query');
 
-        // ✅ Fetch suggestions from listings
+        $suggestions = collect();
+        if($query){
+            $request->validate([
+             'query' => 'required|string|max:255',
+            ]);
+            // ✅ Fetch suggestions from listings
         $suggestions = Listing::where('status', 1)
             ->where('title', 'LIKE', "%{$query}%")
             ->limit(10)
             ->pluck('title');
+        }
 
         // ✅ Past searches only if user is logged in
         $pastSearches = [];
@@ -344,6 +461,7 @@ class ListingController extends Controller
         ]);
     }
 
+
     public function homePastSearches()
     {
         if(!auth('api')->check()){
@@ -384,8 +502,6 @@ class ListingController extends Controller
             'data' => $searchResults,
         ]);
     }
-
-
 
     public function filtersMetadata(Request $request)
     {
@@ -475,7 +591,6 @@ class ListingController extends Controller
                 'attributes' => 'array', 
                 'attributes.*.key' => 'required|string',
                 'attributes.*.value' => 'nullable|string',
-
             ]);
 
             if ($validator->fails()) {
