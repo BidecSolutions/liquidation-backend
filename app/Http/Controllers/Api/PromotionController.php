@@ -15,7 +15,7 @@ class PromotionController extends Controller
      */
     public function index()
     {
-        $promotions = Promotion::orderBy('priority', 'desc')
+        $promotions = Promotion::select('id', 'title', 'description', 'image')->where('is_active', true)
             ->latest()
             ->get();
 

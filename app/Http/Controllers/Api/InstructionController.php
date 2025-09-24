@@ -15,9 +15,10 @@ class InstructionController extends Controller
      */
     public function index()
     {
-        $instructions = Instruction::orderBy('position', 'asc')
-            ->latest()
-            ->get();
+        $instructions = Instruction::select('id', 'title', 'description', 'image')
+        ->where('is_active', true)
+        ->latest()
+        ->get();
 
         return response()->json([
             'status' => true,
