@@ -31,6 +31,8 @@ Route::prefix('options')->group(function () {
         Route::get('/{slug}/show', 'show');
         Route::get('/suggestions', 'suggestions');
         Route::get('/coolAuctions', 'coolAuctions');
+        Route::get('/hotListings', 'hotListings');
+        Route::get('/closingSoon', 'closingSoon');
 
     });
 
