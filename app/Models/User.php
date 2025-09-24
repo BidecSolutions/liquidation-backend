@@ -65,6 +65,7 @@ class User extends Authenticatable
         'profile_photo',
         'background_photo',
         'status',
+        'last_login_at',
     ];
 
 
@@ -122,6 +123,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(ListingReport::class);
     }
+    public function feedbacks()
+    {
+        return $this->hasMany(UserFeedback::class, 'reviewed_user_id');
+    }
 
     public function deliveryAddresses()
     {
@@ -131,6 +136,11 @@ class User extends Authenticatable
     public function favoriteCategories()
     {
         return $this->hasMany(FavoriteCategory::class);
+    }
+
+    public function searchHistories()
+    {
+        return $this->hasMany(SearchHistory::class);
     }
 
     public function favoriteSellers()

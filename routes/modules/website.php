@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\{
     ShippingMethodController,
     ListingController,
     ContactMessageController,
+    UserController,
 };
 
 
@@ -22,6 +23,7 @@ Route::prefix('options')->group(function () {
     Route::get('payment-methods', [PaymentMethodController::class, 'index']);
     Route::get('shipping-methods', [ShippingMethodController::class, 'index']);
 });
+Route::get('user/summary/{userId}', [UserController::class, 'userSummary']);
 
 // ListingController works
     Route::prefix('listings')->controller(ListingController::class)->group(function () {

@@ -197,6 +197,7 @@ class UserAuthController extends Controller
                 'verification_code'       => null,
                 'verification_expires_at' => null,
                 'is_verified'             => true,
+                'last_login_at'             => now(),
             ])->save();
 
             $token = $user->createToken('user-token')->plainTextToken;
@@ -722,7 +723,7 @@ class UserAuthController extends Controller
                 'message' => 'Invalid credentials'
             ], 400);
         }
-        
+        $user->update(['last_login_at' => now()]);
         $token = $user->createToken('user-token')->plainTextToken;
             // /Verification code sent to your email. Please verify
         return response()->json([

@@ -372,6 +372,7 @@ class ListingController extends Controller
             'category_tree' => $categoryTree,
         ]);
     }
+    
     public function suggestions(Request $request)
     {
 
