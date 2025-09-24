@@ -160,13 +160,13 @@ class BidController extends Controller
                 ], 404);
             }
 
-            if ($listing->expire_at && now()->greaterThanOrEqualTo($listing->expire_at)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Auction has expired',
-                    'data' => null
-                ], 403);
-            }
+            // if ($listing->expire_at && now()->greaterThanOrEqualTo($listing->expire_at)) {
+            //     return response()->json([
+            //         'status' => false,
+            //         'message' => 'Auction has expired',
+            //         'data' => null
+            //     ], 403);
+            // }
 
             $validator = Validator::make($request->all(), [
                 'amount' => 'required|numeric|min:0',
