@@ -526,6 +526,34 @@ class ListingController extends Controller
                ]);
     }
 
+    public function searchById(Request $request, $id)
+    {
+        try {
+            $listing = Listing::with(['images', 'category', 'creator', 'attributes', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer'])->withCount('views')->findOrFail($id);
+
+            // Increment view count
+            if (auth('api')->check()) {
+                $userId = auth('api')->id();
+                ListingView::firstOrCreate(
+                    ['listing_id' => $listing->id, 'user_id' => $userId],
+                    ['created_at' => now(), 'updated_at' => now()]
+                );
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Listing fetched successfully',
+                'data' => $listing
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Listing not found',
+                'data' => null
+            ], 404);
+        }
+    }
+
 
     // Get listings by type (jobs, motors, property, services, marketplace)
     public function indexByType($type)
