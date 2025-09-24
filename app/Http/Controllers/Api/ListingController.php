@@ -272,7 +272,7 @@ class ListingController extends Controller
                 'watchers',
                 'paymentMethod:id,name',
                 'shippingMethod:id,name'
-                ])->withCount('views', 'watchers')
+                ])->withCount('views', 'watchers', 'bids')
             ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
 
         // ✅ Filter by category_id
