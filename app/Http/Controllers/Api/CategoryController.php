@@ -19,7 +19,7 @@ class CategoryController extends Controller
             $offset = null;
 
             $query = Category::with(['parent:id,name,slug,parent_id','listings' => function($q) {
-                $q->withCount('views', 'watchers')->with('paymentMethod:id,name', 'shippingMethod:id,name');
+                $q->withCount('views', 'watchers', 'children')->with('paymentMethod:id,name', 'shippingMethod:id,name');
             }]);
 
             if ($request->filled('parent_id')) {
@@ -47,6 +47,11 @@ class CategoryController extends Controller
             }
 
             $categories = $query->orderBy('name', 'asc')->get();
+
+            $categories->transform(function ($category){
+                $category->child = $category->child_count > 0;
+                return $category;
+            });
 
             return response()->json([
                 'status' => true,
