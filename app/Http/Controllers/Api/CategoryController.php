@@ -20,8 +20,8 @@ class CategoryController extends Controller
 
 
             $query = Category::with(['parent:id,name,slug,parent_id','listings' => function($q) {
-                $q->withCount('views', 'watchers')->with('paymentMethod:id,name', 'shippingMethod:id,name');
-            }])->withCount('children as child_count');
+                $q->withCount('views', 'watchers')->with('paymentMethod:id,name', 'shippingMethod:id,name', 'creator');
+            }])->withCount('children as child_count', 'listings as listing_count');
 
             if ($request->filled('parent_id')) {
                 $query->where('parent_id', $request->parent_id);
