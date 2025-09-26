@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('keyword');
             $table->unsignedInteger('count')->default(1); // how many times searched
             $table->timestamps();
+
             $table->unique(['user_id', 'keyword']); // avoid duplicate entries for same user
         });
     }

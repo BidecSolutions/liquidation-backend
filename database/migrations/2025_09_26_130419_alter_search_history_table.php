@@ -6,33 +6,32 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        //
         Schema::table('search_histories', function (Blueprint $table) {
-            $table->foreignId('user_id')
-                  ->nullable()
-                  ->constrained()
-                  ->onDelete('cascade')
-                  ->change();
-            // $table->check('(user_id IS NOT NULL AND guest_id IS NULL) OR (user_id IS NULL AND guest_id IS NOT NULL)');
+            // First drop the foreign key constraint
+            $table->dropForeign(['user_id']);
+
+            // Then make user_id nullable
+            $table->unsignedBigInteger('user_id')->nullable()->change();
+
+            // Re-add the foreign key with ON DELETE CASCADE
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        //
         Schema::table('search_histories', function (Blueprint $table) {
-            $table->foreignId('user_id')
-                  ->constrained()
-                  ->onDelete('cascade')
-                  ->change();
+            $table->dropForeign(['user_id']);
+            $table->unsignedBigInteger('user_id')->nullable(false)->change();
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 };
