@@ -10,7 +10,9 @@ return new class extends Migration
     {
         Schema::create('search_histories', function (Blueprint $table) {
             $table->id();
-            $table->string('user_id')->nullable();
+            $table->foreignId('user_id')
+                  ->constrained()
+                  ->onDelete('cascade');
             $table->string('keyword');
             $table->unsignedInteger('count')->default(1); // how many times searched
             $table->timestamps();
