@@ -120,7 +120,7 @@ class ListingController extends Controller
 
         // 3. Build recommended listings query
         $recommendations = Listing::with(['images', 'category', 'creator'])
-            ->withCount('views')
+            ->withCount('views', 'watchers as watch_count', 'bids')
             ->where('status', 1)
             ->when(count($keywords), function ($q) use ($keywords) {
                 $q->where(function ($q) use ($keywords) {
