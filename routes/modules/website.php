@@ -7,11 +7,14 @@ use App\Http\Controllers\Api\{
     ShippingMethodController,
     ListingController,
     ContactMessageController,
+    GuestController,
     InstructionController,
     PromotionController,
     UserController,
 };
 
+// routes/api.php
+Route::get('guest-id', [GuestController::class, 'generate']);
 
 // CategoryController works
 Route::prefix('category')->controller(CategoryController::class)->group(function () {
@@ -38,6 +41,8 @@ Route::get('instructions', [InstructionController::class, 'index']);
         Route::get('/coolAuctions', 'coolAuctions');
         Route::get('/hotListings', 'hotListings');
         Route::get('/closingSoon', 'closingSoon');
+        Route::get('/search', 'search');
+        Route::get('/homePastSearches', 'homePastSearches');
 
     });
 

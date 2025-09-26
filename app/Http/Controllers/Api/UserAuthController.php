@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\SearchHistory;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -34,13 +35,13 @@ class UserAuthController extends Controller
                 'phone'          => 'nullable|string|max:20',
                 'gender'         => 'nullable|string',
                 'date_of_birth'  => 'nullable|date',
-                'billing_address'=> 'nullable|string|max:500',
-                'customer_number'=> 'nullable|string|max:50',
+                'billing_address' => 'nullable|string|max:500',
+                'customer_number' => 'nullable|string|max:50',
                 'account_type'  =>  'nullable|in:business,personal',
             ]);
 
             $memberId      = $this->generateMemberId();
-            $customerNumber= 'CN'.strtoupper(uniqid());
+            $customerNumber = 'CN' . strtoupper(uniqid());
             $user_code     = $this->generateUniqueCode();
             while (User::where('user_code', $user_code)->exists()) {
                 $user_code = $this->generateUniqueCode();
@@ -74,16 +75,18 @@ class UserAuthController extends Controller
                 'is_verified'              => false,
             ]);
 
-            Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+            Mail::send('emails.verification', ['user' => $user, 'code' => $code], function ($message) use ($user) {
                 $message->to($user->email)->subject('Your Login Verification Code');
             });
+            $guestId = $request->header('X-Guest-ID');
+            SearchHistory::where('guest_id', $guestId)
+                ->update(['user_id' => $user->id, 'guest_id' => null]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Successfully Registered',
                 'email'   => $user->email,
             ], 200);
-
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
@@ -126,16 +129,15 @@ class UserAuthController extends Controller
             ])->save();
 
             // Send OTP email
-            Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+            Mail::send('emails.verification', ['user' => $user, 'code' => $code], function ($message) use ($user) {
                 $message->to($user->email)
-                        ->subject('Your Verification Code');
+                    ->subject('Your Verification Code');
             });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Verification code sent successfully',
             ], 200);
-
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
@@ -156,7 +158,7 @@ class UserAuthController extends Controller
 
             if (!$user) {
                 return response()->json([
-                    'success'=> false,
+                    'success' => false,
                     'message' => 'You are not registered yet',
                 ], 400);
             }
@@ -208,7 +210,6 @@ class UserAuthController extends Controller
                 'data'    => $user,
                 'token'   => $token,
             ]);
-
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
@@ -499,7 +500,6 @@ class UserAuthController extends Controller
                     'name' => $user->name,
                 ],
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
@@ -544,7 +544,6 @@ class UserAuthController extends Controller
                     'email' => $user->email,
                 ],
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
@@ -663,11 +662,11 @@ class UserAuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username'; 
+        $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $user = User::where($fieldtype, $request->email)->first();
-        if($user->is_verified == null){
-            if($user->is_verified != 1){
+        if ($user->is_verified == null) {
+            if ($user->is_verified != 1) {
                 $code = rand(100000, 999999);
                 $user->verification_code = $code;
                 $user->verification_expires_at = now()->addMinutes(30);
@@ -680,19 +679,19 @@ class UserAuthController extends Controller
                 ])->save();
 
                 // Send OTP email
-                Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+                Mail::send('emails.verification', ['user' => $user, 'code' => $code], function ($message) use ($user) {
                     $message->to($user->email)
-                            ->subject('Your Verification Code');
+                        ->subject('Your Verification Code');
                 });
                 return response()->json([
                     'success' => false,
-                    'message' => 'Emails is not verified yet', 
+                    'message' => 'Emails is not verified yet',
                     'email' => $user->email,
                     'is_verified' => 0,
                 ], 400);
             }
-        }else{
-           if($user->is_verified != 1){
+        } else {
+            if ($user->is_verified != 1) {
                 $code = rand(100000, 999999);
                 $user->verification_code = $code;
                 $user->verification_expires_at = now()->addMinutes(30);
@@ -705,13 +704,13 @@ class UserAuthController extends Controller
                 ])->save();
 
                 // Send OTP email
-                Mail::send('emails.verification', ['user' => $user, 'code' => $code], function($message) use ($user){
+                Mail::send('emails.verification', ['user' => $user, 'code' => $code], function ($message) use ($user) {
                     $message->to($user->email)
-                            ->subject('Your Verification Code');
+                        ->subject('Your Verification Code');
                 });
                 return response()->json([
                     'success' => false,
-                    'message' => 'Emails is not verified yet', 
+                    'message' => 'Emails is not verified yet',
                     'email' => $user->email,
                     'is_verified' => 0,
                 ], 400);
@@ -724,8 +723,11 @@ class UserAuthController extends Controller
             ], 400);
         }
         $user->update(['last_login_at' => now()]);
+        $guestId = $request->header('X-Guest-ID');
+            SearchHistory::where('guest_id', $guestId)
+                ->update(['user_id' => $user->id, 'guest_id' => null]);
         $token = $user->createToken('user-token')->plainTextToken;
-            // /Verification code sent to your email. Please verify
+        // /Verification code sent to your email. Please verify
         return response()->json([
             'success' => true,
             'message' => 'login successfull',
@@ -734,30 +736,31 @@ class UserAuthController extends Controller
             'token' => $token,
         ], 200);
     }
-    
-    public function verifyCode(Request $request){
+
+    public function verifyCode(Request $request)
+    {
         // dd("awd");
         $request->validate([
             'email' => 'required|string',
             'verification_code' => 'required|string',
         ]);
-        $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username'; 
+        $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $user = User::where($fieldtype, $request->email)->first();
 
-        if(!$user){
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User not found'
             ], 404);
         }
-        if($user->verification_code !== $request->verification_code){
+        if ($user->verification_code !== $request->verification_code) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid verification code'
             ], 400);
         }
-        if(now()->greaterThan($user->verification_expires_at)){
+        if (now()->greaterThan($user->verification_expires_at)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Verification code has expired'
@@ -791,7 +794,7 @@ class UserAuthController extends Controller
     public function uploadProfilePhoto(Request $request)
     {
         try {
-             $user = $request->user();
+            $user = $request->user();
 
             $request->validate([
                 'profile_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',

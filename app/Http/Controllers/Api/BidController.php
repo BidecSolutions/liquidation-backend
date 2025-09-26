@@ -159,6 +159,20 @@ class BidController extends Controller
                     'data' => null
                 ], 404);
             }
+            if($listing->created_by == auth('api')->id()){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'You cannot bid on your own listing',
+                    'data' => null
+                ], 403);
+            }   
+            if($listing->start_price <= 0){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Bidding not allowed on free listings',
+                    'data' => null
+                ], 403);
+            }
 
             // if ($listing->expire_at && now()->greaterThanOrEqualTo($listing->expire_at)) {
             //     return response()->json([

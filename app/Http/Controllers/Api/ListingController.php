@@ -33,7 +33,7 @@ class ListingController extends Controller
             ->orderByDesc('bids_count')
             ->take(20)
             ->get();
-            // dd($listings);
+        // dd($listings);
 
         // if ($userId) {
         //     $query->where('created_by', $userId);
@@ -62,7 +62,7 @@ class ListingController extends Controller
     private function getClosingSoon($userId = null, $limit = 10)
     {
         $listings = Listing::with(['category', 'creator', 'images'])
-            ->whereNotNull('start_price') 
+            ->whereNotNull('start_price')
             ->where('expire_at', '>', now())
             ->orderBy('expire_at', 'asc')
             ->take(20)
@@ -174,14 +174,14 @@ class ListingController extends Controller
                 // 💼 Offers made by user
                 $listing->buying_offers = $authUserId
                     ? ListingOffer::with(['user'])->where('listing_id', $listing->id)
-                        ->where('user_id', $authUserId)
-                        ->get()
+                    ->where('user_id', $authUserId)
+                    ->get()
                     : collect();
 
                 // 🧾 Offers received by the user (as seller)
                 $listing->selling_offers = $authUserId && $listing->created_by == $authUserId
                     ? ListingOffer::with(['user'])->where('listing_id', $listing->id)
-                        ->get()
+                    ->get()
                     : collect();
             });
 
@@ -263,36 +263,38 @@ class ListingController extends Controller
 
     public function filterListings(Request $request)
     {
+        $guestId = $request->header('X-Guest-ID');
+        // dd($guestId);
         $query = Listing::query()
             ->with([
-                'images', 
+                'images',
                 'category',
-                'creator', 
+                'creator',
                 'attributes',
                 'watchers',
                 'paymentMethod:id,name',
                 'shippingMethod:id,name'
-                ])->withCount('views', 'watchers', 'bids')
+            ])->withCount('views', 'watchers', 'bids')
             ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
 
         // ✅ Filter by category_id
         $categoryTree = null;
-        if ($request->filled('category_id')) { 
+        if ($request->filled('category_id')) {
             // for parent fetching 
             $categoryTree = Category::select('id', 'name', 'slug', 'parent_id')
-            ->with('parentRecursive:id,name,slug,parent_id')
-            ->find($request->category_id);
+                ->with('parentRecursive:id,name,slug,parent_id')
+                ->find($request->category_id);
             // for fetching all childeren listings
             $category = Category::with('children')->find($request->category_id);
-            if($category){
+            if ($category) {
                 $categoryIds = $category->allchildrenIds();
                 $query->whereIn('category_id', $categoryIds);
             }
         }
-        if($request->filled('status')){
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
-        }else{
-            $query->where('status', 1); 
+        } else {
+            $query->where('status', 1);
         }
 
         // // ✅ Filter by category_type (join with categories table)
@@ -336,34 +338,90 @@ class ListingController extends Controller
         if ($request->filled('max_price')) {
             $query->where('buy_now_price', '<=', $request->max_price);
         }
-        if($request->filled('condition')){
+        if ($request->filled('condition')) {
             $query->where('condition', $request->condition);
         }
-        if($request->filled('city')){
-            $query->whereHas('creator', function($q) use ($request) {
+        if ($request->filled('city')) {
+            $query->whereHas('creator', function ($q) use ($request) {
                 $q->where('city', $request->city);
             });
         }
-        if($request->filled('search')){
+        if ($request->filled('search')) {
             // $query->where('title', 'LIKE', '%'. $request->search. '%');
 
             $search = $request->search;
-            $query->where(function ($q) use ($search){
-                 $q->where('title', 'LIKE', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%");
                 //  ->orWhere('subtitle', 'LIKE', "%{$search}%")
             });
         }
-        
+
 
         // ✅ Pagination
         $perPage = $request->input('pagination.per_page', 20);
         $listings = $query->paginate($perPage);
-        $listingData = $listings->getCollection()->map(function($listing){
+        $listingData = $listings->getCollection()->map(function ($listing) {
             $listingArray = $listing->toArray();
             unset($listingArray['attributes']);
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
             return array_merge($listingArray, $attributes);
         });
+
+        // ✅ Build category path if category is selected
+        $categoryPath = null;
+        $categoryName = null;
+        if ($request->filled('category_id')) {
+            $category = Category::with('parentRecursive')->find($request->category_id);
+
+            if ($category) {
+                // Full breadcrumb path
+                $path = [];
+                $c = $category;
+                while ($c) {
+                    array_unshift($path, $c->name);
+                    $c = $c->parent;
+                }
+                $categoryPath = implode(' > ', $path);
+                $categoryName = $category->name;
+            }
+        }
+
+        // ✅ Capture filters (if any)
+        $filters = $request->filters ?? [];
+
+        if ($request->filled('search') || $request->filled('category_id') || !empty($filters)) {
+            $keyword = $request->input('search', $categoryName ?? '');
+
+            if (auth('api')->check()) {
+                // Logged-in user
+                $userId = auth('api')->id();
+
+                SearchHistory::updateOrCreate(
+                    ['user_id' => $userId, 'keyword' => strtolower(trim($keyword))],
+                    [
+                        'count' => DB::raw('count + 1'),
+                        'category_id' => $request->input('category_id', null),
+                        'category_path' => $categoryPath ?? null,
+                        'filters' => !empty($filters) ? json_encode($filters) : null,
+                    ]
+                );
+            } elseif ($guestId = $request->header('X-Guest-ID')) {
+                // Guest user
+                $history = SearchHistory::firstOrNew([
+                    'guest_id' => $guestId,
+                    'keyword'  => strtolower(trim($keyword)),
+                ]);
+
+                $history->count = ($history->exists ? $history->count + 1 : 1);
+                $history->category_id   = $request->input('category_id', null);
+                $history->category_path = $categoryPath ?? null;
+                $history->filters       = !empty($filters) ? json_encode($filters) : null;
+                $history->guest_id = $guestId;
+
+                $history->save();
+            }
+        }
+
 
         return response()->json([
             'status' => true,
@@ -372,28 +430,33 @@ class ListingController extends Controller
             'category_tree' => $categoryTree,
         ]);
     }
-    
+
     public function suggestions(Request $request)
     {
 
         $query = $request->query('query');
 
         $suggestions = collect();
-        if($query){
+        if ($query) {
             $request->validate([
-             'query' => 'required|string|max:255',
+                'query' => 'required|string|max:255',
             ]);
             // ✅ Fetch suggestions from listings
-        $suggestions = Listing::where('status', 1)
-            ->where('title', 'LIKE', "%{$query}%")
-            ->limit(10)
-            ->pluck('title');
+            $suggestions = Listing::where('status', 1)
+                ->where('title', 'LIKE', "%{$query}%")
+                ->limit(10)
+                ->pluck('title');
         }
 
         // ✅ Past searches only if user is logged in
         $pastSearches = [];
         if (auth('api')->check()) {
             $pastSearches = SearchHistory::where('user_id', auth('api')->id())
+                ->orderBy('updated_at', 'desc')
+                ->limit(5)
+                ->pluck('keyword');
+        } elseif ($guestId = $request->header('X-Guest-ID')) {
+            $pastSearches = SearchHistory::where('guest_id', $guestId)
                 ->orderBy('updated_at', 'desc')
                 ->limit(5)
                 ->pluck('keyword');
@@ -420,7 +483,7 @@ class ListingController extends Controller
             ->where('status', 1)
             ->where(function ($q) use ($keyword) {
                 $q->where('title', 'LIKE', "%{$keyword}%")
-                ->orWhere('description', 'LIKE', "%{$keyword}%");
+                    ->orWhere('description', 'LIKE', "%{$keyword}%");
             });
 
         // ✅ Apply limit & offset (manual pagination)
@@ -452,6 +515,16 @@ class ListingController extends Controller
                     'count' => DB::raw('count + 1'),
                 ]
             );
+        } elseif ($request->header('X-Guest-ID')) {
+            $guestId = $request->header('X-Guest-ID');
+
+            $searchHistory = SearchHistory::firstOrNew([
+                'guest_id' => $guestId,
+                'keyword' => $keyword,
+            ]);
+            $searchHistory->count = ($searchHistory->exists ? $searchHistory->count + 1 : 1);
+            $searchHistory->guest_id = $guestId;
+            $searchHistory->save();
         }
 
         return response()->json([
@@ -463,68 +536,122 @@ class ListingController extends Controller
     }
 
 
+
     public function homePastSearches()
     {
-        if(!auth('api')->check()){
-            return response()->json([
-                'status' => false,
-                'message' => 'Login Required for the past searches',
-                'data' => [],
-            ], 404);
-        }
-
-        $userId = auth('api')->id();
-
-        $pastSearches = SearchHistory::where('user_id', $userId)
-            ->orderBy('updated_at', 'desc')   // latest search first
-            ->orderBy('created_at', 'desc')   // ensure fresh single searches aren’t skipped
-            ->limit(5)
-            ->get();
         $searchResults = [];
 
-        foreach($pastSearches as $search){
-            $keyword = $search->keyword;
+        if (!auth('api')->check()) {
+            $guestId = request()->header('X-Guest-ID');
+            if (!$guestId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Guest ID missing',
+                    'data' => []
+                ], 400);
+            }
 
-            $listings = Listing::with(['images', 'category', 'creator'])->withCount('views')
-            ->where('status', 1)
-            ->where(function ($q) use ($keyword) {
-                $q->where('title', 'LIKE', "%{$keyword}%")
-                ->orWhere('description', 'LIKE', "%{$keyword}%");
-            })->limit(5)->get();
+            // ✅ Correct column -> guest_id, not user_id
+            $pastSearches = SearchHistory::where('guest_id', $guestId)
+                ->orderBy('updated_at', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
 
-            $searchResults[] = [
-                'keyword' => $keyword,
-                'listings' => $listings,
-            ];
+            foreach ($pastSearches as $search) {
+                $keyword = $search->keyword;
+
+                if ($search->category_id === null) {
+                    // ✅ Keyword search
+                    $listings = Listing::with(['images', 'category', 'creator'])->withCount('views')
+                        ->where('status', 1)
+                        ->where(function ($q) use ($keyword) {
+                            $q->where('title', 'LIKE', "%{$keyword}%")
+                                ->orWhere('description', 'LIKE', "%{$keyword}%");
+                        })
+                        ->limit(5)
+                        ->get();
+                } else {
+                    // ✅ Category-based search
+                    $categoryIds = $this->getAllCategoryIds($search->category_id);
+                    $listings = Listing::with(['images', 'category', 'creator'])->withCount('views')
+                        ->where('status', 1)
+                        ->whereIn('category_id', $categoryIds)
+                        ->limit(5)
+                        ->get();
+                }
+
+                $searchResults[] = [
+                    'keyword' => $keyword,
+                    'listings' => $listings,
+                ];
+            }
+        } else {
+            $userId = auth('api')->id();
+
+            $pastSearches = SearchHistory::where('user_id', $userId)
+                ->orderBy('updated_at', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+
+            foreach ($pastSearches as $search) {
+                $keyword = $search->keyword;
+
+                if ($search->category_id === null) {
+                    $listings = Listing::with(['images', 'category', 'creator'])->withCount('views')
+                        ->where('status', 1)
+                        ->where(function ($q) use ($keyword) {
+                            $q->where('title', 'LIKE', "%{$keyword}%")
+                                ->orWhere('description', 'LIKE', "%{$keyword}%");
+                        })
+                        ->limit(5)
+                        ->get();
+                } else {
+                    $categoryIds = $this->getAllCategoryIds($search->category_id);
+                    $listings = Listing::with(['images', 'category', 'creator'])->withCount('views')
+                        ->where('status', 1)
+                        ->whereIn('category_id', $categoryIds)
+                        ->limit(5)
+                        ->get();
+                }
+
+                $searchResults[] = [
+                    'keyword' => $keyword,
+                    'listings' => $listings,
+                ];
+            }
         }
-         return response()->json([
+
+        return response()->json([
             'status' => true,
             'message' => 'Home suggestions fetched successfully',
             'data' => $searchResults,
         ]);
     }
 
+
     public function filtersMetadata(Request $request)
     {
         $listingType = $request->input('listing_type');
-        
-        $filters = ListingAttribute::query()
-               ->whereHas('listing', function($q) use ($listingType){
-                  $q->where('listing_type', $listingType);
-               })
-               ->select('key', 'value')
-               ->distinct()
-               ->get()
-               ->groupBy('key')
-               ->map(function ($items) {
-                return $items->pluck('value')->unique()->values();
-               });
 
-               return response()->json([
-                'status' => true,
-                'listing_type' => $listingType,
-                'filters' => $filters
-               ]);
+        $filters = ListingAttribute::query()
+            ->whereHas('listing', function ($q) use ($listingType) {
+                $q->where('listing_type', $listingType);
+            })
+            ->select('key', 'value')
+            ->distinct()
+            ->get()
+            ->groupBy('key')
+            ->map(function ($items) {
+                return $items->pluck('value')->unique()->values();
+            });
+
+        return response()->json([
+            'status' => true,
+            'listing_type' => $listingType,
+            'filters' => $filters
+        ]);
     }
 
     public function searchById(Request $request, $id)
@@ -579,10 +706,7 @@ class ListingController extends Controller
 
         return $categoryIds;
     }
-    public function recentViewedListings()
-    {
-        
-    }
+    public function recentViewedListings() {}
     public function store(Request $request)
     {
         try {
@@ -617,7 +741,7 @@ class ListingController extends Controller
                 'meta_description' => 'nullable|string',
                 'expire_at' => 'nullable|date|after:now',
                 'images.*' => 'nullable|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-                'attributes' => 'array', 
+                'attributes' => 'array',
                 'attributes.*.key' => 'required|string',
                 'attributes.*.value' => 'nullable|string',
             ]);
@@ -633,7 +757,7 @@ class ListingController extends Controller
             $data = $validator->validated();
             $category = Category::find($data['category_id']);
             // return $category;
-            if($data['listing_type'] != $category->category_type){
+            if ($data['listing_type'] != $category->category_type) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Must Select the same category as the listing type',
@@ -739,9 +863,9 @@ class ListingController extends Controller
                 'comments.user:id,name,profile_photo',
                 'comments.replies.user:id,name,profile_photo',
             ])
-            ->withCount('views')
-            ->where('slug', $slug)
-            ->first();
+                ->withCount('views')
+                ->where('slug', $slug)
+                ->first();
             if (!$listing) {
                 return response()->json([
                     'status' => false,
@@ -797,18 +921,24 @@ class ListingController extends Controller
             unset($listingData['attributes']);
 
             $dealersListing = Listing::with('images:id,listing_id,image_path')
-            ->when($listingData['created_by'] ?? null, fn($q, $created_by)=> 
-                 $q->where('created_by', $created_by)
-            )
-            ->when($listingData['listing_type'] ?? null, fn($q, $listingType) => 
-                 $q->where('listing_type', $listingType)
-            )            
-            ->when($listingData['is_active'] ?? null, fn($q, $IsActive) => 
-                 $q->where('is_active', $IsActive)
-            )
-            ->select('id', 'title', 'slug', 'description', 'listing_type', 'condition', 'start_price', 'buy_now_price', 'created_by')
-            ->limit(4)
-            ->get();
+                ->when(
+                    $listingData['created_by'] ?? null,
+                    fn($q, $created_by) =>
+                    $q->where('created_by', $created_by)
+                )
+                ->when(
+                    $listingData['listing_type'] ?? null,
+                    fn($q, $listingType) =>
+                    $q->where('listing_type', $listingType)
+                )
+                ->when(
+                    $listingData['is_active'] ?? null,
+                    fn($q, $IsActive) =>
+                    $q->where('is_active', $IsActive)
+                )
+                ->select('id', 'title', 'slug', 'description', 'listing_type', 'condition', 'start_price', 'buy_now_price', 'created_by')
+                ->limit(4)
+                ->get();
             return response()->json([
                 'status' => true,
                 'message' => 'Listing fetched successfully',
