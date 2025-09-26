@@ -93,7 +93,8 @@ Route::prefix('user')->group(function () {
             Route::get('/search', 'search');
             Route::get('/recentview', 'recentViewedListings');            
             Route::get('/homePastSearches', 'homePastSearches');     
-            Route::get('/searchById/{id}', 'searchById');     
+            Route::get('/searchById/{id}', 'searchById'); 
+            Route::get('/recommendations', 'recommendations');    
 
         });
 

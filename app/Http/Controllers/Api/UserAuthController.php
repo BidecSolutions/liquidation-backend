@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ListingView;
 use App\Models\SearchHistory;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -81,6 +82,11 @@ class UserAuthController extends Controller
             $guestId = $request->header('X-Guest-ID');
             SearchHistory::where('guest_id', $guestId)
                 ->update(['user_id' => $user->id, 'guest_id' => null]);
+            ListingView::where('guest_id', $guestId)
+                ->update([
+                    'user_id' => $user->id,
+                    'guest_id' => null,
+                ]);
 
             return response()->json([
                 'success' => true,
@@ -724,8 +730,13 @@ class UserAuthController extends Controller
         }
         $user->update(['last_login_at' => now()]);
         $guestId = $request->header('X-Guest-ID');
-            SearchHistory::where('guest_id', $guestId)
-                ->update(['user_id' => $user->id, 'guest_id' => null]);
+        SearchHistory::where('guest_id', $guestId)
+            ->update(['user_id' => $user->id, 'guest_id' => null]);
+        ListingView::where('guest_id', $guestId)
+            ->update([
+                'user_id' => $user->id,
+                'guest_id' => null,
+            ]);
         $token = $user->createToken('user-token')->plainTextToken;
         // /Verification code sent to your email. Please verify
         return response()->json([

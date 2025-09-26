@@ -45,6 +45,8 @@ Route::prefix('listings')->controller(ListingController::class)->group(function 
     Route::get('/search', 'search');
     Route::get('/homePastSearches', 'homePastSearches');
     Route::get('/recommendations', 'recommendations');
+    Route::get('/searchById/{id}', 'searchById');
+    Route::get('/mainapi', 'mainapi');
 });
 
 // ContactMessageController works

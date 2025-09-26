@@ -23,7 +23,7 @@ class ListingController extends Controller
 {
 
     // 🔹 Reusable query for Cool Auctions
-    private function getCoolAuctions($userId = null, $limit = 10)
+    private function getCoolAuctions($userId = null, $limit = 10, $offset = 0)
     {
         $listings = Listing::with(['category', 'creator', 'images'])
             ->withCount('bids')
@@ -31,7 +31,8 @@ class ListingController extends Controller
             ->where('start_price', '>', 0)
             ->has('bids')
             ->orderByDesc('bids_count')
-            ->take(20)
+            ->limit($limit)
+            ->offset($offset)
             ->get();
         // dd($listings);
 
@@ -43,13 +44,14 @@ class ListingController extends Controller
     }
 
     // 🔹 Reusable query for Hot Listings
-    private function getHotListings($userId = null, $limit = 10)
+    private function getHotListings($userId = null, $limit = 10, $offset = 0)
     {
         $query = Listing::with(['category', 'creator', 'images'])
             ->withCount(['views', 'watchers'])
             ->orderByDesc('views_count')
             ->orderByDesc('watchers_count')
-            ->take($limit);
+            ->limit($limit)
+            ->offset($offset);
 
         // if ($userId) {
         //     $query->where('created_by', $userId);
@@ -59,13 +61,14 @@ class ListingController extends Controller
     }
 
     // 🔹 Reusable query for Closing Soon
-    private function getClosingSoon($userId = null, $limit = 10)
+    private function getClosingSoon($userId = null, $limit = 10, $offset = 0)
     {
         $listings = Listing::with(['category', 'creator', 'images'])
             ->whereNotNull('start_price')
             ->where('expire_at', '>', now())
             ->orderBy('expire_at', 'asc')
-            ->take(20)
+            ->limit($limit)
+            ->offset($offset)
             ->get();
         // if ($userId) {
         //     $query->where('created_by', $userId);
@@ -73,11 +76,12 @@ class ListingController extends Controller
 
         return $listings;
     }
-    private function getIsFeatured($userId = null, $limit = 10)
+    private function getIsFeatured($userId = null, $limit = 10, $offset = 0)
     {
         $listings = Listing::with(['category', 'creator', 'images'])
             ->where('is_featured', 1)
-            ->take(20)
+            ->limit($limit)
+            ->offset($offset)
             ->get();
         // if ($userId) {
         //     $query->where('created_by', $userId);
@@ -303,9 +307,11 @@ class ListingController extends Controller
 
     public function closingSoon(Request $request)
     {
+        $limit = $request->input('limit', 20);
+        $offset = $request->input('offset', 0);
         try {
             $userId = auth('api')->check() ? auth('api')->id() : null;
-            $listings = $this->getClosingSoon($userId);
+            $listings = $this->getClosingSoon($userId, $limit, $offset);
 
             return response()->json([
                 'status' => true,
@@ -322,9 +328,11 @@ class ListingController extends Controller
     }
     public function isfeatured(Request $request)
     {
+        $limit = $request->input('limit', 20);
+        $offset = $request->input('offset', 0);
         try {
             $userId = auth('api')->check() ? auth('api')->id() : null;
-            $listings = $this->getIsFeatured($userId);
+            $listings = $this->getIsFeatured($userId, $limit, $offset);
 
             return response()->json([
                 'status' => true,
@@ -363,6 +371,43 @@ class ListingController extends Controller
             'message' => 'Recommendations fetched successfully',
             'data' => $recommendations
         ]);
+    }
+    /* FULL API OF HOME PAGE */
+    public function mainapi(Request $request)
+    {
+        try {
+            $cool_auctions = $this->getCoolAuctions(null, 10);
+            $hot_listings = $this->getHotListings(null, 10);
+            $closing_soon = $this->getClosingSoon(null, 10);
+            $is_featured = $this->getIsFeatured(null, 10);
+
+            if (auth('api')->check()) {
+                $userId = auth('api')->id();
+                $recommendations = $this->getRecommendedListings($userId, null, 10, 0);
+            } else if ($guestId = $request->header('X-Guest-ID')) {
+                $recommendations = $this->getRecommendedListings(null, $guestId, 10, 0);
+            } else {
+                $recommendations = [];
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Home page data fetched successfully',
+                'data' => [
+                    'cool_auctions' => $cool_auctions,
+                    'hot_listings' => $hot_listings,
+                    'closing_soon' => $closing_soon,
+                    'is_featured' => $is_featured,
+                    'recommendations' => $recommendations,
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error fetching home page data',
+                'data' => $e->getMessage()
+            ], 500);
+        }
     }
 
 
