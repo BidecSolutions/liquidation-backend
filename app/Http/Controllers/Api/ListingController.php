@@ -73,6 +73,67 @@ class ListingController extends Controller
 
         return $listings;
     }
+    private function getIsFeatured($userId = null, $limit = 10)
+    {
+        $listings = Listing::with(['category', 'creator', 'images'])
+            ->where('is_featured', 1)
+            ->take(20)
+            ->get();
+        // if ($userId) {
+        //     $query->where('created_by', $userId);
+        // }
+
+        return $listings;
+    }
+
+    private function getRecommendedListings($userId = null, $guestId = null, $limit = 20, $offset = 0)
+    {
+        // 1. Get latest keywords/categories from search history
+        $searchHistories = SearchHistory::query()
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->when($guestId, fn($q) => $q->where('guest_id', $guestId))
+            ->orderBy('updated_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        $keywords = $searchHistories->pluck('keyword')->filter()->toArray();
+        $categoryIds = $searchHistories->pluck('category_id')->filter()->toArray();
+
+        // 2. Get latest viewed listing categories
+        $viewedCategories = ListingView::query()
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->when($guestId, fn($q) => $q->where('guest_id', $guestId))
+            ->orderBy('created_at', 'desc')
+            ->with('listing:id,category_id')
+            ->limit(5)
+            ->get()
+            ->pluck('listing.category_id')
+            ->filter()
+            ->toArray();
+
+        // Merge categories from searches + views
+        $allCategoryIds = array_unique(array_merge($categoryIds, $viewedCategories));
+
+        // 3. Build recommended listings query
+        $recommendations = Listing::with(['images', 'category', 'creator'])
+            ->withCount('views')
+            ->where('status', 1)
+            ->when(count($keywords), function ($q) use ($keywords) {
+                $q->where(function ($q) use ($keywords) {
+                    foreach ($keywords as $word) {
+                        $q->orWhere('title', 'LIKE', "%{$word}%")
+                            ->orWhere('description', 'LIKE', "%{$word}%");
+                    }
+                });
+            })
+            ->when(count($allCategoryIds), fn($q) => $q->orWhereIn('category_id', $allCategoryIds))
+            ->limit($limit)
+            ->offset($offset)
+            ->get();
+
+        return $recommendations;
+    }
+
 
     public function index(Request $request)
     {
@@ -259,6 +320,51 @@ class ListingController extends Controller
             ], 500);
         }
     }
+    public function isfeatured(Request $request)
+    {
+        try {
+            $userId = auth('api')->check() ? auth('api')->id() : null;
+            $listings = $this->getIsFeatured($userId);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Closing soon listings fetched successfully',
+                'data' => $listings
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error fetching closing soon listings',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function recommendations(Request $request)
+    {
+        $limit = $request->input('limit', 20);
+        $offset = $request->input('offset', 0);
+
+        $userId = auth('api')->id();
+        $guestId = $request->header('X-Guest-ID');
+
+        if (!$userId && !$guestId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User or Guest ID required',
+                'data' => []
+            ], 400);
+        }
+
+        $recommendations = $this->getRecommendedListings($userId, $guestId, $limit, $offset);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Recommendations fetched successfully',
+            'data' => $recommendations
+        ]);
+    }
+
 
 
     public function filterListings(Request $request)
@@ -666,6 +772,11 @@ class ListingController extends Controller
                     ['listing_id' => $listing->id, 'user_id' => $userId],
                     ['created_at' => now(), 'updated_at' => now()]
                 );
+            } elseif ($guestId = $request->header('X-Guest-ID')) {
+                ListingView::firstOrCreate(
+                    ['listing_id' => $listing->id, 'guest_id' => $guestId],
+                    ['created_at' => now(), 'updated_at' => now()]
+                );
             }
 
             return response()->json([
@@ -878,15 +989,25 @@ class ListingController extends Controller
             $listing->view_count = $listing->views()->count();
 
             // Log listing view with caching
+            // Log listing view with caching
             $cacheKey = 'listing_viewed_' . $listing->id . '_' . request()->ip();
             if (!Cache::has($cacheKey)) {
-                ListingView::create([
+                $data = [
                     'listing_id' => $listing->id,
-                    'user_id' => auth('api')->id(),
-                    'ip_address' => request()->ip()
-                ]);
+                    'ip_address' => request()->ip(),
+                ];
+
+                if (auth('api')->check()) {
+                    $data['user_id'] = auth('api')->id();
+                } else {
+                    // fallback to guest_id (you must have guest auth/identifier logic)
+                    $data['guest_id'] = request()->header('X-Guest-Id') ?? session()->getId();
+                }
+
+                ListingView::create($data);
                 Cache::put($cacheKey, true, now()->addHour());
             }
+
 
             $buyingOffers = collect();
             $sellingOffers = collect();

@@ -20,7 +20,7 @@ Route::get('guest-id', [GuestController::class, 'generate']);
 Route::prefix('category')->controller(CategoryController::class)->group(function () {
     Route::get('/', 'index');
     Route::get('tree', 'tree');
-    Route::get('all','all');
+    Route::get('all', 'all');
     Route::get('/{slug}', 'show');
 });
 
@@ -32,19 +32,20 @@ Route::get('user/summary/{userId}', [UserController::class, 'userSummary']);
 Route::get('promotions', [PromotionController::class, 'index']);
 Route::get('instructions', [InstructionController::class, 'index']);
 // ListingController works
-    Route::prefix('listings')->controller(ListingController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::post('/filters', 'filterListings');
-        Route::get('/filters-metadata', 'filtersMetadata');
-        Route::get('/{slug}/show', 'show');
-        Route::get('/suggestions', 'suggestions');
-        Route::get('/coolAuctions', 'coolAuctions');
-        Route::get('/hotListings', 'hotListings');
-        Route::get('/closingSoon', 'closingSoon');
-        Route::get('/search', 'search');
-        Route::get('/homePastSearches', 'homePastSearches');
-
-    });
+Route::prefix('listings')->controller(ListingController::class)->group(function () {
+    Route::get('/', 'index');
+    Route::post('/filters', 'filterListings');
+    Route::get('/filters-metadata', 'filtersMetadata');
+    Route::get('/{slug}/show', 'show');
+    Route::get('/suggestions', 'suggestions');
+    Route::get('/coolAuctions', 'coolAuctions');
+    Route::get('/hotListings', 'hotListings');
+    Route::get('/closingSoon', 'closingSoon');
+    Route::get('/isfeatured', 'isfeatured');
+    Route::get('/search', 'search');
+    Route::get('/homePastSearches', 'homePastSearches');
+    Route::get('/recommendations', 'recommendations');
+});
 
 // ContactMessageController works
 Route::prefix('contact')->controller(ContactMessageController::class)->group(function () {

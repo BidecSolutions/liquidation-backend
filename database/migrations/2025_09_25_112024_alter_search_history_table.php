@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('guest_id')->nullable()->after('user_id');
             $table->string('category_path')->nullable()->after('category_id');
             $table->json('filters')->nullable()->after('category_id');
+
+            // $table->check('(user_id IS NOT NULL AND guest_id IS NULL) OR (user_id IS NULL AND guest_id IS NOT NULL)');
         });
     }
 
