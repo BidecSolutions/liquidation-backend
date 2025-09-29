@@ -355,17 +355,17 @@ class ListingController extends Controller
         $offset = $request->input('offset', 0);
 
         $userId = auth('api')->id();
-        $guestId = $request->header('X-Guest-ID');
+        // $guestId = $request->header('X-Guest-ID'); // COmmented guest_id by Abdullah also in the if condition below
 
-        if (!$userId && !$guestId) {
+        if (!$userId) {
             return response()->json([
                 'status' => false,
-                'message' => 'User or Guest ID required',
+                'message' => 'User ID required',
                 'data' => []
             ], 400);
         }
 
-        $recommendations = $this->getRecommendedListings($userId, $guestId, $limit, $offset);
+        $recommendations = $this->getRecommendedListings($userId, null, $limit, $offset); // also removed from here
 
         return response()->json([
             'status' => true,
