@@ -25,6 +25,7 @@ Route::get('migrate', function () {
     echo "\n\nAll migrations ran successfully.";
     echo "</pre>";
 });
+
 Route::get('migrate-rollback', function () {
     // Run rollback
     Artisan::call('migrate:rollback');

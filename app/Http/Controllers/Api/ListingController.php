@@ -597,6 +597,11 @@ class ListingController extends Controller
                 ->where('title', 'LIKE', "%{$query}%")
                 ->limit(10)
                 ->pluck('title');
+            $webSuggestions = Listing::where('status', 1)
+                ->where('title', 'LIKE', "%{$query}%")
+                ->limit(10)
+                ->with(['images:id,listing_id,image_path'])
+                ->select('id', 'title', 'slug','buy_now_price')->get();
         }
 
         // ✅ Past searches only if user is logged in
@@ -618,6 +623,7 @@ class ListingController extends Controller
             'message' => 'Suggestions fetched successfully',
             'suggestions' => $suggestions,
             'past_searches' => $pastSearches,
+            'web_suggestions' => $webSuggestions,
         ]);
     }
 
