@@ -333,7 +333,7 @@ class ListingController extends Controller
         $offset = $request->input('offset', 0);
         try {
             $userId = auth('api')->check() ? auth('api')->id() : null;
-            $listings = $this->getIsFeatured($userId, $limit, $offset);
+            $listings = $this->getCoolAuctions($userId, $limit, $offset);
 
             return response()->json([
                 'status' => true,
@@ -589,6 +589,7 @@ class ListingController extends Controller
         $query = $request->query('query');
 
         $suggestions = collect();
+        $webSuggestions = null;
         if ($query) {
             $request->validate([
                 'query' => 'required|string|max:255',
@@ -622,7 +623,6 @@ class ListingController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Suggestions fetched successfully',
-            "awkfkajwfaf" => "awdawd",
             'suggestions' => $suggestions,
             'past_searches' => $pastSearches,
             'web_suggestions' => $webSuggestions,
