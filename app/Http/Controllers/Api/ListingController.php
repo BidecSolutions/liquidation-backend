@@ -25,6 +25,7 @@ class ListingController extends Controller
     // 🔹 Reusable query for Cool Auctions
     private function getCoolAuctions($userId = null, $limit = 10, $offset = 0)
     {
+        $limit = $limit ?? 10;
         $listings = Listing::with(['category', 'creator', 'images'])
             ->withCount('bids')
             ->whereNotNull('start_price') // has an end time
