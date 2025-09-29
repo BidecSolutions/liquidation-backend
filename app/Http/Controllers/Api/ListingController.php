@@ -622,6 +622,7 @@ class ListingController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Suggestions fetched successfully',
+            "awkfkajwfaf" => "awdawd",
             'suggestions' => $suggestions,
             'past_searches' => $pastSearches,
             'web_suggestions' => $webSuggestions,
