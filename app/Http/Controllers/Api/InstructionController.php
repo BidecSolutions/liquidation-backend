@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Instruction;
 use App\Enums\InstructionModule;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class InstructionController extends Controller
 {
@@ -16,9 +17,9 @@ class InstructionController extends Controller
     public function index()
     {
         $instructions = Instruction::select('id', 'title', 'description', 'image')
-        ->where('is_active', true)
-        ->latest()
-        ->get();
+            ->where('is_active', true)
+            ->latest()
+            ->get();
 
         return response()->json([
             'status' => true,
@@ -34,9 +35,18 @@ class InstructionController extends Controller
         $request->validate([
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
-            'image'       => 'required|string|max:500',
+            'image'       => 'required|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'module'      => 'nullable|string|in:' . implode(',', InstructionModule::values()),
         ]);
+
+        $directory = 'listings/images';
+        if (!Storage::disk('public')->exists($directory)) {
+            Storage::disk('public')->makeDirectory($directory, 0775, true);
+        }
+        if($request->hasFile('image')){
+            $path = $request->file('image')->store($directory, 'public');
+            $request->merge(['image' => $path]);
+        }
 
         $instruction = Instruction::create([
             'title'       => $request->title,

@@ -871,6 +871,7 @@ class ListingController extends Controller
         return $categoryIds;
     }
     public function recentViewedListings() {}
+    
     public function store(Request $request)
     {
         try {
