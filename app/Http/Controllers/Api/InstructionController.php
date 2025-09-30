@@ -39,24 +39,19 @@ class InstructionController extends Controller
             'module'      => 'nullable|string|in:' . implode(',', InstructionModule::values()),
         ]);
 
-        $directory = 'listings/images';
-        if (!Storage::disk('public')->exists($directory)) {
-            Storage::disk('public')->makeDirectory($directory, 0775, true);
-        }
-        if($request->hasFile('image')){
-            $path = $request->file('image')->store($directory, 'public');
-            $request->merge(['image' => $path]);
+        $data = $request->except('image');
+        $data['created_by'] = Auth::id();
+        $data['is_active'] = $request->boolean('is_active', true);
+
+        if ($request->hasFile('image')) {
+            $directory = 'instructions/images';
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
+            $data['image'] = $request->file('image')->store($directory, 'public');
         }
 
-        $instruction = Instruction::create([
-            'title'       => $request->title,
-            'description' => $request->description,
-            'image'       => $request->image,
-            'module'      => $request->module,
-            'position'    => $request->position,
-            'is_active'   => $request->boolean('is_active', true),
-            'created_by'  => Auth::id(),
-        ]);
+        $instruction = Instruction::create($data);
 
         return response()->json([
             'status'  => true,
@@ -88,11 +83,24 @@ class InstructionController extends Controller
         $request->validate([
             'title'       => 'sometimes|required|string|max:255',
             'description' => 'sometimes|required|string',
-            'image'       => 'sometimes|required|string|max:500',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'module'      => 'nullable|string|in:' . implode(',', InstructionModule::values()),
         ]);
 
-        $instruction->update($request->all());
+        $data = $request->except('image');
+
+        if ($request->hasFile('image')) {
+            // Delete old image if it exists
+            if ($instruction->image) {
+                Storage::disk('public')->delete($instruction->image);
+            }
+            $directory = 'instructions/images';
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
+            $data['image'] = $request->file('image')->store($directory, 'public');
+        }
+        $instruction->update($data);
 
         return response()->json([
             'status'  => true,
@@ -107,6 +115,11 @@ class InstructionController extends Controller
     public function destroy($id)
     {
         $instruction = Instruction::findOrFail($id);
+
+        // Delete the image from storage
+        if ($instruction->image) {
+            Storage::disk('public')->delete($instruction->image);
+        }
         $instruction->delete();
 
         return response()->json([

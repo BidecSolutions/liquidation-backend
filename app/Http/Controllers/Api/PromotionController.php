@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Promotion;
 use App\Enums\PromotionType;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PromotionController extends Controller
 {
@@ -32,25 +33,23 @@ class PromotionController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'image' => 'required|string|max:500',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'type'  => 'nullable|string|in:' . implode(',', PromotionType::values()),
         ]);
 
-        $promotion = Promotion::create([
-            'title'        => $request->title,
-            'subtitle'     => $request->subtitle,
-            'description'  => $request->description,
-            'image'        => $request->image,
-            'redirect_url' => $request->redirect_url,
-            'button_text'  => $request->button_text,
-            'type'         => $request->type,
-            'position'     => $request->position,
-            'start_date'   => $request->start_date,
-            'end_date'     => $request->end_date,
-            'is_active'    => $request->boolean('is_active', false),
-            'priority'     => $request->priority,
-            'created_by'   => Auth::id(),
-        ]);
+        $data = $request->except('image');
+        $data['created_by'] = Auth::id();
+        $data['is_active'] = $request->boolean('is_active', false);
+
+        if ($request->hasFile('image')) {
+            $directory = 'promotions/images';
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
+            $data['image'] = $request->file('image')->store($directory, 'public');
+        }
+
+        $promotion = Promotion::create($data);
 
         return response()->json([
             'status'  => true,
@@ -81,11 +80,25 @@ class PromotionController extends Controller
 
         $request->validate([
             'title' => 'sometimes|required|string|max:255',
-            'image' => 'sometimes|required|string|max:500',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'type'  => 'nullable|string|in:' . implode(',', PromotionType::values()),
         ]);
 
-        $promotion->update($request->all());
+        $data = $request->except('image');
+
+        if ($request->hasFile('image')) {
+            // Delete old image if it exists
+            if ($promotion->image) {
+                Storage::disk('public')->delete($promotion->image);
+            }
+            $directory = 'promotions/images';
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
+            $data['image'] = $request->file('image')->store($directory, 'public');
+        }
+
+        $promotion->update($data);
 
         return response()->json([
             'status'  => true,
@@ -100,6 +113,11 @@ class PromotionController extends Controller
     public function destroy($id)
     {
         $promotion = Promotion::findOrFail($id);
+
+        // Delete the image from storage
+        if ($promotion->image) {
+            Storage::disk('public')->delete($promotion->image);
+        }
         $promotion->delete();
 
         return response()->json([
