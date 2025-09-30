@@ -226,3 +226,17 @@ Route::get('seed-instructions', function () {
         'total' => DB::table('instructions')->count(),
     ];
 });
+
+Route::get('/seed-regions', function(){
+    Artisan::call('db-seed', [
+        '--class'=> 'Redions',
+        '--force' => true
+    ]);
+
+    return [
+        'status' => true,
+        'message' => 'Regions seeded.',
+        'totalRegions' => DB::table('regions')->count(),
+        'totalGovernorates' => DB::table('governorates')->count(),
+    ];
+});
