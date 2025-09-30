@@ -8,6 +8,7 @@ use App\Models\Instruction;
 use App\Enums\InstructionModule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class InstructionController extends Controller
 {
@@ -15,6 +16,16 @@ class InstructionController extends Controller
      * List all instructions
      */
     public function index()
+    {
+        $instructions = Instruction::latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'data'   => $instructions,
+        ]);
+    }
+
+    public function list()
     {
         $instructions = Instruction::select('id', 'title', 'description', 'image')
             ->where('is_active', true)
@@ -32,16 +43,22 @@ class InstructionController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
-            'image'       => 'required|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image'       => 'required|mimes:jpeg,png,jpg,gif,svg,webp',
             'module'      => 'nullable|string|in:' . implode(',', InstructionModule::values()),
         ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
 
         $data = $request->except('image');
-        $data['created_by'] = Auth::id();
+        $data['created_by'] = auth('admin-api')->id();
         $data['is_active'] = $request->boolean('is_active', true);
 
         if ($request->hasFile('image')) {
@@ -79,18 +96,27 @@ class InstructionController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $instruction = Instruction::findOrFail($id);
-
-        $request->validate([
+        // dd("Awdawd");
+        
+        $instruction = Instruction::find($id);
+        if (!$instruction) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Instruction not found',
+            ], 404);
+        }
+        $validator = Validator::make($request->all(), [
             'title'       => 'sometimes|required|string|max:255',
             'description' => 'sometimes|required|string',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp',
             'module'      => 'nullable|string|in:' . implode(',', InstructionModule::values()),
         ]);
-        if($request->hasFile('image')){
-            dd("has image");
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors(),
+            ], 422);
         }
-        dd($request->all());
         $data = $request->except('image');
 
         if ($request->hasFile('image')) {

@@ -29,8 +29,8 @@ Route::prefix('options')->group(function () {
     Route::get('shipping-methods', [ShippingMethodController::class, 'index']);
 });
 Route::get('user/summary/{userId}', [UserController::class, 'userSummary']);
-Route::get('promotions', [PromotionController::class, 'index']);
-Route::get('instructions', [InstructionController::class, 'index']);
+Route::get('promotions', [PromotionController::class, 'list']);
+Route::get('instructions', [InstructionController::class, 'list']);
 // ListingController works
 Route::prefix('listings')->controller(ListingController::class)->group(function () {
     Route::get('/', 'index');

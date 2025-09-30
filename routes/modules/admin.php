@@ -83,16 +83,16 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::delete('/{id}/destroy', 'destroy');
     });
     Route::prefix('promotions')->controller(PromotionController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::post('/', 'store');
-        Route::get('/{id}', 'show');
+        Route::get('/index', 'index');
+        Route::post('/store', 'store');
+        Route::get('/{id}/show', 'show');
         Route::post('/{id}/update', 'update');
         Route::delete('/{id}', 'destroy');
     });
     Route::prefix('instructions')->controller(InstructionController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::post('/', 'store');
-        Route::get('/{id}', 'show');
+        Route::get('/index', 'index');
+        Route::post('/store', 'store');
+        Route::get('/{id}/show', 'show');
         Route::post('/{id}/update', 'update');
         Route::delete('/{id}', 'destroy');
     });

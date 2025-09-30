@@ -8,6 +8,7 @@ use App\Models\Promotion;
 use App\Enums\PromotionType;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class PromotionController extends Controller
 {
@@ -16,12 +17,23 @@ class PromotionController extends Controller
      */
     public function index()
     {
+        $promotions = Promotion::latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Promotions retrieved successfully',
+            'data'   => $promotions,
+        ]);
+    }
+    public function list()
+    {
         $promotions = Promotion::select('id', 'title', 'description', 'image')->where('is_active', true)
             ->latest()
             ->get();
 
         return response()->json([
             'status' => true,
+            'message' => 'Promotions retrieved successfully',
             'data'   => $promotions,
         ]);
     }
@@ -31,12 +43,17 @@ class PromotionController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|',
             'type'  => 'nullable|string|in:' . implode(',', PromotionType::values()),
         ]);
-
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
         $data = $request->except('image');
         $data['created_by'] = Auth::id();
         $data['is_active'] = $request->boolean('is_active', false);
@@ -76,13 +93,25 @@ class PromotionController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $promotion = Promotion::findOrFail($id);
+        $promotion = Promotion::find($id);
+        if (!$promotion) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Promotion not found',
+            ], 404);
+        }
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'type'  => 'nullable|string|in:' . implode(',', PromotionType::values()),
         ]);
+         if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
         $data = $request->except('image');
 
