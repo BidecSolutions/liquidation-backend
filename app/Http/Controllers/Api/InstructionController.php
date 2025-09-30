@@ -38,6 +38,7 @@ class InstructionController extends Controller
             'image'       => 'required|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'module'      => 'nullable|string|in:' . implode(',', InstructionModule::values()),
         ]);
+        dd($request->all());
 
         $data = $request->except('image');
         $data['created_by'] = Auth::id();

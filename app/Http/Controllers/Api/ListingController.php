@@ -411,8 +411,6 @@ class ListingController extends Controller
         }
     }
 
-
-
     public function filterListings(Request $request)
     {
         $guestId = $request->header('X-Guest-ID');
@@ -871,7 +869,7 @@ class ListingController extends Controller
         return $categoryIds;
     }
     public function recentViewedListings() {}
-    
+
     public function store(Request $request)
     {
         try {
