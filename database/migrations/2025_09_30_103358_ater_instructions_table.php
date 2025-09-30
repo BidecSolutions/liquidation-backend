@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         //
-        Schema::table('instructions', function(Blueprint $table){
-            $table->dropForeign(['created_by']);
-            $table->foreign('created_by')->references('id')->on('admins')->onDelete('set null');
-        });
+        // Schema::table('instructions', function(Blueprint $table){
+        //     $table->dropForeign(['created_by']);
+        //     $table->foreign('created_by')->references('id')->on('admins')->onDelete('set null');
+        // });
     }
 
     /**
@@ -24,9 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         //
-        Schema::table('instructions', function(Blueprint $table){
-            $table->dropForeign(['created_by']);
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
-        });
+        // Schema::table('instructions', function(Blueprint $table){
+        //     $table->dropForeign(['created_by']);
+        //     $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+        // });
     }
 };
