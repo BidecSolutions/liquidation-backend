@@ -93,7 +93,7 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::get('/', 'index');
         Route::post('/', 'store');
         Route::get('/{id}', 'show');
-        Route::put('/{id}', 'update');
+        Route::post('/{id}/update', 'update');
         Route::delete('/{id}', 'destroy');
     });
 
