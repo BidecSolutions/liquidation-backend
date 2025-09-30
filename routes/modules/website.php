@@ -7,9 +7,11 @@ use App\Http\Controllers\Api\{
     ShippingMethodController,
     ListingController,
     ContactMessageController,
+    GovernorateController,
     GuestController,
     InstructionController,
     PromotionController,
+    RegionController,
     UserController,
 };
 
@@ -53,3 +55,8 @@ Route::prefix('listings')->controller(ListingController::class)->group(function 
 Route::prefix('contact')->controller(ContactMessageController::class)->group(function () {
     Route::post('message', 'store');
 });
+// Public routes for locations
+Route::get('regions', [RegionController::class, 'index']);
+Route::get('governorates', [GovernorateController::class, 'index']);
+Route::get('regions/{region}', [RegionController::class, 'show']);
+Route::get('governorates/{governorate}', [GovernorateController::class, 'show']);

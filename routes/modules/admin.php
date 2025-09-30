@@ -16,9 +16,11 @@ use App\Http\Controllers\Api\{
     EmailTestController,
     CodeController,
     ContactMessageController,
+    GovernorateController,
     InstructionController,
     ListingAttributeController,
     PromotionController,
+    RegionController,
 };
 
 // Admin Auth
@@ -82,6 +84,7 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::patch('/{id}/toggle', 'toggleStatus');
         Route::delete('/{id}/destroy', 'destroy');
     });
+
     Route::prefix('promotions')->controller(PromotionController::class)->group(function () {
         Route::get('/index', 'index');
         Route::post('/store', 'store');
@@ -89,7 +92,14 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::post('/{id}/update', 'update');
         Route::delete('/{id}', 'destroy');
     });
-    Route::prefix('instructions')->controller(InstructionController::class)->group(function () {
+    Route::prefix('regions')->controller(RegionController::class)->group(function () {
+        Route::get('/index', 'index');
+        Route::post('/store', 'store');
+        Route::get('/{id}/show', 'show');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}', 'destroy');
+    });
+    Route::prefix('governorate')->controller(GovernorateController::class)->group(function () {
         Route::get('/index', 'index');
         Route::post('/store', 'store');
         Route::get('/{id}/show', 'show');
