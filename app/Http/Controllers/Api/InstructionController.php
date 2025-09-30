@@ -87,6 +87,9 @@ class InstructionController extends Controller
             'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'module'      => 'nullable|string|in:' . implode(',', InstructionModule::values()),
         ]);
+        if($request->hasFile('image')){
+            dd("has image");
+        }
         dd($request->all());
         $data = $request->except('image');
 
