@@ -10,4 +10,9 @@ class Regions extends Model
     //
     use HasFactory;
     protected $fillable = ['name'];
+
+    public function governorates()
+    {
+        return $this->hasMany(Governorates::class, 'region_id');
+    }
 }
