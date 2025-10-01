@@ -671,6 +671,12 @@ class UserAuthController extends Controller
         $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $user = User::where($fieldtype, $request->email)->first();
+        if(!$user){
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
         if ($user->is_verified == null) {
             if ($user->is_verified != 1) {
                 $code = rand(100000, 999999);
@@ -882,7 +888,7 @@ class UserAuthController extends Controller
     // Logout user
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $request->user()->tokens()->where('id', $request->user()->currentAccessToken()->id)->delete();
         return response()->json([
             'success' => true,
             'message' => 'Successfully Logged out'

@@ -95,8 +95,19 @@ class ListingController extends Controller
     {
         // 1. Get latest keywords/categories from search history
         $searchHistories = SearchHistory::query()
-            ->when($userId, fn($q) => $q->where('user_id', $userId))
-            ->when($guestId, fn($q) => $q->where('guest_id', $guestId))
+            ->when(
+                $userId,
+                function ($q) use ($userId) {
+                    if ($userId) {
+                        $q->where('user_id', $userId);
+                    }
+                },
+                function ($q) use ($guestId) {
+                    if ($guestId) {
+                        $q->where('guest_id', $guestId);
+                    }
+                }
+            )
             ->orderBy('updated_at', 'desc')
             ->limit(5)
             ->get();
@@ -603,7 +614,7 @@ class ListingController extends Controller
                 ->where('title', 'LIKE', "%{$query}%")
                 ->limit(10)
                 ->with(['images:id,listing_id,image_path'])
-                ->select('id', 'title', 'slug','buy_now_price')->get();
+                ->select('id', 'title', 'slug', 'buy_now_price')->get();
         }
 
         // ✅ Past searches only if user is logged in
@@ -701,6 +712,7 @@ class ListingController extends Controller
         $searchResults = [];
 
         if (!auth('api')->check()) {
+            dd("AWfawf");
             $guestId = request()->header('X-Guest-ID');
             if (!$guestId) {
                 return response()->json([
@@ -742,6 +754,7 @@ class ListingController extends Controller
 
                 $searchResults[] = [
                     'keyword' => $keyword,
+                    'path' => $search->category_path,
                     'listings' => $listings,
                 ];
             }
