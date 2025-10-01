@@ -46,6 +46,7 @@ Route::prefix('listings')->controller(ListingController::class)->group(function 
     Route::get('/isfeatured', 'isfeatured');
     Route::get('/search', 'search');
     Route::get('/homePastSearches', 'homePastSearches');
+    Route::get('/deletePastSearches/{searchId}', 'removePastSearch');
     Route::get('/recommendations', 'recommendations');
     Route::get('/searchById/{id}', 'searchById');
     Route::get('/mainapi', 'mainapi');

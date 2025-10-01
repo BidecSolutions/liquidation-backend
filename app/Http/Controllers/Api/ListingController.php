@@ -786,6 +786,7 @@ class ListingController extends Controller
                 }
 
                 $searchResults[] = [
+                    'id' => $search->id,
                     'keyword' => $keyword,
                     'path' => $search->category_path,
                     'listings' => $listings,
@@ -834,6 +835,52 @@ class ListingController extends Controller
             'message' => 'Home suggestions fetched successfully',
             'data' => $searchResults,
         ]);
+    }
+
+    public function removePastSearch($searchId)
+    {
+        try {
+            if (!auth('api')->check()) {
+                $guestId = request()->header('X-Guest-ID');
+                if (!$guestId) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Guest ID missing',
+                        'data' => []
+                    ], 400);
+                }
+                $search = SearchHistory::where('id', $searchId)->where('guest_id', $guestId)->first();
+                if (!$search) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Search not found',
+                        'data' => []
+                    ], 404);
+                }
+                $search->delete();
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Search removed successfully',
+                    'data' => []
+                ]);
+            } else {
+                $userId = auth('api')->id();
+                $search = SearchHistory::where('id', $searchId)->where('user_id', $userId)->first();
+                if (!$search) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Search not found',
+                        'data' => []
+                    ], 404);
+                }
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => true,
+                'message' => 'somthing went wrong',
+                'error' => $e,
+            ]);
+        }
     }
 
 
