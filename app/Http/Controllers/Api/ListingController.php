@@ -538,6 +538,7 @@ class ListingController extends Controller
 
             if ($category) {
                 // Full breadcrumb path
+
                 $path = [];
                 $c = $category;
                 while ($c) {
@@ -593,53 +594,6 @@ class ListingController extends Controller
             'category_tree' => $categoryTree,
         ]);
     }
-
-    public function suggestions(Request $request)
-    {
-
-        $query = $request->query('query');
-
-        $suggestions = collect();
-        $webSuggestions = null;
-        if ($query) {
-            $request->validate([
-                'query' => 'required|string|max:255',
-            ]);
-            // ✅ Fetch suggestions from listings
-            $suggestions = Listing::where('status', 1)
-                ->where('title', 'LIKE', "%{$query}%")
-                ->limit(10)
-                ->pluck('title');
-            $webSuggestions = Listing::where('status', 1)
-                ->where('title', 'LIKE', "%{$query}%")
-                ->limit(10)
-                ->with(['images:id,listing_id,image_path'])
-                ->select('id', 'title', 'slug', 'buy_now_price')->get();
-        }
-
-        // ✅ Past searches only if user is logged in
-        $pastSearches = [];
-        if (auth('api')->check()) {
-            $pastSearches = SearchHistory::where('user_id', auth('api')->id())
-                ->orderBy('updated_at', 'desc')
-                ->limit(5)
-                ->pluck('keyword');
-        } elseif ($guestId = $request->header('X-Guest-ID')) {
-            $pastSearches = SearchHistory::where('guest_id', $guestId)
-                ->orderBy('updated_at', 'desc')
-                ->limit(5)
-                ->pluck('keyword');
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Suggestions fetched successfully',
-            'suggestions' => $suggestions,
-            'past_searches' => $pastSearches,
-            'web_suggestions' => $webSuggestions,
-        ]);
-    }
-
     public function search(Request $request)
     {
         $request->validate([
@@ -704,6 +658,53 @@ class ListingController extends Controller
             'total' => $query->count(), // total matching rows
         ]);
     }
+    public function suggestions(Request $request)
+    {
+
+        $query = $request->query('query');
+
+        $suggestions = collect();
+        $webSuggestions = null;
+        if ($query) {
+            $request->validate([
+                'query' => 'required|string|max:255',
+            ]);
+            // ✅ Fetch suggestions from listings
+            $suggestions = Listing::where('status', 1)
+                ->where('title', 'LIKE', "%{$query}%")
+                ->limit(10)
+                ->pluck('title');
+            $webSuggestions = Listing::where('status', 1)
+                ->where('title', 'LIKE', "%{$query}%")
+                ->limit(10)
+                ->with(['images:id,listing_id,image_path'])
+                ->select('id', 'title', 'slug', 'buy_now_price')->get();
+        }
+
+        // ✅ Past searches only if user is logged in
+        $pastSearches = [];
+        if (auth('api')->check()) {
+            $pastSearches = SearchHistory::where('user_id', auth('api')->id())
+                ->orderBy('updated_at', 'desc')
+                ->limit(5)
+                ->pluck('keyword');
+        } elseif ($guestId = $request->header('X-Guest-ID')) {
+            $pastSearches = SearchHistory::where('guest_id', $guestId)
+                ->orderBy('updated_at', 'desc')
+                ->limit(5)
+                ->pluck('keyword');
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Suggestions fetched successfully',
+            'suggestions' => $suggestions,
+            'past_searches' => $pastSearches,
+            'web_suggestions' => $webSuggestions,
+        ]);
+    }
+
+
 
 
 
@@ -712,7 +713,7 @@ class ListingController extends Controller
         $searchResults = [];
 
         if (!auth('api')->check()) {
-            dd("AWfawf");
+            // dd("AWfawf");
             $guestId = request()->header('X-Guest-ID');
             if (!$guestId) {
                 return response()->json([
