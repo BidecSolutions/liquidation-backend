@@ -602,13 +602,45 @@ class ListingController extends Controller
 
         $keyword = strtolower(trim($request->keyword));
 
-        // ✅ Base query
-        $query = Listing::with(['images', 'category', 'creator'])->withCount('views')
-            ->where('status', 1)
-            ->where(function ($q) use ($keyword) {
-                $q->where('title', 'LIKE', "%{$keyword}%")
-                    ->orWhere('description', 'LIKE', "%{$keyword}%");
-            });
+        $maincategory = Category::whereRaw('LOWER(name) = ?', [$keyword])->with('parentRecursive')->first();
+        if ($maincategory) {
+            $categoryIds = $maincategory->allchildrenIds();
+
+            $query = Listing::with(['images', 'category', 'creator'])->withCount('views')->where('status', 1)->whereIn('category_id', $categoryIds);
+
+            $results = $query->get();
+
+            $path = [];
+            $c = $maincategory;
+            while ($c) {
+                array_unshift($path, $c->name);
+                $c = $c->parent;
+            }
+            $categoryPath = implode('>', $path);
+        } else {
+            $query = Listing::with(['images', 'category', 'creator'])->withCount('views')
+                ->where('status', 1)
+                ->where(function ($q) use ($keyword) {
+                    $q->where('title', 'LIKE', "%{$keyword}%")
+                        ->orWhere('description', 'LIKE', "%{$keyword}%");
+                });
+            $results = $query->get();
+            $categoryIds = $results->pluck('category_id')->unique();
+
+            $categoryPath = null;
+            if ($categoryIds->count() === 1) {
+                $category = Category::with('parentRecursive')->find($categoryIds->first());
+                if ($category) {
+                    $path = [];
+                    $c = $category;
+                    while ($c) {
+                        array_unshift($path, $c->name);
+                        $c = $c->parent;
+                    }
+                    $categoryPath = implode(' > ', $path);
+                }
+            }
+        }
 
         // ✅ Apply limit & offset (manual pagination)
         $limit = $request->input('limit');
@@ -628,6 +660,7 @@ class ListingController extends Controller
             return array_merge($listingArray, $attributes);
         });
 
+
         // ✅ Save search history
         if (auth('api')->check()) {
             SearchHistory::updateOrCreate(
@@ -637,6 +670,7 @@ class ListingController extends Controller
                 ],
                 [
                     'count' => DB::raw('count + 1'),
+                    'category_path' => $categoryPath ?? null,
                 ]
             );
         } elseif ($request->header('X-Guest-ID')) {
@@ -648,6 +682,8 @@ class ListingController extends Controller
             ]);
             $searchHistory->count = ($searchHistory->exists ? $searchHistory->count + 1 : 1);
             $searchHistory->guest_id = $guestId;
+            $searchHistory->category_id = $category->id ?? null;
+            $searchHistory->category_path = $categoryPath ?? null;
             $searchHistory->save();
         }
 
@@ -655,7 +691,8 @@ class ListingController extends Controller
             'status' => true,
             'message' => 'Search results fetched successfully',
             'data' => $listingData,
-            'total' => $query->count(), // total matching rows
+            'total' => $query->count(),
+            'category_path' => $categoryPath ?? null,
         ]);
     }
     public function suggestions(Request $request)
@@ -703,11 +740,6 @@ class ListingController extends Controller
             'web_suggestions' => $webSuggestions,
         ]);
     }
-
-
-
-
-
     public function homePastSearches()
     {
         $searchResults = [];
