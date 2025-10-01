@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\{
     ListingReportController,
     WatchlistController,
     AdminAnalyticsController,
+    CityController,
+    CountryController,
     EmailTestController,
     CodeController,
     ContactMessageController,
@@ -98,6 +100,7 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::get('/{id}/show', 'show');
         Route::post('/{id}/update', 'update');
         Route::delete('/{id}', 'destroy');
+        // Route::apiResource('/', RegionController::class)->parameters(['' => 'region']);
     });
     Route::prefix('governorate')->controller(GovernorateController::class)->group(function () {
         Route::get('/index', 'index');
@@ -105,8 +108,27 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::get('/{id}/show', 'show');
         Route::post('/{id}/update', 'update');
         Route::delete('/{id}', 'destroy');
+        // Route::apiResource('/', GovernorateController::class)->parameters(['' => 'governorate']);
+    });
+    Route::prefix('countries')->controller(CountryController::class)->group(function () {
+        Route::get('/index', 'index');
+        Route::post('/store', 'store');
+        Route::get('/{id}/show', 'show');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}', 'destroy');
+        // Route::apiResource('/', GovernorateController::class)->parameters(['' => 'governorate']);
+    });
+    Route::prefix('cities')->controller(CityController::class)->group(function () {
+        Route::get('/index', 'index');
+        Route::post('/store', 'store');
+        Route::get('/{id}/show', 'show');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}', 'destroy');
+        // Route::apiResource('/', GovernorateController::class)->parameters(['' => 'governorate']);
     });
 
+    // Route::apiResource('countries', CountryController::class);
+    // Route::apiResource('cities', CityController::class);
      // ListingController works
     Route::prefix('listings')->controller(ListingController::class)->group(function () {
         Route::get('/', 'index');

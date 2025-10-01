@@ -229,7 +229,7 @@ Route::get('seed-instructions', function () {
 
 Route::get('/seed-regions', function(){
     Artisan::call('db:seed', [
-        '--class'=> 'Redions',
+        '--class'=> 'RegionsSeeder',
         '--force' => true
     ]);
 

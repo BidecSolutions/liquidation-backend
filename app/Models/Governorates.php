@@ -9,11 +9,11 @@ class Governorates extends Model
 {
     //
     use HasFactory;
-
+    protected $table = 'governorates';
     protected $fillable = ['region_id', 'name'];
 
     public function region()
     {
-        return $this->belongsTo(Regions::class, 'regions_id');
+        return $this->belongsTo(Regions::class, 'region_id');
     }
 }
