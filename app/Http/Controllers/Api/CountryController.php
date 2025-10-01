@@ -89,4 +89,9 @@ class CountryController extends Controller
             'message' => 'Country deleted successfully.'
         ]);
     }
+
+    public function list()
+    {
+        
+    }
 }
