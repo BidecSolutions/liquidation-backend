@@ -823,6 +823,7 @@ class ListingController extends Controller
                 }
 
                 $searchResults[] = [
+                    'id' => $search->id,
                     'keyword' => $keyword,
                     'path' => $search->category_path,
                     'listings' => $listings,
