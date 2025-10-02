@@ -83,14 +83,16 @@ class UserAuthController extends Controller
             Mail::send('emails.verification', ['user' => $user, 'code' => $code], function ($message) use ($user) {
                 $message->to($user->email)->subject('Your Login Verification Code');
             });
-            $guestId = $request->header('X-Guest-ID');
-            SearchHistory::where('guest_id', $guestId)
-                ->update(['user_id' => $user->id, 'guest_id' => null]);
-            ListingView::where('guest_id', $guestId)
-                ->update([
-                    'user_id' => $user->id,
-                    'guest_id' => null,
-                ]);
+            if ($request->header('X-Guest-ID')) {
+                $guestId = $request->header('X-Guest-ID');
+                SearchHistory::where('guest_id', $guestId)
+                    ->update(['user_id' => $user->id, 'guest_id' => null]);
+                ListingView::where('guest_id', $guestId)
+                    ->update([
+                        'user_id' => $user->id,
+                        'guest_id' => null,
+                    ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -675,7 +677,7 @@ class UserAuthController extends Controller
         $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $user = User::where($fieldtype, $request->email)->first();
-        if(!$user){
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User not found'
