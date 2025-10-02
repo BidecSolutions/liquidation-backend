@@ -874,6 +874,12 @@ class ListingController extends Controller
                         'data' => []
                     ], 404);
                 }
+                $search->delete();
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Search removed successfully',
+                    'data' => []
+                ]);
             }
         } catch (Exception $e) {
             return response()->json([
