@@ -22,6 +22,12 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     protected $guard_name = 'api';
+    protected $appends = [
+        'country_name',
+        'region_name',
+        'governorate_name',
+        'city_name',
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -49,6 +55,10 @@ class User extends Authenticatable
         'account_type',
         'business_name',
         'country',
+        'country_id',
+        'regions_id',
+        'governorates_id',
+        'city_id',
         'address_finder',
         'address_1',
         'address_2',
@@ -58,7 +68,6 @@ class User extends Authenticatable
         'billing_address',
         'street_address',
         'apartment',
-        'city',
         'state',
         'zip_code',
         'password',
@@ -91,6 +100,42 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function countries()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+    public function regions()
+    {
+        return $this->belongsTo(Regions::class, 'regions_id');
+    }
+    public function governorates()
+    {
+        return $this->belongsTo(Governorates::class, 'governorates_id');
+    }
+    public function cities()
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+    public function getCountryNameAttribute()
+    {
+        return $this->countries ? $this->countries->name : null;
+    }
+
+    public function getRegionNameAttribute()
+    {
+        return $this->regions ? $this->regions->name : null;
+    }
+
+    public function getGovernorateNameAttribute()
+    {
+        return $this->governorates ? $this->governorates->name : null;
+    }
+
+    public function getCityNameAttribute()
+    {
+        return $this->cities ? $this->cities->name : null;
     }
 
     public function watchlist()
@@ -149,17 +194,14 @@ class User extends Authenticatable
     }
 
     public function getProfilePictureUrlAttribute()
-{
-    return $this->profile_picture
-       ? asset('storage/profile_photos/' . $this->profile_photo)
-        : asset('images/default-avatar.png');
-}
+    {
+        return $this->profile_picture
+            ? asset('storage/profile_photo/' . $this->profile_photo)
+            : asset('images/default-avatar.png');
+    }
 
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
     }
-
-
-
 }

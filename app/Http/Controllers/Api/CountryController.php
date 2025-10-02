@@ -95,43 +95,64 @@ class CountryController extends Controller
 
     public function list(Request $request)
     {
-        $countries = null;
-        $regions = null;
-        $governorates = null;
-        $city = null;
-        if ($request->has('with_countries')) {
-            $countries = Country::latest()->get();
+        $country_id = $request->input('country_id');
+        $region_id = $request->input('regions_id');
+        $governorate_id = $request->input('governorates_id');
+
+        // CASE 1: If governorate_id is provided → fetch governorate + cities
+        if ($governorate_id) {
+            $governorates = Governorates::with('cities', 'region.country')
+                ->where('id', $governorate_id)
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Governorate data retrieved successfully.',
+                'data' => [
+                    'governorates' => $governorates,
+                ],
+            ]);
         }
-        if($request->has('with_regions')){
-            $regions = Regions::latest();
-            if($request->has('country_id') != null){
-                // dd($request->country_id);
-                $regions = $regions->where('country_id', $request->country_id);
-            }
-            $regions = $regions->get();
+
+        // CASE 2: If region_id is provided → fetch region + governorates + cities
+        if ($region_id) {
+            $regions = Regions::with('governorates.cities', 'country')
+                ->where('id', $region_id)
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Region data retrieved successfully.',
+                'data' => [
+                    'regions' => $regions,
+                ],
+            ]);
         }
-        if($request->has('with_governorates')){
-            $governorates = Governorates::latest();
-            if($request->region_id != null){
-                $governorates = $governorates->where('region_id', $request->region_id);
-            }
-            $governorates = $governorates->get();
+
+        // CASE 3: If country_id is provided → fetch that country + regions + governorates + cities
+        if ($country_id) {
+            $countries = Country::with('regions.governorates.cities')
+                ->where('id', $country_id)
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Country data retrieved successfully.',
+                'data' => [
+                    'countries' => $countries,
+                ],
+            ]);
         }
-        if($request->has('with_city')){
-            $city = City::latest();
-            if($request->governorate_id!= null){
-                $city = $city->where('governorate_id', $request->governorate_id);
-            }
-            $city = $city->get();
-        }
+
+        // CASE 4: If no filter is provided → fetch all countries + regions + governorates + cities
+        $countries = Country::with('regions.governorates.cities')->get();
 
         return response()->json([
             'status' => true,
-            'message' => 'Data retrieved successfully.',
-            'countries' => $countries,
-            'regions' => $regions,
-            'governorates' => $governorates,
-            'cities' => $city,
+            'message' => 'All countries retrieved successfully.',
+            'data' => [
+                'countries' => $countries,
+            ],
         ]);
     }
 }

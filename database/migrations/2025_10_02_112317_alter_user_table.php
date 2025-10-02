@@ -11,7 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::table('users', function(Blueprint $table){
+            $table->integer('country_id')->nullable()->after('country');
+            $table->integer('regions_id')->nullable()->after('country_id');
+            $table->integer('governorates_id')->nullable()->after('regions_id');
+            $table->integer('city_id')->nullable()->after('governorates_id');
+
+        });
     }
 
     /**
@@ -19,6 +25,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('users', function(Blueprint $table){
+            $table->dropColumn('country_id');
+            $table->dropColumn('regions_id');
+            $table->dropColumn('governorates_id');
+            $table->dropColumn('city_id');
+        });
     }
 };

@@ -16,4 +16,8 @@ class Governorates extends Model
     {
         return $this->belongsTo(Regions::class, 'region_id');
     }
+    public function cities()
+    {
+        return $this->hasMany(City::class, 'governorate_id');
+    }
 }
