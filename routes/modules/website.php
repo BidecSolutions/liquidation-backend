@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\{
     ShippingMethodController,
     ListingController,
     ContactMessageController,
+    CountryController,
     GovernorateController,
     GuestController,
     InstructionController,
@@ -51,6 +52,7 @@ Route::prefix('listings')->controller(ListingController::class)->group(function 
     Route::get('/searchById/{id}', 'searchById');
     Route::get('/mainapi', 'mainapi');
 });
+Route::post('countries/list', [CountryController::class, 'list']);
 
 // ContactMessageController works
 Route::prefix('contact')->controller(ContactMessageController::class)->group(function () {

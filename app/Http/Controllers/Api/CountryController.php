@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Models\Country;
+use App\Models\Governorates;
+use App\Models\Regions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -90,8 +93,45 @@ class CountryController extends Controller
         ]);
     }
 
-    public function list()
+    public function list(Request $request)
     {
-        
+        $countries = null;
+        $regions = null;
+        $governorates = null;
+        $city = null;
+        if ($request->has('with_countries')) {
+            $countries = Country::latest()->get();
+        }
+        if($request->has('with_regions')){
+            $regions = Regions::latest();
+            if($request->has('country_id') != null){
+                // dd($request->country_id);
+                $regions = $regions->where('country_id', $request->country_id);
+            }
+            $regions = $regions->get();
+        }
+        if($request->has('with_governorates')){
+            $governorates = Governorates::latest();
+            if($request->region_id != null){
+                $governorates = $governorates->where('region_id', $request->region_id);
+            }
+            $governorates = $governorates->get();
+        }
+        if($request->has('with_city')){
+            $city = City::latest();
+            if($request->governorate_id!= null){
+                $city = $city->where('governorate_id', $request->governorate_id);
+            }
+            $city = $city->get();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data retrieved successfully.',
+            'countries' => $countries,
+            'regions' => $regions,
+            'governorates' => $governorates,
+            'cities' => $city,
+        ]);
     }
 }
