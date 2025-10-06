@@ -1,13 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use \Illuminate\Support\Facades\Artisan;
+use App\Jobs\RunVehicleSeederJob;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
-
 
 Route::get('migrate', function () {
     // Run migrations
@@ -19,11 +19,11 @@ Route::get('migrate', function () {
     $statusOutput = Artisan::output();
 
     // Output both
-    echo "<pre>";
-    echo "Migration Output:\n" . $migrateOutput;
-    echo "\n\nMigration Status:\n" . $statusOutput;
+    echo '<pre>';
+    echo "Migration Output:\n".$migrateOutput;
+    echo "\n\nMigration Status:\n".$statusOutput;
     echo "\n\nAll migrations ran successfully.";
-    echo "</pre>";
+    echo '</pre>';
 });
 
 Route::get('migrate-rollback', function () {
@@ -36,11 +36,11 @@ Route::get('migrate-rollback', function () {
     $statusOutput = Artisan::output();
 
     // Output both
-    echo "<pre>";
-    echo "Rollback Output:\n" . $rollbackOutput;
-    echo "\n\nMigration Status:\n" . $statusOutput;
+    echo '<pre>';
+    echo "Rollback Output:\n".$rollbackOutput;
+    echo "\n\nMigration Status:\n".$statusOutput;
     echo "\n\nRollback executed successfully.";
-    echo "</pre>";
+    echo '</pre>';
 });
 
 Route::get('rollback', function () {
@@ -53,13 +53,12 @@ Route::get('rollback', function () {
     $statusOutput = Artisan::output();
 
     // Output both
-    echo "<pre>";
-    echo "Migration Rollback Output:\n" . $migrateOutput;
-    echo "\n\nMigration Status:\n" . $statusOutput;
+    echo '<pre>';
+    echo "Migration Rollback Output:\n".$migrateOutput;
+    echo "\n\nMigration Status:\n".$statusOutput;
     echo "\n\nAll migrations ran successfully.";
-    echo "</pre>";
+    echo '</pre>';
 });
-
 
 Route::get('/run-app-schedule', function () {
     // Run first command and capture output
@@ -71,8 +70,8 @@ Route::get('/run-app-schedule', function () {
     $output2 = Artisan::output();
 
     // Combine both outputs with headers and line breaks
-    $finalOutput = "✅ app:close-expired-listings Output:\n" . $output1;
-    $finalOutput .= "\n\n✅ offers:expire Output:\n" . $output2;
+    $finalOutput = "✅ app:close-expired-listings Output:\n".$output1;
+    $finalOutput .= "\n\n✅ offers:expire Output:\n".$output2;
 
     return nl2br($finalOutput);
 });
@@ -90,17 +89,15 @@ Route::get('seed-locations', function () {
     // dd('here');
     Artisan::call('db:seed', [
         // '--class' => 'PaymentMethodSeeder',
-        '--force' => true // Allows running in production
+        '--force' => true, // Allows running in production
     ]);
-
-
 
     $output = Artisan::output();
 
-    echo "<pre>";
-    echo "Seeding Output:\n" . $output;
+    echo '<pre>';
+    echo "Seeding Output:\n".$output;
     echo "\n\nLocations have been seeded successfully.";
-    echo "</pre>";
+    echo '</pre>';
 });
 
 Route::get('seed-categories', function () {
@@ -116,13 +113,13 @@ Route::get('seed-categories', function () {
         return response()->json([
             'status' => true,
             'message' => 'Seeder executed successfully.',
-            'output' => $output
+            'output' => $output,
         ]);
     } catch (\Exception $e) {
         return response()->json([
             'status' => false,
             'message' => 'Seeder failed to execute.',
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
         ], 500);
     }
 });
@@ -140,13 +137,13 @@ Route::get('seed-username', function () {
         return response()->json([
             'status' => true,
             'message' => 'Seeder of user name executed successfully.',
-            'output' => $output
+            'output' => $output,
         ]);
     } catch (\Exception $e) {
         return response()->json([
             'status' => false,
             'message' => 'Seeder of user name failed to execute.',
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
         ], 500);
     }
 });
@@ -163,18 +160,19 @@ Route::get('seed-admin', function () {
         return response()->json([
             'status' => true,
             'message' => 'Seeder of user name executed successfully.',
-            'output' => $output
+            'output' => $output,
         ]);
     } catch (\Exception $e) {
         return response()->json([
             'status' => false,
             'message' => 'Seeder of user name failed to execute.',
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
         ], 500);
     }
 });
 Route::get('seed-vehicle-makes', function () {
     Artisan::call('db:seed', ['--class' => 'VehicleMakeSeeder', '--force' => true]);
+
     return [
         'status' => true,
         'message' => 'Makes seeded.',
@@ -184,6 +182,7 @@ Route::get('seed-vehicle-makes', function () {
 
 Route::get('seed-vehicle-models', function () {
     Artisan::call('db:seed', ['--class' => 'VehicleModelSeeder', '--force' => true]);
+
     return [
         'status' => true,
         'message' => 'Models seeded.',
@@ -192,18 +191,18 @@ Route::get('seed-vehicle-models', function () {
 });
 
 Route::get('seed-vehicle-years', function () {
-    Artisan::call('db:seed', ['--class' => 'VehicleYearSeeder', '--force' => true]);
+    RunVehicleSeederJob::dispatch();
+
     return [
         'status' => true,
-        'message' => 'Years seeded.',
-        'total' => DB::table('vehicle_data')->whereNotNull('model')->whereNotNull('year')->count(),
+        'message' => 'VehicleYearSeeder job dispatched successfully! It will run in background.',
     ];
 });
 // 🚗 Seed Promotions
 Route::get('seed-promotions', function () {
     Artisan::call('db:seed', [
         '--class' => 'PromotionSeeder',
-        '--force' => true
+        '--force' => true,
     ]);
 
     return [
@@ -217,7 +216,7 @@ Route::get('seed-promotions', function () {
 Route::get('seed-instructions', function () {
     Artisan::call('db:seed', [
         '--class' => 'InstructionSeeder',
-        '--force' => true
+        '--force' => true,
     ]);
 
     return [
@@ -227,10 +226,10 @@ Route::get('seed-instructions', function () {
     ];
 });
 
-Route::get('/seed-regions', function(){
+Route::get('/seed-regions', function () {
     Artisan::call('db:seed', [
-        '--class'=> 'RegionsSeeder',
-        '--force' => true
+        '--class' => 'RegionsSeeder',
+        '--force' => true,
     ]);
 
     return [
