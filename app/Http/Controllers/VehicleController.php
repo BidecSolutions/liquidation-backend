@@ -14,7 +14,7 @@ class VehicleController extends Controller
         $year = $request->input('year');
         $query = Vehicle::select('make', 'model', 'year');
         if($make){
-            $query = $query->where('make', $make);
+            $query = $query->where('make', $make)->whereNotNull('model');
         }
         if($model){
             $query = $query->where('model', $model);
