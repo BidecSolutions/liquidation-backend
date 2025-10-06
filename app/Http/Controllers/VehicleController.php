@@ -22,11 +22,18 @@ class VehicleController extends Controller
         if($year){
             $query = $query->where('year', $model);
         }
+        $make = $query->pluck('make')->unique()->values();
+        $model = $query->pluck('model')->unique()->values();
+        $years = $query->pluck('year')->unique()->values();
         $VehicelMake =  $query->get();
         return response()->json([
             'status' => true,
             'message' => 'vehicle data successfully fetched',
-            'data' => $VehicelMake,
+            'data' => [
+                'make' => $make,
+                'model' => $model,
+                'years' => $years,
+            ],
         ]);
     }
 }
