@@ -18,18 +18,30 @@ class CategoryController extends Controller
             $offset = null;
             if ($request->input('name')) {
                 $keyword = $request->input('name');
-                $Category = Category::select('id', 'name', 'slug')->where(function ($q) use ($keyword) {
-                    $q->where('name', 'LIKE', "%{$keyword}");
-                });
+                $Category = Category::select('id', 'name', 'slug')
+                    ->where(function ($q) use ($keyword) {
+                        $q->where('name', 'LIKE', "%{$keyword}%");
+                    })
+                    ->get(); // ✅ execute query
 
-                return $Category;
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Categories filtered by name',
+                    'data' => $Category,
+                ]);
             }
+
             if ($request->input('id')) {
                 $id = $request->input('id');
-                $category = Category::where('id', $id)->get();
+                $category = Category::where('id', $id)->get(); // already executed
 
-                return $category;
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Category fetched by ID',
+                    'data' => $category,
+                ]);
             }
+
             $query = Category::with(['parent:id,name,slug,parent_id', 'listings' => function ($q) {
                 $q->withCount('views', 'watchers')->with('paymentMethod:id,name', 'shippingMethod:id,name', 'creator');
             }])->withCount('children as child_count', 'listings as listing_count');

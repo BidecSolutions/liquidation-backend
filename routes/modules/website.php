@@ -1,20 +1,19 @@
 <?php
 
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ContactMessageController;
+use App\Http\Controllers\Api\CountryController;
+use App\Http\Controllers\Api\GovernorateController;
+use App\Http\Controllers\Api\GuestController;
+use App\Http\Controllers\Api\InstructionController;
+use App\Http\Controllers\Api\ListingController;
+use App\Http\Controllers\Api\PaymentMethodController;
+use App\Http\Controllers\Api\PromotionController;
+use App\Http\Controllers\Api\RegionController;
+use App\Http\Controllers\Api\ShippingMethodController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\{
-    CategoryController,
-    PaymentMethodController,
-    ShippingMethodController,
-    ListingController,
-    ContactMessageController,
-    CountryController,
-    GovernorateController,
-    GuestController,
-    InstructionController,
-    PromotionController,
-    RegionController,
-    UserController,
-};
 
 // routes/api.php
 Route::get('guest-id', [GuestController::class, 'generate']);
@@ -57,6 +56,9 @@ Route::post('countries/list', [CountryController::class, 'list']);
 // ContactMessageController works
 Route::prefix('contact')->controller(ContactMessageController::class)->group(function () {
     Route::post('message', 'store');
+});
+Route::prefix('vehicle')->controller(VehicleController::class)->group(function () {
+    Route::post('/', 'list');
 });
 // Public routes for locations
 Route::get('regions', [RegionController::class, 'index']);
