@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class VehicleMakeSeeder extends Seeder
@@ -15,7 +15,9 @@ class VehicleMakeSeeder extends Seeder
         DB::table('vehicle_data')->truncate();
 
         // Step 2: Load JSON file
-        $json = Storage::get("vehicle/all_makes.json");
+        $url = 'https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json';
+        $response = Http::timeout(60)->get($url);
+        $json = $response->body();
         $data = json_decode($json, true);
 
         $makes = $data['Results'] ?? [];
@@ -24,48 +26,40 @@ class VehicleMakeSeeder extends Seeder
 
         // Allowed makes list (only these will be inserted)
         $allowedMakes = [
-            'Toyota',
-            'Hyundai',
-            'Kia',
-            'Nissan',
-            'Mazda',
-            'Ford',
-            'Isuzu',
-            'Suzuki',
-            'Changan',
-            'Geely',
-            'Lexus',
-            'Mercedes-Benz',
-            'BMW',
-            'Land Rover',
-            'Infiniti',
+            'toyota',
+            'hyundai',
+            'kia',
+            'nissan',
+            'mazda',
+            'ford',
+            'isuzu',
+            'suzuki',
+            'changan',
+            'geely',
+            'lexus',
+            'mercedes-benz',
+            'bmw',
+            'land rover',
+            'infiniti',
         ];
 
         // Step 3: Loop and insert only matching makes
-        foreach ($makes as $chunk) {
-            $insertData = [];
-            print($chunk);
-            foreach ($chunk as $make) {
-                $makeName = trim($make['Make_Name']);
+        foreach ($makes as $make) {
+            $makeName = trim($make['Make_Name']);
+            $normalized = strtolower($makeName);
 
-                if (in_array($makeName, $allowedMakes, true)) {
-                    $insertData[] = [
-                        'make'       => $makeName,
-                        'make_slug'  => Str::slug($makeName),
-                        'model'      => null,
-                        'year'       => null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                    $count++;
-                }
-            }
-
-            if (!empty($insertData)) {
-                DB::table('vehicle_data')->insertOrIgnore($insertData);
+            if (in_array($normalized, $allowedMakes, true)) {
+                DB::table('vehicle_data')->insertOrIgnore([
+                    'make' => $makeName,
+                    'make_slug' => Str::slug($makeName),
+                    'model' => null,
+                    'year' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $count++;
             }
         }
 
-        $this->command->info("✅ Inserted {$count} filtered makes from cached JSON.");
     }
 }

@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Category;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
@@ -17,9 +16,21 @@ class CategoryController extends Controller
             // initialize so meta always has values
             $limit = null;
             $offset = null;
+            if ($request->input('name')) {
+                $keyword = $request->input('name');
+                $Category = Category::select('id', 'name', 'slug')->where(function ($q) use ($keyword) {
+                    $q->where('name', 'LIKE', "%{$keyword}");
+                });
 
+                return $Category;
+            }
+            if ($request->input('id')) {
+                $id = $request->input('id');
+                $category = Category::where('id', $id)->get();
 
-            $query = Category::with(['parent:id,name,slug,parent_id','listings' => function($q) {
+                return $category;
+            }
+            $query = Category::with(['parent:id,name,slug,parent_id', 'listings' => function ($q) {
                 $q->withCount('views', 'watchers')->with('paymentMethod:id,name', 'shippingMethod:id,name', 'creator');
             }])->withCount('children as child_count', 'listings as listing_count');
 
@@ -42,15 +53,16 @@ class CategoryController extends Controller
 
             // apply offset & limit only when limit is provided
             if ($request->filled('limit')) {
-                $limit  = (int) $request->get('limit', 20);
+                $limit = (int) $request->get('limit', 20);
                 $offset = (int) $request->get('offset', 0);
                 $query->skip($offset)->take($limit);
             }
 
             $categories = $query->orderBy('name', 'asc')->get();
 
-            $categories->transform(function ($category){
+            $categories->transform(function ($category) {
                 $category->child = $category->child_count > 0;
+
                 return $category;
             });
 
@@ -59,20 +71,19 @@ class CategoryController extends Controller
                 'message' => 'Categories fetched successfully',
                 'data' => $categories,
                 'meta' => [
-                    'total'  => $total,
-                    'limit'  => $limit,
-                    'offset' => $offset
-                ]
+                    'total' => $total,
+                    'limit' => $limit,
+                    'offset' => $offset,
+                ],
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
-
 
     public function tree()
     {
@@ -85,16 +96,17 @@ class CategoryController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Category tree fetched successfully',
-                'data' => $categories
+                'data' => $categories,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
+
     public function all()
     {
         try {
@@ -105,13 +117,13 @@ class CategoryController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'All Category fetched successfully',
-                'data' => $categories
+                'data' => $categories,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -119,30 +131,29 @@ class CategoryController extends Controller
     public function show($slug)
     {
         try {
-            $category = Category::with('parent:id,name,slug,parent_id','listings')->where('slug', $slug)->first();
+            $category = Category::with('parent:id,name,slug,parent_id', 'listings')->where('slug', $slug)->first();
 
-            if (!$category) {
+            if (! $category) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Category not found',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
 
             return response()->json([
                 'status' => true,
                 'message' => 'Category fetched',
-                'data' => $category
+                'data' => $category,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
-
 
     public function store(Request $request)
     {
@@ -171,7 +182,7 @@ class CategoryController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Validation failed',
-                    'data' => $validator->errors()
+                    'data' => $validator->errors(),
                 ], 422);
             }
 
@@ -179,7 +190,7 @@ class CategoryController extends Controller
 
             if ($request->hasFile('image')) {
                 $path = 'categories/images';
-                if (!Storage::disk('public')->exists($path)) {
+                if (! Storage::disk('public')->exists($path)) {
                     Storage::disk('public')->makeDirectory($path, 0775, true);
                 }
                 $data['image_path'] = $request->file('image')->store($path, 'public');
@@ -188,7 +199,7 @@ class CategoryController extends Controller
 
             if ($request->hasFile('icon')) {
                 $path = 'categories/icons';
-                if (!Storage::disk('public')->exists($path)) {
+                if (! Storage::disk('public')->exists($path)) {
                     Storage::disk('public')->makeDirectory($path, 0775, true);
                 }
                 $data['icon'] = $request->file('icon')->store($path, 'public');
@@ -202,34 +213,33 @@ class CategoryController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Category created successfully',
-                'data' => $category
+                'data' => $category,
             ], 201);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
-
 
     public function update(Request $request, $id)
     {
         try {
             $category = Category::find($id);
 
-            if (!$category) {
+            if (! $category) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Category not found',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
 
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'slug' => 'required|string|max:255|unique:categories,slug,' . $id,
+                'slug' => 'required|string|max:255|unique:categories,slug,'.$id,
                 'description' => 'nullable|string',
                 'category_type' => 'sometimes|required|string|max:255',
                 'parent_id' => 'nullable|exists:categories,id',
@@ -251,7 +261,7 @@ class CategoryController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Validation failed',
-                    'data' => $validator->errors()
+                    'data' => $validator->errors(),
                 ], 422);
             }
 
@@ -286,32 +296,31 @@ class CategoryController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Category updated successfully',
-                'data' => $category
+                'data' => $category,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
-
 
     public function toggleStatus($id)
     {
         try {
             $category = Category::find($id);
 
-            if (!$category) {
+            if (! $category) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Category not found',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
 
-            $category->status = !$category->status;
+            $category->status = ! $category->status;
             $category->save();
 
             return response()->json([
@@ -319,14 +328,14 @@ class CategoryController extends Controller
                 'message' => 'Category status updated',
                 'data' => [
                     'id' => $category->id,
-                    'status' => $category->status
-                ]
+                    'status' => $category->status,
+                ],
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -336,11 +345,11 @@ class CategoryController extends Controller
         try {
             $category = Category::find($id);
 
-            if (!$category) {
+            if (! $category) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Category not found',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
 
@@ -357,13 +366,13 @@ class CategoryController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Category deleted successfully',
-                'data' => null
+                'data' => null,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
