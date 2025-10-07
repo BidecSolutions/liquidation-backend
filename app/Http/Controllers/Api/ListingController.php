@@ -438,7 +438,8 @@ class ListingController extends Controller
                 'paymentMethod:id,name',
                 'shippingMethod:id,name'
             ])->withCount('views', 'watchers', 'bids')
-            ->where('listing_type', $request->listing_type); // ✅ Only listings with the requested type
+            ->where('listing_type', $request->listing_type) 
+            ->where('is_active', true); 
 
         // ✅ Filter by category_id
         $categoryTree = null;
