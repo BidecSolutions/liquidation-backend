@@ -78,11 +78,22 @@ public function userSummary($userId)
     $neutral  = $feedbacks->where('rating', 3)->count();
     $negative = $feedbacks->whereIn('rating', [1, 2])->count();
 
-    //Get all listings for this user
+    // Get all listings for this user
     $allListings = $user->listings()
-        ->with('category', 'views')
+        // ->with('category', 'views')
         ->latest()
-        ->get();
+        ->get()
+        ->map(function ($listing) {
+            return [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'price' => $listing->price,
+                'status' => $listing->status,
+                'views_count' => $listing->views()->count(),
+                'category' => $listing->category->name ?? null,
+                'created_at' => $listing->created_at->format('Y-m-d'),
+            ];
+        });
 
     //Build and return full summary response
     return response()->json([
@@ -275,6 +286,5 @@ public function userSummary($userId)
             ], 500);
         }
     }
-}
 
-//tetsing workflow
+}
