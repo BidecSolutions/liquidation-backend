@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\RegionController;
 use App\Http\Controllers\Api\ShippingMethodController;
+use App\Http\Controllers\Api\UserAuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
@@ -65,3 +66,7 @@ Route::get('regions', [RegionController::class, 'index']);
 Route::get('governorates', [GovernorateController::class, 'index']);
 Route::get('regions/{region}', [RegionController::class, 'show']);
 Route::get('governorates/{governorate}', [GovernorateController::class, 'show']);
+
+//forgot password routes 
+Route::post('/forgot-password', [UserAuthController::class,'sendResetLinkEmail']);
+Route::post('/reset-password', [UserAuthController::class,'resetPassword']);
