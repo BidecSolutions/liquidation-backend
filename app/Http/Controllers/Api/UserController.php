@@ -78,6 +78,9 @@ class UserController extends Controller
         $neutral  = $feedbacks->where('rating', 3)->count();
         $negative = $feedbacks->whereIn('rating', [1, 2])->count();
 
+        // Get all listings 
+    $allListings = $user->listings()->with('category', 'views')->latest()->get()->map(function ($listing) {
+
         return response()->json([
             'status' => true,
             'data' => [
@@ -97,6 +100,7 @@ class UserController extends Controller
                     'active' => $activeListings,
                     'sold' => $soldListings,
                     'view_count' => $totalViews,
+                    'all' => $allListings,
                 ],
                 'watchlist' => [
                     'count' => $watchlistCount,
