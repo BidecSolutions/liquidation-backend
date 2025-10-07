@@ -82,19 +82,7 @@ public function userSummary($userId)
     $allListings = $user->listings()
         // ->with('category', 'views')
         ->latest()
-        ->get()
-        ->map(function ($listing) {
-            return [
-                'id' => $listing->id,
-                'title' => $listing->title,
-                'price' => $listing->price,
-                'status' => $listing->status,
-                'views_count' => $listing->views()->count(),
-                'category' => $listing->category->name ?? null,
-                'created_at' => $listing->created_at->format('Y-m-d'),
-            ];
-        });
-
+        ->get();
     //Build and return full summary response
     return response()->json([
         'success' => true,
