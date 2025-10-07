@@ -154,7 +154,7 @@ class ListingController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes','paymentMethod:id,name','shippingMethod:id,name'])->withCount('views');
+            $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes', 'paymentMethod:id,name', 'shippingMethod:id,name'])->withCount('views');
 
             // 🔒 Filter by creator if authenticated (user guard)
             $authUserId = auth('api')->check() ? auth('api')->id() : null;
@@ -251,14 +251,14 @@ class ListingController extends Controller
                 // 💼 Offers made by user
                 $listing->buying_offers = $authUserId
                     ? ListingOffer::with(['user'])->where('listing_id', $listing->id)
-                    ->where('user_id', $authUserId)
-                    ->get()
+                        ->where('user_id', $authUserId)
+                        ->get()
                     : collect();
 
                 // 🧾 Offers received by the user (as seller)
                 $listing->selling_offers = $authUserId && $listing->created_by == $authUserId
                     ? ListingOffer::with(['user'])->where('listing_id', $listing->id)
-                    ->get()
+                        ->get()
                     : collect();
             });
 
@@ -438,9 +438,9 @@ class ListingController extends Controller
                 'paymentMethod:id,name',
                 'shippingMethod:id,name'
             ])->withCount('views', 'watchers', 'bids')
-            ->where('listing_type', $request->listing_type) 
-            ->where('is_active', true); 
-
+            ->where('listing_type', $request->listing_type) // ✅ Only listings with the requested type
+            ->where('status', 1)
+            ->where('is_active', 1);
         // ✅ Filter by category_id
         $categoryTree = null;
         if ($request->filled('category_id')) {
@@ -574,13 +574,13 @@ class ListingController extends Controller
                 // Guest user
                 $history = SearchHistory::firstOrNew([
                     'guest_id' => $guestId,
-                    'keyword'  => strtolower(trim($keyword)),
+                    'keyword' => strtolower(trim($keyword)),
                 ]);
 
                 $history->count = ($history->exists ? $history->count + 1 : 1);
-                $history->category_id   = $request->input('category_id', null);
+                $history->category_id = $request->input('category_id', null);
                 $history->category_path = $categoryPath ?? null;
-                $history->filters       = !empty($filters) ? json_encode($filters) : null;
+                $history->filters = !empty($filters) ? json_encode($filters) : null;
                 $history->guest_id = $guestId;
 
                 $history->save();
@@ -648,7 +648,7 @@ class ListingController extends Controller
         $offset = $request->input('offset');
 
         if ($limit !== null && $offset !== null) {
-            $results = $query->limit((int)$limit)->offset((int)$offset)->get();
+            $results = $query->limit((int) $limit)->offset((int) $offset)->get();
         } else {
             $results = $query->get(); // return all if no limit/offset
         }
@@ -972,7 +972,9 @@ class ListingController extends Controller
 
         return $categoryIds;
     }
-    public function recentViewedListings() {}
+    public function recentViewedListings()
+    {
+    }
     public function store(Request $request)
     {
         try {
