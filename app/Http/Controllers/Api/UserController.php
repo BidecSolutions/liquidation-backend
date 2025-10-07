@@ -53,6 +53,7 @@ class UserController extends Controller
     }
     public function userSummary($userId)
     {
+        return 0;
         $user = User::with(['listings', 'watchlist', 'feedbacks'])->find($userId);
 
         if (!$user) {
