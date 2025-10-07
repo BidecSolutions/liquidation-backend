@@ -121,7 +121,7 @@ class UserController extends Controller
                     }),
                 ],
                 'recent_activity' => [
-                    'last_search' => $user->u()->latest()->first()?->keyword ?? null,
+                    'last_search' => $user->searches()->latest()->first()?->keyword ?? null,
                     'last_viewed_listing' => $user->listings()->with('views')->latest()->first()?->title ?? null,
                 ]
             ]
