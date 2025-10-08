@@ -133,6 +133,7 @@ class ListingController extends Controller
         // 3. Build recommended listings query
         $recommendations = Listing::with(['images', 'category', 'creator'])
             ->withCount('views', 'watchers as watch_count', 'bids')
+            ->where('expire_at', '>=', now())
             ->where('status', 1)
             ->when(count($keywords), function ($q) use ($keywords) {
                 $q->where(function ($q) use ($keywords) {
@@ -440,7 +441,8 @@ class ListingController extends Controller
             ])->withCount('views', 'watchers', 'bids')
             ->where('listing_type', $request->listing_type) // ✅ Only listings with the requested type
             ->where('status', 1)
-            ->where('is_active', 1);
+            ->where('is_active', 1)
+            ->where('expire_at', '>=', now());
         // ✅ Filter by category_id
         $categoryTree = null;
         if ($request->filled('category_id')) {
