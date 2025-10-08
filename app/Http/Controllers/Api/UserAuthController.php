@@ -29,7 +29,7 @@ class UserAuthController extends Controller
                 'email' => [
                     'required',
                     'string',
-                    Rule::unique('users', 'email')->where(function($query){
+                    Rule::unique('users', 'email')->where(function ($query) {
                         $query->where('status', '!=', 3);
                     }),
                 ],
@@ -60,16 +60,16 @@ class UserAuthController extends Controller
             $existingUser = User::where('email', $request->email)->first();
             if ($existingUser && $existingUser->status == 3) { // 3 = Deleted
                 return response()->json([
-                    'success'          => false,
+                    'success' => false,
                     'restore_possible' => true, // Flag for frontend to show restore option
-                    'message'          => 'An account with this email was previously deleted. Would you like to restore it?',
+                    'message' => 'An account with this email was previously deleted. Would you like to restore it?',
                 ], 409);
             }
 
 
 
             $memberId = $this->generateMemberId();
-            $customerNumber = 'CN'.strtoupper(uniqid());
+            $customerNumber = 'CN' . strtoupper(uniqid());
             $user_code = $this->generateUniqueCode();
             while (User::where('user_code', $user_code)->exists()) {
                 $user_code = $this->generateUniqueCode();
@@ -152,7 +152,7 @@ class UserAuthController extends Controller
             // Generate and save a new verification code
             $code = (string) random_int(100000, 999999);
             $user->forceFill([
-                'verification_code'       => $code,
+                'verification_code' => $code,
                 'verification_expires_at' => now()->addMinutes(30),
             ])->save();
 
@@ -170,7 +170,7 @@ class UserAuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send restoration code.',
-                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+                'error' => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -182,7 +182,7 @@ class UserAuthController extends Controller
     {
         try {
             $request->validate([
-                'email'             => 'required|email',
+                'email' => 'required|email',
                 'verification_code' => 'required|digits:6',
             ]);
 
@@ -208,8 +208,8 @@ class UserAuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Your account has been restored successfully.',
-                'data'    => $user,
-                'token'   => $token,
+                'data' => $user,
+                'token' => $token,
             ]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'An error occurred during account restoration.'], 500);
@@ -225,7 +225,7 @@ class UserAuthController extends Controller
 
             $user = User::where('email', $request->email)->first();
 
-            if (! $user) {
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Email not registered',
@@ -278,7 +278,7 @@ class UserAuthController extends Controller
 
             $user = User::where('email', $request->email)->first();
 
-            if (! $user) {
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You are not registered yet',
@@ -427,13 +427,13 @@ class UserAuthController extends Controller
                 // Generate up to 5 unique suggestions
                 while (count($suggestions) < 5 && $attempts < 20) {
                     $attempts++;
-                    $newUsername = $username.rand(100, 999);
+                    $newUsername = $username . rand(100, 999);
 
                     if (rand(0, 1)) {
                         $newUsername .= chr(rand(97, 122)); // random lowercase letter
                     }
 
-                    if (! \App\Models\User::where('username', $newUsername)->exists()) {
+                    if (!\App\Models\User::where('username', $newUsername)->exists()) {
                         $suggestions[] = $newUsername;
                     }
                 }
@@ -485,7 +485,7 @@ class UserAuthController extends Controller
                 'first_name' => 'nullable|string|max:100',
                 'last_name' => 'nullable|string|max:100',
                 'name' => 'nullable|string|max:255',
-                'email' => 'nullable|email|unique:users,email,'.$user->id,
+                'email' => 'nullable|email|unique:users,email,' . $user->id,
                 'phone' => 'nullable|string|max:20',
                 'landline' => 'nullable|string|max:20',
                 'gender' => 'nullable|in:male,female,other',
@@ -597,14 +597,14 @@ class UserAuthController extends Controller
             ]);
 
             $user = $request->user();
-            if (! $user) {
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthenticated user',
                 ], 401);
             }
 
-            if (! Hash::check($request->password, $user->password)) {
+            if (!Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Incorrect password',
@@ -646,7 +646,7 @@ class UserAuthController extends Controller
                 'password' => 'required',
             ]);
 
-            if (! Hash::check($request->password, $request->user()->password)) {
+            if (!Hash::check($request->password, $request->user()->password)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Incorrect password',
@@ -689,7 +689,7 @@ class UserAuthController extends Controller
         ]);
         $user = $request->user();
 
-        if (! Hash::check($request->current_password, $user->password)) {
+        if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Current password is incorrect',
@@ -785,7 +785,7 @@ class UserAuthController extends Controller
         $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $user = User::where($fieldtype, $request->email)->first();
-        if (! $user) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User not found',
@@ -852,7 +852,7 @@ class UserAuthController extends Controller
                 ], 400);
             }
         }
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
@@ -892,7 +892,7 @@ class UserAuthController extends Controller
 
         $user = User::where($fieldtype, $request->email)->first();
 
-        if (! $user) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User not found',
@@ -949,12 +949,44 @@ class UserAuthController extends Controller
     // User profile
     public function profile(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Successfully Fetched',
-            'data' => $request->user(),
-        ], 200);
+        try {
+            $user = $request->user()->load('feedbacks');
+
+            $feedbacks = $user->feedbacks;
+
+            // Feedback Summary Calculations
+            $total = $feedbacks->count();
+            $averageRating = $total > 0 ? round($feedbacks->avg('rating'), 2) : 0;
+            $positive = $feedbacks->whereIn('rating', [4, 5])->count();
+            $neutral = $feedbacks->where('rating', 3)->count();
+            $negative = $feedbacks->whereIn('rating', [1, 2])->count();
+
+            $summary = [
+                'total_feedback' => $total,
+                'average_rating' => $averageRating,
+                'positive_percent' => $total > 0 ? round(($positive / $total) * 100, 1) : 0,
+                'neutral_percent' => $total > 0 ? round(($neutral / $total) * 100, 1) : 0,
+                'negative_percent' => $total > 0 ? round(($negative / $total) * 100, 1) : 0,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile fetched successfully.',
+                'data' => [
+                    'user' => $user,
+                    'feedback_summary' => $summary,
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch profile.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
+
 
     // Upload profile photo
     public function uploadProfilePhoto(Request $request)
@@ -986,7 +1018,7 @@ class UserAuthController extends Controller
             return response()->json(
                 [
                     'success' => false,
-                    'message' => 'Something went wrong: '.$e->getMessage(),
+                    'message' => 'Something went wrong: ' . $e->getMessage(),
                 ],
                 500
             );
@@ -1026,7 +1058,7 @@ class UserAuthController extends Controller
             return response()->json(
                 [
                     'success' => false,
-                    'message' => 'Something went wrong: '.$e->getMessage(),
+                    'message' => 'Something went wrong: ' . $e->getMessage(),
                 ],
                 500
             );
@@ -1056,7 +1088,7 @@ class UserAuthController extends Controller
         }
 
         // Add dash in the middle (after 4 chars)
-        return substr($randomString, 0, 4).substr($randomString, 4, 4);
+        return substr($randomString, 0, 4) . substr($randomString, 4, 4);
     }
 
     private function generateMemberId()
