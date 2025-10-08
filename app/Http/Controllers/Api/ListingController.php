@@ -30,6 +30,7 @@ class ListingController extends Controller
             ->withCount('bids')
             ->whereNotNull('start_price') // has an end time
             ->where('start_price', '>', 0)
+            ->where('expire_at', '>=', now())
             ->has('bids')
             ->orderByDesc('bids_count')
             ->limit($limit)
@@ -49,6 +50,7 @@ class ListingController extends Controller
     {
         $query = Listing::with(['category', 'creator', 'images'])
             ->withCount(['views', 'watchers'])
+            ->where('expire_at', '>=', now())
             ->orderByDesc('views_count')
             ->orderByDesc('watchers_count')
             ->limit($limit)
@@ -81,6 +83,7 @@ class ListingController extends Controller
     {
         $listings = Listing::with(['category', 'creator', 'images'])
             ->where('is_featured', 1)
+            ->where('expire_at', '>=', now())
             ->limit($limit)
             ->offset($offset)
             ->get();
