@@ -51,82 +51,90 @@ class UserController extends Controller
             ], 500);
         }
     }
-    public function userSummary($userId)
-    {
-        $user = User::with(['listings', 'watchlist', 'feedbacks'])->find($userId);
+public function userSummary($userId)
+{
+    $user = User::with(['listings.category', 'listings.views', 'watchlist', 'feedbacks'])->find($userId);
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => "User not found",
-            ], 404);
-        }
-
-        // Listings stats
-        $totalListings = $user->listings()->count();
-        $activeListings = $user->listings()->where('status', 1)->count();
-        $soldListings = $user->listings()->whereNotNull('sold_at')->count();
-        $totalViews = $user->listings()->withCount('views')->get()->sum('views_count');
-
-        // Watchlist
-        $watchlistCount = $user->watchlist()->count();
-
-        // Feedback summary
-        $feedbacks = UserFeedback::where('reviewed_user_id', $user->id)->get();
-        $totalFeedback = $feedbacks->count();
-        $positive = $feedbacks->whereIn('rating', [4, 5])->count();
-        $neutral  = $feedbacks->where('rating', 3)->count();
-        $negative = $feedbacks->whereIn('rating', [1, 2])->count();
-
+    if (!$user) {
         return response()->json([
-            'status' => true,
-            'data' => [
-                'personal' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'username' => $user->username,
-                    'email' => $user->email,
-                    'profile_photo' => $user->profile_photo,
-                    'about_me' => $user->about_me,
-                    'member_number' => $user->memberId,
-                    'member_since' => $user->created_at->format('Y-m-d'),
-                    'last_login' => $user->last_login_at,
-                ],
-                'listings' => [
-                    'total' => $totalListings,
-                    'active' => $activeListings,
-                    'sold' => $soldListings,
-                    'view_count' => $totalViews,
-                ],
-                'watchlist' => [
-                    'count' => $watchlistCount,
-                ],
-                'feedback' => [
-                    'total' => $totalFeedback,
-                    'positive' => $positive,
-                    'neutral' => $neutral,
-                    'negative' => $negative,
-                    'recent' => $feedbacks->take(5)->map(function ($fb) {
-                        return [
-                            'rating' => $fb->rating,
-                            'review' => $fb->feedback_text,
-                            'type'   => $fb->feedback_type,
-                            'date'   => $fb->created_at->format('Y-m-d'),
-                            'reviewer' => [
-                                'id' => $fb->reviewer->id,
-                                'name' => $fb->reviewer->name,
-                                'username' => $fb->reviewer->username,
-                            ],
-                        ];
-                    }),
-                ],
-                'recent_activity' => [
-                    'last_search' => $user->u()->latest()->first()?->keyword ?? null,
-                    'last_viewed_listing' => $user->listings()->with('views')->latest()->first()?->title ?? null,
-                ]
-            ]
-        ]);
+            'success' => false,
+            'message' => "User not found",
+        ], 404);
     }
+
+    // Listings stats
+    $totalListings = $user->listings()->count();
+    $activeListings = $user->listings()->where('status', 1)->count();
+    $soldListings = $user->listings()->whereNotNull('sold_at')->count();
+    $totalViews = $user->listings()->withCount('views')->get()->sum('views_count');
+
+    // Watchlist
+    $watchlistCount = $user->watchlist()->count();
+
+    // Feedback summary
+    $feedbacks = UserFeedback::where('reviewed_user_id', $user->id)->with('reviewer')->get();
+    $totalFeedback = $feedbacks->count();
+    $positive = $feedbacks->whereIn('rating', [4, 5])->count();
+    $neutral  = $feedbacks->where('rating', 3)->count();
+    $negative = $feedbacks->whereIn('rating', [1, 2])->count();
+
+    // Get all listings for this user
+    $allListings = $user->listings()
+        // ->with('category', 'views')
+        ->latest()
+        ->get();
+    //Build and return full summary response
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'personal' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'profile_photo' => $user->profile_photo,
+                'about_me' => $user->about_me,
+                'member_number' => $user->memberId,
+                'member_since' => $user->created_at->format('Y-m-d'),
+                'last_login' => $user->last_login_at,
+            ],
+            'listings' => [
+                'total' => $totalListings,
+                'active' => $activeListings,
+                'sold' => $soldListings,
+                'view_count' => $totalViews,
+                'all' => $allListings, //Added full listing data
+            ],
+            'watchlist' => [
+                'count' => $watchlistCount,
+            ],
+            'feedback' => [
+                'total' => $totalFeedback,
+                'positive' => $positive,
+                'neutral' => $neutral,
+                'negative' => $negative,
+                'recent' => $feedbacks->take(5)->map(function ($fb) {
+                    return [
+                        'rating' => $fb->rating,
+                        'review' => $fb->feedback_text,
+                        'type'   => $fb->feedback_type,
+                        'date'   => $fb->created_at->format('Y-m-d'),
+                        'reviewer' => [
+                            'id' => $fb->reviewer->id,
+                            'name' => $fb->reviewer->name,
+                            'username' => $fb->reviewer->username,
+                        ],
+                    ];
+                }),
+            ],
+            'recent_activity' => [
+                'last_search' => $user->searches()->latest()->first()?->keyword ?? null,
+                'last_viewed_listing' => $user->listings()->with('views')->latest()->first()?->title ?? null,
+            ],
+        ],
+    ], 200);
+}
+
 
     public function store(Request $request)
     {

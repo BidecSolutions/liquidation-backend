@@ -204,4 +204,9 @@ class User extends Authenticatable
     {
         $this->notify(new ResetPasswordNotification($token));
     }
+
+    public function searches()
+    {
+        return $this->hasMany(SearchHistory::class);
+    }
 }
