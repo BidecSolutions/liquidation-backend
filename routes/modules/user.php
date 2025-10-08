@@ -35,6 +35,8 @@ Route::prefix('user')->group(function () {
         Route::post('/username-check', 'checkUsername');
         Route::post('/email-verification', 'emailVerification');
         Route::post('/resend-otp', 'resendOtp');
+        Route::post('/request-restore-token', 'requestRestoreToken');
+        Route::post('/verify-and-restore', 'verifyAndRestore');
     });
 
     Route::middleware('auth:api')->group(function () {

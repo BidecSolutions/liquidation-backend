@@ -53,9 +53,10 @@ class UserAuthController extends Controller
             $existingUser = User::where('email', $request->email)->first();
             if ($existingUser && $existingUser->status == 3) { // 3 = Deleted
                 return response()->json([
-                    'success' => false,
-                    'message' => 'An account with this email was deleted. Please contact support to restore it.',
-                ], 409); // 409 Conflict is appropriate here
+                    'success'          => false,
+                    'restore_possible' => true, // Flag for frontend to show restore option
+                    'message'          => 'An account with this email was previously deleted. Would you like to restore it?',
+                ], 409);
             }
 
 
@@ -120,6 +121,91 @@ class UserAuthController extends Controller
                 'message' => 'Registration failed',
                 'error' => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
             ], 500);
+        }
+    }
+
+    /**
+     * Sends a verification token to a user to initiate account restoration.
+     */
+    public function requestRestoreToken(Request $request)
+    {
+        try {
+            $request->validate(['email' => 'required|email']);
+
+            $user = User::where('email', $request->email)->first();
+
+            // Ensure user exists and is marked as deleted
+            if (!$user || $user->status !== 3) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No deleted account found for this email.',
+                ], 404);
+            }
+
+            // Generate and save a new verification code
+            $code = (string) random_int(100000, 999999);
+            $user->forceFill([
+                'verification_code'       => $code,
+                'verification_expires_at' => now()->addMinutes(30),
+            ])->save();
+
+            // Send the restoration code via email
+            Mail::send('emails.restoringAccount', ['user' => $user, 'code' => $code, 'is_restore' => true], function ($message) use ($user) {
+                $message->to($user->email)->subject('Your Account Restoration Code');
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'A restoration code has been sent to your email.',
+            ]);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send restoration code.',
+                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Verifies the restoration token, restores the account, and logs the user in.
+     */
+    public function verifyAndRestore(Request $request)
+    {
+        try {
+            $request->validate([
+                'email'             => 'required|email',
+                'verification_code' => 'required|digits:6',
+            ]);
+
+            $user = User::where('email', $request->email)->where('status', 3)->first();
+
+            if (!$user || !$user->verification_code || $user->verification_code !== $request->verification_code) {
+                return response()->json(['success' => false, 'message' => 'Invalid verification code.'], 400);
+            }
+
+            if (now()->isAfter($user->verification_expires_at)) {
+                return response()->json(['success' => false, 'message' => 'Verification code has expired.'], 400);
+            }
+
+            // Restore user
+            $user->status = 1; // Set to active
+            $user->verification_code = null;
+            $user->verification_expires_at = null;
+            $user->save();
+
+            // Log the user in by creating a new token
+            $token = $user->createToken('user-token-restored')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Your account has been restored successfully.',
+                'data'    => $user,
+                'token'   => $token,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'An error occurred during account restoration.'], 500);
         }
     }
 
