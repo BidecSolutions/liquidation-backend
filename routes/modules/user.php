@@ -51,6 +51,7 @@ Route::prefix('user')->group(function () {
             Route::post('/change-email', 'updateEmail');
             Route::post('/update-name', 'updateName');
             Route::post('/profile-update', 'updateProfileDetails');
+            Route::delete('/delete', 'deleteAccount');
             // Route::post('/forgot-password', 'sendResetLinkEmail');
             // Route::post('/reset-password', 'resetPassword');
             

@@ -5,17 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ListingView;
 use App\Models\SearchHistory;
+use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
-use App\Models\User;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
-
-
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class UserAuthController extends Controller
 {
@@ -24,60 +22,77 @@ class UserAuthController extends Controller
     {
         try {
             $request->validate([
-                'name'           => 'required|string',
-                'username'       => 'nullable|string|unique:users,username',
-                'first_name'     => 'required|string',
-                'last_name'      => 'required|string',
-                'email'          => 'required|email|unique:users,email',
-                'password'       => 'required|string|min:6',
-                'city'           => 'nullable|string|max:20',
-                'state'          => 'nullable|string|max:20',
-                'country'        => 'nullable|string|max:20',
-                'country_id'        => 'nullable|string|max:20|exists:country,id',
-                'regions_id'        => 'nullable|string|max:20|exists:regions,id',
-                'governorates_id'        => 'nullable|string|max:20|exists:governorates,id',
-                'city_id'        => 'nullable|string|max:20|exists:cities,id',
-                'phone'          => 'nullable|string|max:20',
-                'gender'         => 'nullable|string',
-                'date_of_birth'  => 'nullable|date',
+                'name' => 'required|string',
+                'username' => 'nullable|string|unique:users,username',
+                'first_name' => 'required|string',
+                'last_name' => 'required|string',
+                'email' => [
+                    'required',
+                    'string',
+                    Rule::unique('users', 'email')->where(function($query){
+                        $query->where('status', '!=', 3);
+                    }),
+                ],
+                'password' => 'required|string|min:6',
+                'city' => 'nullable|string|max:20',
+                'state' => 'nullable|string|max:20',
+                'country' => 'nullable|string|max:20',
+                'country_id' => 'nullable|string|max:20|exists:country,id',
+                'regions_id' => 'nullable|string|max:20|exists:regions,id',
+                'governorates_id' => 'nullable|string|max:20|exists:governorates,id',
+                'city_id' => 'nullable|string|max:20|exists:cities,id',
+                'phone' => 'nullable|string|max:20',
+                'gender' => 'nullable|string',
+                'date_of_birth' => 'nullable|date',
                 'billing_address' => 'nullable|string|max:500',
                 'customer_number' => 'nullable|string|max:50',
-                'account_type'  =>  'nullable|in:business,personal',
+                'account_type' => 'nullable|in:business,personal',
             ]);
 
-            $memberId      = $this->generateMemberId();
-            $customerNumber = 'CN' . strtoupper(uniqid());
-            $user_code     = $this->generateUniqueCode();
+            // Check if a deleted user with this email exists
+            $existingUser = User::where('email', $request->email)->first();
+            if ($existingUser && $existingUser->status == 3) { // 3 = Deleted
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An account with this email was deleted. Please contact support to restore it.',
+                ], 409); // 409 Conflict is appropriate here
+            }
+
+
+
+            $memberId = $this->generateMemberId();
+            $customerNumber = 'CN'.strtoupper(uniqid());
+            $user_code = $this->generateUniqueCode();
             while (User::where('user_code', $user_code)->exists()) {
                 $user_code = $this->generateUniqueCode();
             }
 
             // Better RNG for codes
-            $code       = (string) random_int(100000, 999999);
+            $code = (string) random_int(100000, 999999);
             $expiration = now()->addMinutes(30);
 
             $user = User::create([
-                'name'                     => $request->name,
-                'user_code'                => $user_code,
-                'memberId'                 => $memberId,
-                'username'                 => $request->username,
-                'first_name'               => $request->first_name,
-                'last_name'                => $request->last_name,
-                'email'                    => $request->email,
-                'password'                 => Hash::make($request->password),
-                'city'                     => $request->city,
-                'state'                    => $request->state,
-                'country'                  => $request->country,
-                'phone'                    => $request->phone,
-                'gender'                   => $request->gender,
-                'date_of_birth'            => $request->date_of_birth,
-                'billing_address'          => $request->billing_address,
-                'customer_number'          => $customerNumber,
-                'account_type'            => $request->account_type ?? 'personal',
+                'name' => $request->name,
+                'user_code' => $user_code,
+                'memberId' => $memberId,
+                'username' => $request->username,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'city' => $request->city,
+                'state' => $request->state,
+                'country' => $request->country,
+                'phone' => $request->phone,
+                'gender' => $request->gender,
+                'date_of_birth' => $request->date_of_birth,
+                'billing_address' => $request->billing_address,
+                'customer_number' => $customerNumber,
+                'account_type' => $request->account_type ?? 'personal',
                 // verification
-                'verification_code'        => $code,
-                'verification_expires_at'  => $expiration,
-                'is_verified'              => false,
+                'verification_code' => $code,
+                'verification_expires_at' => $expiration,
+                'is_verified' => false,
             ]);
 
             Mail::send('emails.verification', ['user' => $user, 'code' => $code], function ($message) use ($user) {
@@ -97,16 +112,17 @@ class UserAuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Successfully Registered',
-                'email'   => $user->email,
+                'email' => $user->email,
             ], 200);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Registration failed',
-                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+                'error' => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
             ], 500);
         }
     }
+
     public function resendOtp(Request $request)
     {
         try {
@@ -116,7 +132,7 @@ class UserAuthController extends Controller
 
             $user = User::where('email', $request->email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Email not registered',
@@ -136,8 +152,8 @@ class UserAuthController extends Controller
 
             // Update user with new verification code
             $user->forceFill([
-                'verification_code'        => $code,
-                'verification_expires_at'  => $expiration,
+                'verification_code' => $code,
+                'verification_expires_at' => $expiration,
             ])->save();
 
             // Send OTP email
@@ -154,10 +170,11 @@ class UserAuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to resend OTP',
-                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+                'error' => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
             ], 500);
         }
     }
+
     public function emailVerification(Request $request)
     {
         try {
@@ -168,7 +185,7 @@ class UserAuthController extends Controller
 
             $user = User::where('email', $request->email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You are not registered yet',
@@ -208,10 +225,10 @@ class UserAuthController extends Controller
 
             // Mark verified
             $user->forceFill([
-                'verification_code'       => null,
+                'verification_code' => null,
                 'verification_expires_at' => null,
-                'is_verified'             => true,
-                'last_login_at'             => now(),
+                'is_verified' => true,
+                'last_login_at' => now(),
             ])->save();
 
             $token = $user->createToken('user-token')->plainTextToken;
@@ -219,14 +236,14 @@ class UserAuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Your email is verified successfully',
-                'data'    => $user,
-                'token'   => $token,
+                'data' => $user,
+                'token' => $token,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong during verification',
-                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+                'error' => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
             ], 400);
         }
     }
@@ -242,7 +259,7 @@ class UserAuthController extends Controller
     //     $user = auth()->user();
     //     if($user->account_type === 'business'){
     //         return resposne()->json([
-    //             'success' => false, 
+    //             'success' => false,
     //             'message' => 'Your account is already a business account',
     //             'user'    => $user
     //         ]);
@@ -262,7 +279,6 @@ class UserAuthController extends Controller
     //         'user' => $user
     //     ]);
     // }
-
 
     // Update user info
     // public function update(Request $request, $id)
@@ -297,19 +313,19 @@ class UserAuthController extends Controller
     //         ], 500);
     //     }
     // }
-    //Edit contact details
-    //username check
+    // Edit contact details
+    // username check
     public function checkUsername(Request $request)
     {
         $request->validate([
             'username' => 'nullable|string',
-            'email'    => 'nullable|email',
+            'email' => 'nullable|email',
         ]);
 
         // If username is provided
         if ($request->filled('username')) {
             $username = $request->username;
-            $exists   = \App\Models\User::where('username', $username)->exists();
+            $exists = \App\Models\User::where('username', $username)->exists();
 
             if ($exists) {
                 $suggestions = [];
@@ -318,13 +334,13 @@ class UserAuthController extends Controller
                 // Generate up to 5 unique suggestions
                 while (count($suggestions) < 5 && $attempts < 20) {
                     $attempts++;
-                    $newUsername = $username . rand(100, 999);
+                    $newUsername = $username.rand(100, 999);
 
                     if (rand(0, 1)) {
                         $newUsername .= chr(rand(97, 122)); // random lowercase letter
                     }
 
-                    if (!\App\Models\User::where('username', $newUsername)->exists()) {
+                    if (! \App\Models\User::where('username', $newUsername)->exists()) {
                         $suggestions[] = $newUsername;
                     }
                 }
@@ -376,7 +392,7 @@ class UserAuthController extends Controller
                 'first_name' => 'nullable|string|max:100',
                 'last_name' => 'nullable|string|max:100',
                 'name' => 'nullable|string|max:255',
-                'email' => 'nullable|email|unique:users,email,' . $user->id,
+                'email' => 'nullable|email|unique:users,email,'.$user->id,
                 'phone' => 'nullable|string|max:20',
                 'landline' => 'nullable|string|max:20',
                 'gender' => 'nullable|in:male,female,other',
@@ -442,7 +458,7 @@ class UserAuthController extends Controller
         }
     }
 
-    //update profile method to add occupation, about_me, and favourite quote
+    // update profile method to add occupation, about_me, and favourite quote
     public function updateProfileDetails(Request $request)
     {
         try {
@@ -457,6 +473,7 @@ class UserAuthController extends Controller
                 'about_me' => $request->about_me,
                 'favourite_quote' => $request->favourite_quote,
             ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Profile details updated successfully',
@@ -477,8 +494,7 @@ class UserAuthController extends Controller
         }
     }
 
-
-    //change user name
+    // change user name
     public function updateName(Request $request)
     {
         try {
@@ -488,14 +504,14 @@ class UserAuthController extends Controller
             ]);
 
             $user = $request->user();
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthenticated user',
                 ], 401);
             }
 
-            if (!Hash::check($request->password, $user->password)) {
+            if (! Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Incorrect password',
@@ -527,8 +543,7 @@ class UserAuthController extends Controller
         }
     }
 
-
-    //Change email
+    // Change email
 
     public function updateEmail(Request $request)
     {
@@ -538,7 +553,7 @@ class UserAuthController extends Controller
                 'password' => 'required',
             ]);
 
-            if (!Hash::check($request->password, $request->user()->password)) {
+            if (! Hash::check($request->password, $request->user()->password)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Incorrect password',
@@ -571,8 +586,7 @@ class UserAuthController extends Controller
         }
     }
 
-
-    //Change password
+    // Change password
 
     public function changePassword(Request $request)
     {
@@ -582,7 +596,7 @@ class UserAuthController extends Controller
         ]);
         $user = $request->user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Current password is incorrect',
@@ -590,13 +604,14 @@ class UserAuthController extends Controller
         }
         $user->password = Hash::make($request->new_password);
         $user->save();
+
         return response()->json([
             'success' => true,
             'message' => 'Password changed successfully',
         ], 200);
     }
 
-    //forgot password (send reset link)
+    // forgot password (send reset link)
     public function sendResetLinkEmail(Request $request)
     {
         try {
@@ -615,7 +630,7 @@ class UserAuthController extends Controller
         if ($status === Password::RESET_LINK_SENT) {
             return response()->json([
                 'status' => true,
-                'message' => 'Password reset link sent to your email address.'
+                'message' => 'Password reset link sent to your email address.',
             ]);
         }
 
@@ -625,8 +640,7 @@ class UserAuthController extends Controller
         ], 400);
     }
 
-    //reset password
-
+    // reset password
 
     public function resetPassword(Request $request)
     {
@@ -658,7 +672,7 @@ class UserAuthController extends Controller
         if ($status === Password::PASSWORD_RESET) {
             return response()->json([
                 'status' => true,
-                'message' => 'Password reset successful.'
+                'message' => 'Password reset successful.',
             ]);
         }
 
@@ -667,6 +681,7 @@ class UserAuthController extends Controller
             'message' => __($status),
         ], 400);
     }
+
     public function login(Request $request)
     {
         $request->validate([
@@ -677,12 +692,20 @@ class UserAuthController extends Controller
         $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $user = User::where($fieldtype, $request->email)->first();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
-                'message' => 'User not found'
+                'message' => 'User not found',
             ], 404);
         }
+
+        if ($user->status == 3) { // 3 = Deleted
+            return response()->json([
+                'success' => false,
+                'message' => 'This account has been deleted. Please contact support to restore it.',
+            ], 403); // 403 Forbidden
+        }
+
         if ($user->is_verified == null) {
             if ($user->is_verified != 1) {
                 $code = rand(100000, 999999);
@@ -692,8 +715,8 @@ class UserAuthController extends Controller
                 $user->save();
 
                 $user->forceFill([
-                    'verification_code'        => $code,
-                    'verification_expires_at'  => $expiration,
+                    'verification_code' => $code,
+                    'verification_expires_at' => $expiration,
                 ])->save();
 
                 // Send OTP email
@@ -701,6 +724,7 @@ class UserAuthController extends Controller
                     $message->to($user->email)
                         ->subject('Your Verification Code');
                 });
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Emails is not verified yet',
@@ -717,8 +741,8 @@ class UserAuthController extends Controller
                 $user->save();
 
                 $user->forceFill([
-                    'verification_code'        => $code,
-                    'verification_expires_at'  => $expiration,
+                    'verification_code' => $code,
+                    'verification_expires_at' => $expiration,
                 ])->save();
 
                 // Send OTP email
@@ -726,6 +750,7 @@ class UserAuthController extends Controller
                     $message->to($user->email)
                         ->subject('Your Verification Code');
                 });
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Emails is not verified yet',
@@ -734,10 +759,10 @@ class UserAuthController extends Controller
                 ], 400);
             }
         }
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid credentials'
+                'message' => 'Invalid credentials',
             ], 400);
         }
         $user->update(['last_login_at' => now()]);
@@ -752,6 +777,7 @@ class UserAuthController extends Controller
                 ]);
         }
         $token = $user->createToken('user-token')->plainTextToken;
+
         // /Verification code sent to your email. Please verify
         return response()->json([
             'success' => true,
@@ -773,22 +799,22 @@ class UserAuthController extends Controller
 
         $user = User::where($fieldtype, $request->email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
-                'message' => 'User not found'
+                'message' => 'User not found',
             ], 404);
         }
         if ($user->verification_code !== $request->verification_code) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid verification code'
+                'message' => 'Invalid verification code',
             ], 400);
         }
         if (now()->greaterThan($user->verification_expires_at)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Verification code has expired'
+                'message' => 'Verification code has expired',
             ], 400);
         }
 
@@ -797,6 +823,7 @@ class UserAuthController extends Controller
         $user->verification_expires_at = null;
         $user->save();
         $token = $user->createToken('user-token')->plainTextToken;
+
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
@@ -805,12 +832,33 @@ class UserAuthController extends Controller
         ], 200);
     }
 
+    public function deleteAccount()
+    {
+        $user = auth('api')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found or unauthenticated.',
+            ], 404);
+        }
+
+        // Mark account as deleted
+        $user->status = 3;
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Your account has been marked for deletion.',
+        ]);
+    }
+
     // User profile
     public function profile(Request $request)
     {
         return response()->json([
             'success' => true,
-            'message' => "Successfully Fetched",
+            'message' => 'Successfully Fetched',
             'data' => $request->user(),
         ], 200);
     }
@@ -839,13 +887,13 @@ class UserAuthController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'User not found'
+                'message' => 'User not found',
             ], 404);
         } catch (\Exception $e) {
             return response()->json(
                 [
                     'success' => false,
-                    'message' => 'Something went wrong: ' . $e->getMessage()
+                    'message' => 'Something went wrong: '.$e->getMessage(),
                 ],
                 500
             );
@@ -877,7 +925,7 @@ class UserAuthController extends Controller
             return response()->json(
                 [
                     'success' => false,
-                    'message' => 'User not found'
+                    'message' => 'User not found',
                 ],
                 404
             );
@@ -885,19 +933,21 @@ class UserAuthController extends Controller
             return response()->json(
                 [
                     'success' => false,
-                    'message' => 'Something went wrong: ' . $e->getMessage()
+                    'message' => 'Something went wrong: '.$e->getMessage(),
                 ],
                 500
             );
         }
     }
+
     // Logout user
     public function logout(Request $request)
     {
         $request->user()->tokens()->where('id', $request->user()->currentAccessToken()->id)->delete();
+
         return response()->json([
             'success' => true,
-            'message' => 'Successfully Logged out'
+            'message' => 'Successfully Logged out',
         ], 200);
     }
 
@@ -913,7 +963,7 @@ class UserAuthController extends Controller
         }
 
         // Add dash in the middle (after 4 chars)
-        return substr($randomString, 0, 4) . substr($randomString, 4, 4);
+        return substr($randomString, 0, 4).substr($randomString, 4, 4);
     }
 
     private function generateMemberId()

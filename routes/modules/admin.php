@@ -56,6 +56,7 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::get('/{id}/edit', 'show');
         Route::post('/{id}/update', 'update');
         Route::delete('/{id}/changeactiveInactive', 'changeactiveInactive');
+        Route::get('/restoreUser/{id}', 'restoreUser');
     });
 
     // RolePermissionCOntroller works
