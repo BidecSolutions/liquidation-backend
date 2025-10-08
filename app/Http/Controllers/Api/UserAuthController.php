@@ -37,7 +37,7 @@ class UserAuthController extends Controller
                 'city' => 'nullable|string|max:20',
                 'state' => 'nullable|string|max:20',
                 'country' => 'nullable|string|max:20',
-                'country_id' => 'nullable|max:20|exists:country,id',
+                'country_id' => 'nullable|max:20|exists:countries,id',
                 'regions_id' => 'nullable|max:20|exists:regions,id',
                 'governorates_id' => 'nullable|max:20|exists:governorates,id',
                 'city_id' => 'nullable|max:20|exists:cities,id',
