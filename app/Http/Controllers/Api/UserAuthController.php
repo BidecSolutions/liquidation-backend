@@ -41,7 +41,14 @@ class UserAuthController extends Controller
                 'regions_id' => 'nullable|max:20|exists:regions,id',
                 'governorates_id' => 'nullable|max:20|exists:governorates,id',
                 'city_id' => 'nullable|max:20|exists:cities,id',
-                'phone' => 'nullable|string|max:20',
+                'phone' => [
+                    'nullable',
+                    'string',
+                    'max:20',
+                    Rule::unique('users', 'phone')->where(function ($query) {
+                        $query->where('status', '!=', 3);
+                    }),
+                ],
                 'gender' => 'nullable|string',
                 'date_of_birth' => 'nullable|date',
                 'billing_address' => 'nullable|string|max:500',

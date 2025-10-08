@@ -524,7 +524,11 @@ class ListingController extends Controller
                 //  ->orWhere('subtitle', 'LIKE', "%{$search}%")
             });
         }
-
+        $sortOrder = strtolower($request->input('sort', 'desc'));
+        if(!in_array($sortOrder, ['asc', 'desc'])){
+            $sortOrder= 'desc';
+        }
+        $query->orderBy('created_at', $sortOrder);
 
         // ✅ Pagination
         $perPage = $request->input('pagination.per_page', 20);
