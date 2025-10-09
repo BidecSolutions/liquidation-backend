@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ListingView;
 use App\Models\SearchHistory;
 use App\Models\User;
+use App\Services\UserDeletionService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,13 +24,19 @@ class UserAuthController extends Controller
         try {
             $request->validate([
                 'name' => 'required|string',
-                'username' => 'nullable|string|unique:users,username',
+                'username' => [
+                    'nullable',
+                    'string',
+                    Rule::unique('users', 'username')->where(function ($query) {
+                        $query->where('status', '!=', 3);
+                    }),
+                ],
                 'first_name' => 'required|string',
                 'last_name' => 'required|string',
                 'email' => [
                     'required',
                     'string',
-                    Rule::unique('users', 'email')->where(function($query){
+                    Rule::unique('users', 'email')->where(function ($query) {
                         $query->where('status', '!=', 3);
                     }),
                 ],
@@ -56,70 +63,88 @@ class UserAuthController extends Controller
                 'account_type' => 'nullable|in:business,personal',
             ]);
 
-            // Check if a deleted user with this email exists
             $existingUser = User::where('email', $request->email)->first();
-            if ($existingUser && $existingUser->status == 3) { // 3 = Deleted
-                return response()->json([
-                    'success'          => false,
-                    'restore_possible' => true, // Flag for frontend to show restore option
-                    'message'          => 'An account with this email was previously deleted. Would you like to restore it?',
-                ], 409);
-            }
-
-
-
-            $memberId = $this->generateMemberId();
-            $customerNumber = 'CN'.strtoupper(uniqid());
-            $user_code = $this->generateUniqueCode();
-            while (User::where('user_code', $user_code)->exists()) {
-                $user_code = $this->generateUniqueCode();
-            }
-
-            // Better RNG for codes
             $code = (string) random_int(100000, 999999);
             $expiration = now()->addMinutes(30);
 
-            $user = User::create([
-                'name' => $request->name,
-                'user_code' => $user_code,
-                'memberId' => $memberId,
-                'username' => $request->username,
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-                'phone' => $request->phone,
-                'gender' => $request->gender,
-                'date_of_birth' => $request->date_of_birth,
-                'billing_address' => $request->billing_address,
-                'customer_number' => $customerNumber,
-                'account_type' => $request->account_type ?? 'personal',
-                // verification
-                'verification_code' => $code,
-                'verification_expires_at' => $expiration,
-                'is_verified' => false,
-            ]);
+            // ✅ Case 1: Restore previously deleted account
+            if ($existingUser && $existingUser->status == 3) {
+                $existingUser->update([
+                    'name' => $request->name,
+                    'username' => $request->username,
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'country' => $request->country,
+                    'phone' => $request->phone,
+                    'gender' => $request->gender,
+                    'date_of_birth' => $request->date_of_birth,
+                    'billing_address' => $request->billing_address,
+                    'account_type' => $request->account_type ?? 'personal',
+                    'verification_code' => $code,
+                    'verification_expires_at' => $expiration,
+                    'is_verified' => false,
+                    'status' => 1, // ✅ Restore account
+                ]);
 
+                $user = $existingUser;
+            }
+            // ✅ Case 2: Create a completely new account
+            else {
+                $memberId = $this->generateMemberId();
+                $customerNumber = 'CN'.strtoupper(uniqid());
+                $user_code = $this->generateUniqueCode();
+
+                while (User::where('user_code', $user_code)->exists()) {
+                    $user_code = $this->generateUniqueCode();
+                }
+
+                $user = User::create([
+                    'name' => $request->name,
+                    'user_code' => $user_code,
+                    'memberId' => $memberId,
+                    'username' => $request->username,
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'country' => $request->country,
+                    'phone' => $request->phone,
+                    'gender' => $request->gender,
+                    'date_of_birth' => $request->date_of_birth,
+                    'billing_address' => $request->billing_address,
+                    'customer_number' => $customerNumber,
+                    'account_type' => $request->account_type ?? 'personal',
+                    'verification_code' => $code,
+                    'verification_expires_at' => $expiration,
+                    'is_verified' => false,
+                ]);
+            }
+
+            // ✅ Send new verification email
             Mail::send('emails.verification', ['user' => $user, 'code' => $code], function ($message) use ($user) {
                 $message->to($user->email)->subject('Your Login Verification Code');
             });
+
+            // ✅ Attach guest data (if any)
             if ($request->header('X-Guest-ID')) {
                 $guestId = $request->header('X-Guest-ID');
                 SearchHistory::where('guest_id', $guestId)
                     ->update(['user_id' => $user->id, 'guest_id' => null]);
                 ListingView::where('guest_id', $guestId)
-                    ->update([
-                        'user_id' => $user->id,
-                        'guest_id' => null,
-                    ]);
+                    ->update(['user_id' => $user->id, 'guest_id' => null]);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Successfully Registered',
+                'message' => $existingUser && $existingUser->status == 3
+                    ? 'Account restored and verification email sent.'
+                    : 'Successfully registered.',
                 'email' => $user->email,
             ], 200);
         } catch (\Throwable $e) {
@@ -134,7 +159,7 @@ class UserAuthController extends Controller
     /**
      * Sends a verification token to a user to initiate account restoration.
      */
-    public function requestRestoreToken(Request $request)
+    /* public function requestRestoreToken(Request $request)
     {
         try {
             $request->validate(['email' => 'required|email']);
@@ -173,12 +198,12 @@ class UserAuthController extends Controller
                 'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
             ], 500);
         }
-    }
+    } */
 
     /**
      * Verifies the restoration token, restores the account, and logs the user in.
      */
-    public function verifyAndRestore(Request $request)
+    /* public function verifyAndRestore(Request $request)
     {
         try {
             $request->validate([
@@ -214,7 +239,7 @@ class UserAuthController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'An error occurred during account restoration.'], 500);
         }
-    }
+    } */
 
     public function resendOtp(Request $request)
     {
@@ -340,72 +365,72 @@ class UserAuthController extends Controller
             ], 400);
         }
     }
-    // public function upgradeToBusiness(Request $request)
-    // {
-    //     $request->validate([
-    //         'business_name'   => 'required|string|max:255',
-    //         'tax_id'          => 'nullable|string|max:50',
-    //         'business_license'=> 'nullable|string|max:100',
-    //         // 'store_description' => 'nullable|string',
-    //     ]);
+    /* public function upgradeToBusiness(Request $request)
+    {
+        $request->validate([
+            'business_name'   => 'required|string|max:255',
+            'tax_id'          => 'nullable|string|max:50',
+            'business_license'=> 'nullable|string|max:100',
+            // 'store_description' => 'nullable|string',
+        ]);
 
-    //     $user = auth()->user();
-    //     if($user->account_type === 'business'){
-    //         return resposne()->json([
-    //             'success' => false,
-    //             'message' => 'Your account is already a business account',
-    //             'user'    => $user
-    //         ]);
-    //     }
+        $user = auth()->user();
+        if($user->account_type === 'business'){
+            return resposne()->json([
+                'success' => false,
+                'message' => 'Your account is already a business account',
+                'user'    => $user
+            ]);
+        }
 
-    //     $user->update([
-    //         'account_type'    => 'business',
-    //         'business_name'   => $request->business_name,
-    //         'tax_id'          => $request->tax_id,
-    //         'business_license'=> $request->business_license,
-    //         // 'store_description'=> $request->store_description,
-    //     ]);
+        $user->update([
+            'account_type'    => 'business',
+            'business_name'   => $request->business_name,
+            'tax_id'          => $request->tax_id,
+            'business_license'=> $request->business_license,
+            // 'store_description'=> $request->store_description,
+        ]);
 
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Account upgraded to business successfully',
-    //         'user' => $user
-    //     ]);
-    // }
+        return response()->json([
+            'status' => true,
+            'message' => 'Account upgraded to business successfully',
+            'user' => $user
+        ]);
+    } */
 
     // Update user info
-    // public function update(Request $request, $id)
-    // {
-    //     try {
-    //         $user = User::findOrFail($id);
+    /* public function update(Request $request, $id)
+    {
+        try {
+            $user = User::findOrFail($id);
 
-    //         $request->validate([
-    //             'name' => 'sometimes|required|string',
-    //             'email' => 'sometimes|required|email|unique:users,email,' . $id,
-    //             'phone' => 'nullable|string|max:20',
-    //             'billing_address' => 'nullable|string|max:500',
-    //         ]);
+            $request->validate([
+                'name' => 'sometimes|required|string',
+                'email' => 'sometimes|required|email|unique:users,email,' . $id,
+                'phone' => 'nullable|string|max:20',
+                'billing_address' => 'nullable|string|max:500',
+            ]);
 
-    //         $user->update([
-    //             'name' => $request->name ?? $user->name,
-    //             'email' => $request->email ?? $user->email,
-    //             'phone' => $request->phone ?? $user->phone,
-    //             'billing_address' => $request->billing_address ?? $user->billing_address,
-    //         ]);
+            $user->update([
+                'name' => $request->name ?? $user->name,
+                'email' => $request->email ?? $user->email,
+                'phone' => $request->phone ?? $user->phone,
+                'billing_address' => $request->billing_address ?? $user->billing_address,
+            ]);
 
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'User updated successfully',
-    //             'data' => $user,
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'User update failed',
-    //             'error' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
+            return response()->json([
+                'success' => true,
+                'message' => 'User updated successfully',
+                'data' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User update failed',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    } */
     // Edit contact details
     // username check
     public function checkUsername(Request $request)
@@ -929,16 +954,23 @@ class UserAuthController extends Controller
     {
         $user = auth('api')->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'status' => false,
                 'message' => 'User not found or unauthenticated.',
             ], 404);
         }
 
-        // Mark account as deleted
-        $user->status = 3;
-        $user->save();
+        // Optional: purge user activity here using UserDeletionService
+        // UserDeletionService::purgeUserData($user);
+
+        // Mark account as deleted and clear verification data
+        $user->update([
+            'status' => 3,
+            'verification_code' => null,
+            'verification_expires_at' => null,
+            'is_verified' => false,
+        ]);
 
         return response()->json([
             'status' => true,
