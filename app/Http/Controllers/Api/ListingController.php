@@ -3,25 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Listing;
 use App\Models\ListingAttribute;
+use App\Models\ListingImage;
+use App\Models\ListingOffer;
+use App\Models\ListingView;
+use App\Models\SearchHistory;
 use App\Models\UserFeedback;
 use Exception;
 use Illuminate\Http\Request;
-use App\Models\Category;
-use App\Models\Listing;
-use App\Models\ListingView;
-use App\Models\ListingImage;
-use App\Models\ListingOffer;
-use App\Models\SearchHistory;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ListingController extends Controller
 {
-
     // 🔹 Reusable query for Cool Auctions
     private function getCoolAuctions($userId = null, $limit = 10, $offset = 0)
     {
@@ -79,6 +78,7 @@ class ListingController extends Controller
 
         return $listings;
     }
+
     private function getIsFeatured($userId = null, $limit = 10, $offset = 0)
     {
         $listings = Listing::with(['category', 'creator', 'images'])
@@ -120,8 +120,8 @@ class ListingController extends Controller
 
         // 2. Get latest viewed listing categories
         $viewedCategories = ListingView::query()
-            ->when($userId, fn($q) => $q->where('user_id', $userId))
-            ->when($guestId, fn($q) => $q->where('guest_id', $guestId))
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->when($guestId, fn ($q) => $q->where('guest_id', $guestId))
             ->orderBy('created_at', 'desc')
             ->with('listing:id,category_id')
             ->limit(5)
@@ -146,14 +146,13 @@ class ListingController extends Controller
                     }
                 });
             })
-            ->when(count($allCategoryIds), fn($q) => $q->orWhereIn('category_id', $allCategoryIds))
+            ->when(count($allCategoryIds), fn ($q) => $q->orWhereIn('category_id', $allCategoryIds))
             ->limit($limit)
             ->offset($offset)
             ->get();
 
         return $recommendations;
     }
-
 
     public function index(Request $request)
     {
@@ -169,19 +168,19 @@ class ListingController extends Controller
             // 🔎 Filter by search keyword
             if ($request->has('search')) {
                 $query->where(function ($q) use ($request) {
-                    $q->where('title', 'like', '%' . $request->search . '%')
-                        ->orWhere('description', 'like', '%' . $request->search . '%')
-                        ->orWhere('subtitle', 'like', '%' . $request->search . '%')
-                        ->orWhere('brand', 'like', '%' . $request->search . '%')
-                        ->orWhere('color', 'like', '%' . $request->search . '%')
-                        ->orWhere('size', 'like', '%' . $request->search . '%')
-                        ->orWhere('style', 'like', '%' . $request->search . '%')
-                        ->orWhere('memory', 'like', '%' . $request->search . '%')
-                        ->orWhere('hard_drive_size', 'like', '%' . $request->search . '%')
-                        ->orWhere('cores', 'like', '%' . $request->search . '%')
-                        ->orWhere('storage', 'like', '%' . $request->search . '%')
+                    $q->where('title', 'like', '%'.$request->search.'%')
+                        ->orWhere('description', 'like', '%'.$request->search.'%')
+                        ->orWhere('subtitle', 'like', '%'.$request->search.'%')
+                        ->orWhere('brand', 'like', '%'.$request->search.'%')
+                        ->orWhere('color', 'like', '%'.$request->search.'%')
+                        ->orWhere('size', 'like', '%'.$request->search.'%')
+                        ->orWhere('style', 'like', '%'.$request->search.'%')
+                        ->orWhere('memory', 'like', '%'.$request->search.'%')
+                        ->orWhere('hard_drive_size', 'like', '%'.$request->search.'%')
+                        ->orWhere('cores', 'like', '%'.$request->search.'%')
+                        ->orWhere('storage', 'like', '%'.$request->search.'%')
                         ->orWhereHas('category', function ($q2) use ($request) {
-                            $q2->where('name', 'like', '%' . $request->search . '%');
+                            $q2->where('name', 'like', '%'.$request->search.'%');
                         });
                 });
             }
@@ -199,7 +198,6 @@ class ListingController extends Controller
             if ($request->has('listing_type')) {
                 $query->where('listing_type', $request->listing_type);
             }
-
 
             // if ($request->has('status')) {
             //     $query->where('status', $request->status);
@@ -269,13 +267,13 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Listings fetched successfully',
-                'data' => $listings
+                'data' => $listings,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching listings',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -290,13 +288,13 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Cool auctions fetched successfully',
-                'data' => $listings
+                'data' => $listings,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching cool auctions',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -310,13 +308,13 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Hot listings fetched successfully',
-                'data' => $listings
+                'data' => $listings,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching hot listings',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -332,16 +330,17 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Closing soon listings fetched successfully',
-                'data' => $listings
+                'data' => $listings,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching closing soon listings',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
+
     public function isfeatured(Request $request)
     {
         $limit = $request->input('limit', 20);
@@ -353,13 +352,13 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Closing soon listings fetched successfully',
-                'data' => $listings
+                'data' => $listings,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching closing soon listings',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -372,11 +371,11 @@ class ListingController extends Controller
         $userId = auth('api')->id();
         $guestId = $request->header('X-Guest-ID');
 
-        if (!$userId && !$guestId) {
+        if (! $userId && ! $guestId) {
             return response()->json([
                 'status' => false,
                 'message' => 'User or Guest ID required',
-                'data' => []
+                'data' => [],
             ], 400);
         }
 
@@ -385,9 +384,10 @@ class ListingController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Recommendations fetched successfully',
-            'data' => $recommendations
+            'data' => $recommendations,
         ]);
     }
+
     /* FULL API OF HOME PAGE */
     public function mainapi(Request $request)
     {
@@ -400,7 +400,7 @@ class ListingController extends Controller
             if (auth('api')->check()) {
                 $userId = auth('api')->id();
                 $recommendations = $this->getRecommendedListings($userId, null, 10, 0);
-            } else if ($guestId = $request->header('X-Guest-ID')) {
+            } elseif ($guestId = $request->header('X-Guest-ID')) {
                 $recommendations = $this->getRecommendedListings(null, $guestId, 10, 0);
             } else {
                 $recommendations = [];
@@ -415,18 +415,16 @@ class ListingController extends Controller
                     'closing_soon' => $closing_soon,
                     'is_featured' => $is_featured,
                     'recommendations' => $recommendations,
-                ]
+                ],
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching home page data',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
-
-
 
     public function filterListings(Request $request)
     {
@@ -440,7 +438,7 @@ class ListingController extends Controller
                 'attributes',
                 'watchers',
                 'paymentMethod:id,name',
-                'shippingMethod:id,name'
+                'shippingMethod:id,name',
             ])->withCount('views', 'watchers', 'bids')
             ->where('listing_type', $request->listing_type) // ✅ Only listings with the requested type
             ->where('status', 1)
@@ -449,7 +447,7 @@ class ListingController extends Controller
         // ✅ Filter by category_id
         $categoryTree = null;
         if ($request->filled('category_id')) {
-            // for parent fetching 
+            // for parent fetching
             $categoryTree = Category::select('id', 'name', 'slug', 'parent_id')
                 ->with('parentRecursive:id,name,slug,parent_id')
                 ->find($request->category_id);
@@ -479,7 +477,7 @@ class ListingController extends Controller
             foreach ($request->filters as $key => $value) {
                 $query->whereHas('attributes', function ($q) use ($key, $value, $rangeKeys) {
                     // Multiple values -> IN
-                    if (is_array($value) && !isset($value['min']) && !isset($value['max'])) {
+                    if (is_array($value) && ! isset($value['min']) && ! isset($value['max'])) {
                         $q->where('key', $key)->whereIn('value', $value);
                     }
                     // Range filter (for predefined keys)
@@ -525,20 +523,32 @@ class ListingController extends Controller
             });
         }
         $sortOrder = strtolower($request->input('sort', 'desc'));
-        if(!in_array($sortOrder, ['asc', 'desc'])){
-            $sortOrder= 'desc';
+        if (! in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
         }
         $query->orderBy('created_at', $sortOrder);
 
         // ✅ Pagination
         $perPage = $request->input('pagination.per_page', 20);
         $listings = $query->paginate($perPage);
+
         $listingData = $listings->getCollection()->map(function ($listing) {
             $listingArray = $listing->toArray();
             unset($listingArray['attributes']);
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
+
             return array_merge($listingArray, $attributes);
         });
+
+        // ✅ Keep pagination meta
+        $pagination = [
+            'current_page' => $listings->currentPage(),
+            'per_page' => $listings->perPage(),
+            'total' => $listings->total(),
+            'last_page' => $listings->lastPage(),
+            'next_page_url' => $listings->nextPageUrl(),
+            'prev_page_url' => $listings->previousPageUrl(),
+        ];
 
         // ✅ Build category path if category is selected
         $categoryPath = null;
@@ -563,7 +573,7 @@ class ListingController extends Controller
         // ✅ Capture filters (if any)
         $filters = $request->filters ?? [];
 
-        if ($request->filled('search') || $request->filled('category_id') || !empty($filters)) {
+        if ($request->filled('search') || $request->filled('category_id') || ! empty($filters)) {
             $keyword = $request->input('search', $categoryName ?? '');
 
             if (auth('api')->check()) {
@@ -576,7 +586,7 @@ class ListingController extends Controller
                         'count' => DB::raw('count + 1'),
                         'category_id' => $request->input('category_id', null),
                         'category_path' => $categoryPath ?? null,
-                        'filters' => !empty($filters) ? json_encode($filters) : null,
+                        'filters' => ! empty($filters) ? json_encode($filters) : null,
                     ]
                 );
             } elseif ($guestId = $request->header('X-Guest-ID')) {
@@ -589,21 +599,22 @@ class ListingController extends Controller
                 $history->count = ($history->exists ? $history->count + 1 : 1);
                 $history->category_id = $request->input('category_id', null);
                 $history->category_path = $categoryPath ?? null;
-                $history->filters = !empty($filters) ? json_encode($filters) : null;
+                $history->filters = ! empty($filters) ? json_encode($filters) : null;
                 $history->guest_id = $guestId;
 
                 $history->save();
             }
         }
 
-
         return response()->json([
             'status' => true,
             'message' => 'Filtered listings fetched successfully',
             'data' => $listingData,
+            'pagination' => $pagination, 
             'category_tree' => $categoryTree,
         ]);
     }
+
     public function search(Request $request)
     {
         $request->validate([
@@ -667,9 +678,9 @@ class ListingController extends Controller
             $listingArray = $listing->toArray();
             unset($listingArray['attributes']);
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
+
             return array_merge($listingArray, $attributes);
         });
-
 
         // ✅ Save search history
         if (auth('api')->check()) {
@@ -705,6 +716,7 @@ class ListingController extends Controller
             'category_path' => $categoryPath ?? null,
         ]);
     }
+
     public function suggestions(Request $request)
     {
 
@@ -750,18 +762,19 @@ class ListingController extends Controller
             'web_suggestions' => $webSuggestions,
         ]);
     }
+
     public function homePastSearches()
     {
         $searchResults = [];
 
-        if (!auth('api')->check()) {
+        if (! auth('api')->check()) {
             // dd("AWfawf");
             $guestId = request()->header('X-Guest-ID');
-            if (!$guestId) {
+            if (! $guestId) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Guest ID missing',
-                    'data' => []
+                    'data' => [],
                 ], 400);
             }
 
@@ -851,44 +864,46 @@ class ListingController extends Controller
     public function removePastSearch($searchId)
     {
         try {
-            if (!auth('api')->check()) {
+            if (! auth('api')->check()) {
                 $guestId = request()->header('X-Guest-ID');
-                if (!$guestId) {
+                if (! $guestId) {
                     return response()->json([
                         'status' => false,
                         'message' => 'Guest ID missing',
-                        'data' => []
+                        'data' => [],
                     ], 400);
                 }
                 $search = SearchHistory::where('id', $searchId)->where('guest_id', $guestId)->first();
-                if (!$search) {
+                if (! $search) {
                     return response()->json([
                         'status' => false,
                         'message' => 'Search not found',
-                        'data' => []
+                        'data' => [],
                     ], 404);
                 }
                 $search->delete();
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Search removed successfully',
-                    'data' => []
+                    'data' => [],
                 ]);
             } else {
                 $userId = auth('api')->id();
                 $search = SearchHistory::where('id', $searchId)->where('user_id', $userId)->first();
-                if (!$search) {
+                if (! $search) {
                     return response()->json([
                         'status' => false,
                         'message' => 'Search not found',
-                        'data' => []
+                        'data' => [],
                     ], 404);
                 }
                 $search->delete();
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Search removed successfully',
-                    'data' => []
+                    'data' => [],
                 ]);
             }
         } catch (Exception $e) {
@@ -899,7 +914,6 @@ class ListingController extends Controller
             ]);
         }
     }
-
 
     public function filtersMetadata(Request $request)
     {
@@ -920,7 +934,7 @@ class ListingController extends Controller
         return response()->json([
             'status' => true,
             'listing_type' => $listingType,
-            'filters' => $filters
+            'filters' => $filters,
         ]);
     }
 
@@ -946,23 +960,23 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Listing fetched successfully',
-                'data' => $listing
+                'data' => $listing,
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Listing not found',
-                'data' => null
+                'data' => null,
             ], 404);
         }
     }
-
 
     // Get listings by type (jobs, motors, property, services, marketplace)
     public function indexByType($type)
     {
         try {
             $listings = Listing::with(['user', 'category'])->byType($type)->get();
+
             return response()->json(['status' => true, 'data' => $listings]);
         } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => 'Failed to fetch listings by type', 'error' => $e->getMessage()], 500);
@@ -981,9 +995,9 @@ class ListingController extends Controller
 
         return $categoryIds;
     }
-    public function recentViewedListings()
-    {
-    }
+
+    public function recentViewedListings() {}
+
     public function store(Request $request)
     {
         try {
@@ -1027,7 +1041,7 @@ class ListingController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Validation failed',
-                    'data' => $validator->errors()
+                    'data' => $validator->errors(),
                 ], 422);
             }
 
@@ -1038,10 +1052,10 @@ class ListingController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Must Select the same category as the listing type',
-                    'data' => null
+                    'data' => null,
                 ], 422);
             }
-            $data['slug'] = Str::slug($request->title . '-' . uniqid());
+            $data['slug'] = Str::slug($request->title.'-'.uniqid());
             $data['status'] = 1;
             $data['is_active'] = 1;
             $data['created_by'] = auth('api')->id(); // or auth('admin-api')->id()
@@ -1049,7 +1063,7 @@ class ListingController extends Controller
             $listing = Listing::create($data);
 
             // Save attributes
-            if (!empty($data['attributes'])) {
+            if (! empty($data['attributes'])) {
                 foreach ($data['attributes'] as $attr) {
                     $listing->attributes()->create([
                         'key' => $attr['key'],
@@ -1060,15 +1074,16 @@ class ListingController extends Controller
 
             // 📁 Ensure directory exists
             $directory = 'listings/images';
-            if (!Storage::disk('public')->exists($directory)) {
+            if (! Storage::disk('public')->exists($directory)) {
                 Storage::disk('public')->makeDirectory($directory, 0775, true);
             }
 
             // 🖼 Upload images (max 20)
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $index => $image) {
-                    if ($index >= 20)
+                    if ($index >= 20) {
                         break;
+                    }
 
                     $path = $image->store($directory, 'public');
 
@@ -1076,7 +1091,7 @@ class ListingController extends Controller
                         'listing_id' => $listing->id,
                         'image_path' => $path,
                         'alt_text' => $request->input("alt_text.$index", null),
-                        'order' => $index
+                        'order' => $index,
                     ]);
                 }
             }
@@ -1084,13 +1099,13 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Listing created successfully',
-                'data' => $listing->load(['images', 'attributes'])
+                'data' => $listing->load(['images', 'attributes']),
             ], 201);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -1103,7 +1118,7 @@ class ListingController extends Controller
 
         $item = Listing::find($id);
 
-        if (!$item) {
+        if (! $item) {
             return response()->json(['status' => false, 'message' => 'Item not found'], 404);
         }
 
@@ -1117,7 +1132,7 @@ class ListingController extends Controller
     {
         $item = Listing::find($id);
 
-        if (!$item) {
+        if (! $item) {
             return response()->json(['status' => false, 'message' => 'Item not found'], 404);
         }
 
@@ -1143,11 +1158,11 @@ class ListingController extends Controller
                 ->withCount('views')
                 ->where('slug', $slug)
                 ->first();
-            if (!$listing) {
+            if (! $listing) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Listing not found',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
 
@@ -1156,8 +1171,8 @@ class ListingController extends Controller
 
             // Log listing view with caching
             // Log listing view with caching
-            $cacheKey = 'listing_viewed_' . $listing->id . '_' . request()->ip();
-            if (!Cache::has($cacheKey)) {
+            $cacheKey = 'listing_viewed_'.$listing->id.'_'.request()->ip();
+            if (! Cache::has($cacheKey)) {
                 $data = [
                     'listing_id' => $listing->id,
                     'ip_address' => request()->ip(),
@@ -1173,7 +1188,6 @@ class ListingController extends Controller
                 ListingView::create($data);
                 Cache::put($cacheKey, true, now()->addHour());
             }
-
 
             $buyingOffers = collect();
             $sellingOffers = collect();
@@ -1193,7 +1207,7 @@ class ListingController extends Controller
                 }
             }
 
-            //calculate positive feedback percentage
+            // calculate positive feedback percentage
             $totalFeedbackCount = UserFeedback::where('reviewed_user_id', $listing->created_by)->count();
             $positiveFeedbackCount = UserFeedback::where('reviewed_user_id', $listing->created_by)
                 ->whereIn('rating', [4, 5])
@@ -1210,22 +1224,20 @@ class ListingController extends Controller
             $dealersListing = Listing::with('images:id,listing_id,image_path')
                 ->when(
                     $listingData['created_by'] ?? null,
-                    fn($q, $created_by) =>
-                    $q->where('created_by', $created_by)
+                    fn ($q, $created_by) => $q->where('created_by', $created_by)
                 )
                 ->when(
                     $listingData['listing_type'] ?? null,
-                    fn($q, $listingType) =>
-                    $q->where('listing_type', $listingType)
+                    fn ($q, $listingType) => $q->where('listing_type', $listingType)
                 )
                 ->when(
                     $listingData['is_active'] ?? null,
-                    fn($q, $IsActive) =>
-                    $q->where('is_active', $IsActive)
+                    fn ($q, $IsActive) => $q->where('is_active', $IsActive)
                 )
                 ->select('id', 'title', 'slug', 'description', 'listing_type', 'condition', 'start_price', 'buy_now_price', 'created_by')
                 ->limit(4)
                 ->get();
+
             return response()->json([
                 'status' => true,
                 'message' => 'Listing fetched successfully',
@@ -1235,13 +1247,13 @@ class ListingController extends Controller
                     'selling_offers' => $sellingOffers,
                     'creator_feedback_percentage' => $positiveFeedbackPercentage,
                     'dealers_other_listings' => $dealersListing,
-                ]
+                ],
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching listing',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -1251,11 +1263,11 @@ class ListingController extends Controller
         try {
             $listing = Listing::where('slug', $slug)->with('images')->first();
 
-            if (!$listing) {
+            if (! $listing) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Listing not found',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
 
@@ -1297,7 +1309,7 @@ class ListingController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Validation failed',
-                    'data' => $validator->errors()
+                    'data' => $validator->errors(),
                 ], 422);
             }
 
@@ -1305,26 +1317,26 @@ class ListingController extends Controller
             $listing->update($data);
 
             //  Sync attributes
-            if (!empty($data['attributes'])) {
+            if (! empty($data['attributes'])) {
                 $listing->attributes()->delete();
                 foreach ($data['attributes'] as $attr) {
                     $listing->attributes()->create($attr);
                 }
             }
 
-
             // ✅ Only process images if provided
             if ($request->hasFile('images')) {
                 $directory = 'listings/images';
-                if (!Storage::disk('public')->exists($directory)) {
+                if (! Storage::disk('public')->exists($directory)) {
                     Storage::disk('public')->makeDirectory($directory, 0775, true);
                 }
 
                 $existingCount = $listing->images->count();
 
                 foreach ($request->file('images') as $index => $image) {
-                    if (($existingCount + $index) >= 20)
+                    if (($existingCount + $index) >= 20) {
                         break;
+                    }
 
                     $path = $image->store($directory, 'public');
 
@@ -1332,7 +1344,7 @@ class ListingController extends Controller
                         'listing_id' => $listing->id,
                         'image_path' => $path,
                         'alt_text' => $request->input("alt_text.$index", null),
-                        'order' => $existingCount + $index
+                        'order' => $existingCount + $index,
                     ]);
                 }
             }
@@ -1340,24 +1352,24 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Listing updated successfully',
-                'data' => $listing->load('images', 'attributes')
+                'data' => $listing->load('images', 'attributes'),
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
 
-    //Deleting images 
+    // Deleting images
     public function deleteImage($id)
     {
         try {
             $image = ListingImage::find($id);
 
-            if (!$image) {
+            if (! $image) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Image not found',
@@ -1378,10 +1390,11 @@ class ListingController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
+
     public function filters()
     {
         try {
@@ -1405,13 +1418,13 @@ class ListingController extends Controller
                     'conditions' => $conditions,
                     'categories' => $categories,
                     'price_range' => $priceRange,
-                ]
+                ],
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching filters',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -1422,11 +1435,11 @@ class ListingController extends Controller
             ->where('created_by', auth('api')->id())
             ->first();
 
-        if (!$listing) {
+        if (! $listing) {
             return response()->json([
                 'status' => false,
                 'message' => 'Listing not found or unauthorized',
-                'data' => null
+                'data' => null,
             ], 404);
         }
 
@@ -1439,8 +1452,8 @@ class ListingController extends Controller
             'message' => 'Listing activation toggled successfully',
             'data' => [
                 'listing_id' => $listing->id,
-                'is_active' => $listing->is_active
-            ]
+                'is_active' => $listing->is_active,
+            ],
         ]);
     }
 
@@ -1449,11 +1462,11 @@ class ListingController extends Controller
         try {
             $listing = Listing::where('slug', $slug)->first();
 
-            if (!$listing) {
+            if (! $listing) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Listing not found',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
 
@@ -1468,13 +1481,13 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Listing deleted successfully',
-                'data' => null
+                'data' => null,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error deleting listing',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -1486,11 +1499,11 @@ class ListingController extends Controller
             ->whereIn('status', [0, 1]) // Only withdraw if pending/approved
             ->first();
 
-        if (!$listing) {
+        if (! $listing) {
             return response()->json([
                 'status' => false,
                 'message' => 'Listing not found or cannot be withdrawn',
-                'data' => null
+                'data' => null,
             ], 404);
         }
 
@@ -1502,7 +1515,7 @@ class ListingController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Listing withdrawn successfully',
-            'data' => $listing
+            'data' => $listing,
         ]);
     }
 
@@ -1513,11 +1526,11 @@ class ListingController extends Controller
             ->whereIn('status', [2, 4, 5]) // rejected, expired, withdrawn
             ->first();
 
-        if (!$listing) {
+        if (! $listing) {
             return response()->json([
                 'status' => false,
                 'message' => 'Listing not found or cannot be re-listed',
-                'data' => null
+                'data' => null,
             ], 404);
         }
 
@@ -1529,7 +1542,7 @@ class ListingController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Listing re-listed successfully',
-            'data' => $listing
+            'data' => $listing,
         ]);
     }
 
@@ -1554,13 +1567,13 @@ class ListingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Listing views fetched successfully',
-                'data' => $views
+                'data' => $views,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error fetching listing views',
-                'data' => $e->getMessage()
+                'data' => $e->getMessage(),
             ], 500);
         }
     }
@@ -1569,10 +1582,10 @@ class ListingController extends Controller
     {
         $listing = Listing::where('slug', $slug)->first();
 
-        if (!$listing) {
+        if (! $listing) {
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid listing or already processed'
+                'message' => 'Invalid listing or already processed',
             ], 422);
         }
 
@@ -1581,7 +1594,7 @@ class ListingController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Listing approved successfully'
+            'message' => 'Listing approved successfully',
         ]);
     }
 
@@ -1589,10 +1602,10 @@ class ListingController extends Controller
     {
         $listing = Listing::where('slug', $slug)->first();
 
-        if (!$listing) {
+        if (! $listing) {
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid listing or already processed'
+                'message' => 'Invalid listing or already processed',
             ], 422);
         }
 
@@ -1601,7 +1614,7 @@ class ListingController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Listing rejected successfully'
+            'message' => 'Listing rejected successfully',
         ]);
     }
 }
