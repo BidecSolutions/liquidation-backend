@@ -53,7 +53,10 @@ class UserController extends Controller
     }
     public function userSummary($userId)
     {
-        $user = User::with(['listings.category', 'listings.views', 'watchlist', 'feedbacks'])->find($userId);
+        $user = User::with(['listings.category', 'listings.views', 'watchlist', 'feedbacks',])->find($userId);
+
+        $allListings = $user->listings()->latest()->get();
+
 
         if (!$user) {
             return response()->json([
@@ -129,7 +132,9 @@ class UserController extends Controller
                 'recent_activity' => [
                     'last_search' => $user->searchHistories()->latest()->first()?->keyword ?? null,
                     'last_viewed_listing' => $user->listings()->with('views')->latest()->first()?->title ?? null,
-                ]
+                ],
+                'all_listings' => $allListings,
+
             ]
         ]);
     }
