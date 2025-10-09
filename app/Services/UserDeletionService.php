@@ -17,7 +17,7 @@ class UserDeletionService
             $user->searchHistories()->delete();
 
             // 2️⃣ Delete listing views
-            $user->listingViews()->delete();
+            // $user->listingViews()->delete();
 
             // 3️⃣ Delete comments (including replies)
             $user->comments()->delete();
