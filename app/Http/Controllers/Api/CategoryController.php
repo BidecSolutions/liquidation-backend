@@ -365,23 +365,24 @@ class CategoryController extends Controller
                 ], 404);
             }
 
-            function deletesubcategory($id)
-            {
-                $subcategory = Category::where('parent_id', $id)->get();
-                foreach ($subcategory as $sub) {
-                    deletesubcategory($sub->id);
+            // function deletesubcategory($id)
+            // {
+            //     $subcategory = Category::where('parent_id', $id)->get();
+            //     foreach ($subcategory as $sub) {
+            //         deletesubcategory($sub->id);
 
-                    if ($sub->image_path) {
-                        Storage::disk('public')->delete($sub->image_path);
-                    }
+            //         if ($sub->image_path) {
+            //             Storage::disk('public')->delete($sub->image_path);
+            //         }
 
-                    if ($sub->icon) {
-                        Storage::disk('public')->delete($sub->icon);
-                    }
-                    $sub->delete();
-                }
-            }
-            deletesubcategory($category->id);
+            //         if ($sub->icon) {
+            //             Storage::disk('public')->delete($sub->icon);
+            //         }
+            //         $sub->delete();
+            //     }
+            // }
+            // deletesubcategory($category->id);
+            $category->delete();
 
             return response()->json([
                 'status' => true,
