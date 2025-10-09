@@ -18,7 +18,7 @@ class CategoryController extends Controller
             $offset = null;
             if ($request->input('name')) {
                 $keyword = $request->input('name');
-                $Category = Category::select('id', 'name', 'slug', 'parent_id')
+                $Category = Category::select('id', 'name', 'slug', 'parent_id', 'status')
                     ->where(function ($q) use ($keyword) {
                         $q->where('name', 'LIKE', "%{$keyword}%");
                     })
