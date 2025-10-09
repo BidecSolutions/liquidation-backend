@@ -3,25 +3,20 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use App\Models\Watchlist;
-use App\Models\Listing;
-use App\Models\Bid;
-use App\Models\ListingOffer;
-use App\Models\ListingReport;
-use App\Notifications\ResetPasswordNotification;
-
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected $guard_name = 'api';
+
     protected $appends = [
         'country_name',
         'region_name',
@@ -77,8 +72,6 @@ class User extends Authenticatable
         'last_login_at',
     ];
 
-
-
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -106,18 +99,22 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Country::class, 'country_id');
     }
+
     public function regions()
     {
         return $this->belongsTo(Regions::class, 'regions_id');
     }
+
     public function governorates()
     {
         return $this->belongsTo(Governorates::class, 'governorates_id');
     }
+
     public function cities()
     {
         return $this->belongsTo(City::class, 'city_id');
     }
+
     public function getCountryNameAttribute()
     {
         return $this->countries ? $this->countries->name : null;
@@ -142,14 +139,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Watchlist::class);
     }
+
     public function listings()
     {
         return $this->hasMany(Listing::class, 'created_by');
     }
+
     public function buyer_id()
     {
         return $this->hasMany(Appointment::class, 'buyer_id');
     }
+
     public function seller_id()
     {
         return $this->hasMany(Appointment::class, 'seller_id');
@@ -164,13 +164,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(ListingOffer::class);
     }
+
     public function reports()
     {
         return $this->hasMany(ListingReport::class);
     }
+
     public function feedbacks()
     {
         return $this->hasMany(UserFeedback::class, 'reviewed_user_id');
+    }
+
+    public function listingViews()
+    {
+        return $this->hasMany(ListingView::class);
     }
 
     public function deliveryAddresses()
@@ -196,7 +203,7 @@ class User extends Authenticatable
     public function getProfilePictureUrlAttribute()
     {
         return $this->profile_picture
-            ? asset('storage/profile_photo/' . $this->profile_photo)
+            ? asset('storage/profile_photo/'.$this->profile_photo)
             : asset('images/default-avatar.png');
     }
 
