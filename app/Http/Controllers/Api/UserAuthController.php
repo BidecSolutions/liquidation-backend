@@ -962,7 +962,7 @@ class UserAuthController extends Controller
         }
 
         // Optional: purge user activity here using UserDeletionService
-        // UserDeletionService::purgeUserData($user);
+        UserDeletionService::purgeUserData($user);
 
         // Mark account as deleted and clear verification data
         $user->update([
@@ -971,6 +971,9 @@ class UserAuthController extends Controller
             'verification_expires_at' => null,
             'is_verified' => false,
         ]);
+        if(method_exists($user, 'tokens')){
+            $user->tokens()->delete();
+        }
 
         return response()->json([
             'status' => true,
