@@ -1009,7 +1009,6 @@ class ListingController extends Controller
                 'description' => 'required|string',
                 'listing_type' => 'required|string',
                 'condition' => ['required', new Enum(ListingCondition::class)],
-                
                 'start_price' => 'nullable|numeric|min:0',
                 'reserve_price' => 'nullable|numeric|min:0',
                 'buy_now_price' => 'nullable|numeric|min:0',
@@ -1279,7 +1278,7 @@ class ListingController extends Controller
                 'subtitle' => 'nullable|string|max:255',
                 'description' => 'required|string',
                 'listing_type' => 'sometimes|string',
-                'condition' => 'required|in:new,used,brand_new,ready_to_move,under_construction,furnished,semi_furnished,unfurnished,recently_renovated',
+                'condition' => ['required', new Enum(ListingCondition::class)],
                 'start_price' => 'nullable|numeric|min:0',
                 'reserve_price' => 'nullable|numeric|min:0',
                 'buy_now_price' => 'nullable|numeric|min:0',
