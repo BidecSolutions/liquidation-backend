@@ -1009,6 +1009,7 @@ class ListingController extends Controller
                 'description' => 'required|string',
                 'listing_type' => 'required|string',
                 'condition' => ['required', new Enum(ListingCondition::class)],
+                
                 'start_price' => 'nullable|numeric|min:0',
                 'reserve_price' => 'nullable|numeric|min:0',
                 'buy_now_price' => 'nullable|numeric|min:0',
