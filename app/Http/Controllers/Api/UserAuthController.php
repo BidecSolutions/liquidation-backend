@@ -527,6 +527,10 @@ class UserAuthController extends Controller
                 'street_address' => 'nullable|string|max:255',
                 'apartment' => 'nullable|string|max:255',
                 'city' => 'nullable|string|max:100',
+                'country_id' => 'nullable|max:20|exists:countries,id',
+                'regions_id' => 'nullable|max:20|exists:regions,id',
+                'governorates_id' => 'nullable|max:20|exists:governorates,id',
+                'city_id' => 'nullable|max:20|exists:cities,id',
                 'state' => 'nullable|string|max:100',
                 'zip_code' => 'nullable|string|max:20',
             ]);
@@ -541,6 +545,10 @@ class UserAuthController extends Controller
                 'gender',
                 'account_type',
                 'business_name',
+                'country_id',
+                'regions_id',
+                'governorates_id',
+                'city_id',
                 'country',
                 'address_finder',
                 'address_1',
@@ -971,7 +979,7 @@ class UserAuthController extends Controller
             'verification_expires_at' => null,
             'is_verified' => false,
         ]);
-        if(method_exists($user, 'tokens')){
+        if (method_exists($user, 'tokens')) {
             $user->tokens()->delete();
         }
 
