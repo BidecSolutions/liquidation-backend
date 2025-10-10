@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ListingCondition;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Listing;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Enum;
 
 class ListingController extends Controller
 {
@@ -610,7 +612,7 @@ class ListingController extends Controller
             'status' => true,
             'message' => 'Filtered listings fetched successfully',
             'data' => $listingData,
-            'pagination' => $pagination, 
+            'pagination' => $pagination,
             'category_tree' => $categoryTree,
         ]);
     }
@@ -1006,7 +1008,7 @@ class ListingController extends Controller
                 'subtitle' => 'nullable|string|max:255',
                 'description' => 'required|string',
                 'listing_type' => 'required|string',
-                'condition' => 'required|in:new,used,brand_new,ready_to_move,under_construction,furnished,semi_furnished,unfurnished,recently_renovated',
+                'condition' => ['required', new Enum(ListingCondition::class)],
                 'start_price' => 'nullable|numeric|min:0',
                 'reserve_price' => 'nullable|numeric|min:0',
                 'buy_now_price' => 'nullable|numeric|min:0',
