@@ -11,11 +11,13 @@ use App\Models\ListingImage;
 use App\Models\ListingOffer;
 use App\Models\ListingView;
 use App\Models\SearchHistory;
+use App\Models\User;
 use App\Models\UserFeedback;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -1061,8 +1063,23 @@ class ListingController extends Controller
             $data['status'] = 1;
             $data['is_active'] = 1;
             $data['created_by'] = auth('api')->id(); // or auth('admin-api')->id()
-
+            $creator = User::where('id', $data['created_by'])->first();
+            if (! $creator) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User Not Found',
+                    'data' => [],
+                ]);
+            }
             $listing = Listing::create($data);
+            // Send email notification to the listing creator
+            Mail::send('emails.notifications.listing_createdz', [
+                'user' => $creator,
+                'listing' => $listing,
+            ], function ($message) use ($creator, $listing) {
+                $message->to($creator->email)
+                    ->subject('🎉 Your Listing "'.$listing->title.'" Has Been Created Successfully!');
+            });
 
             // Save attributes
             if (! empty($data['attributes'])) {

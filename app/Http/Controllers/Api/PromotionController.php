@@ -103,7 +103,7 @@ class PromotionController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp',
             'type'  => 'nullable|string|in:' . implode(',', PromotionType::values()),
         ]);
          if ($validator->fails()) {
