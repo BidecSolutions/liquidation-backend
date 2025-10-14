@@ -380,8 +380,7 @@ class CategoryController extends Controller
                     }
                     $sub->delete();
                 }
-            }
-            deletesubcategory($category->id); */
+            }*/
             $category->delete();
 
             return response()->json([

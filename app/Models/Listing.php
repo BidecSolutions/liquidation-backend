@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Listing extends Model
 {
     use HasFactory;
+
     protected $table = 'listings';
+
     protected $fillable = [
         'title',
         'slug',
@@ -54,8 +56,9 @@ class Listing extends Model
         'sold_at' => 'datetime',
     ];
 
-    protected $appends = ['winning_bid', 'buyer'];
+   
 
+    protected $appends = ['winning_bid', 'buyer'];
 
     // 🔗 Relationships
 
@@ -108,12 +111,12 @@ class Listing extends Model
     {
         return $this->belongsToMany(User::class, 'watchlists');
     }
-    
 
     public function winningBid()
     {
         return $this->hasOne(Bid::class)->orderByDesc('amount')->with(['user']);
     }
+
     public function winningOffer()
     {
         return $this->hasOne(ListingOffer::class)->orderByDesc('amount');
@@ -138,9 +141,6 @@ class Listing extends Model
         return $this->winningBid()->with('user')->first();
     }
 
-
-
-
     public function buyNowPurchases()
     {
         return $this->hasMany(BuyNowPurchase::class);
@@ -154,9 +154,8 @@ class Listing extends Model
     // Scope for filtering by type (jobs, motors, etc.)
     public function scopeByType($query, $type)
     {
-        return $query->whereHas('listingType', fn($q) => $q->where('code', $type));
+        return $query->whereHas('listingType', fn ($q) => $q->where('code', $type));
     }
-
 
     public function attributes()
     {
@@ -167,9 +166,27 @@ class Listing extends Model
     {
         return $this->hasMany(UserFeedback::class, 'listing_id');
     }
+
     public function comments()
     {
         return $this->hasMany(Comment::class);
     }
+     protected static function boot()
+    {
+        parent::boot();
 
+        static::deleting(function ($listing) {
+            $listing->images()->delete();
+            $listing->offers()->delete();
+            $listing->bids()->delete();
+            $listing->views()->delete();
+            $listing->reports()->delete();
+            $listing->attributes()->delete();
+            $listing->feedbacks()->delete();
+            $listing->comments()->delete();
+            $listing->buyNowPurchases()->delete();
+
+            $listing->watchers()->detach();
+        });
+    }
 }

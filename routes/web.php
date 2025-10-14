@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\RunVehicleSeederJob;
+use Database\Seeders\DeleteSubcategory;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -209,6 +210,15 @@ Route::get('seed-promotions', function () {
         'status' => true,
         'message' => 'Promotions seeded.',
         'total' => DB::table('promotions')->count(),
+    ];
+});
+Route::get('delete-subcategory/{id}', function () {
+    $seeder = new DeleteSubcategory();
+    $seeder->run($id);
+
+    return [
+        'status' => true,
+        'message' => 'DeleteSubcategory with its lsitgin are successfully delted.',
     ];
 });
 
