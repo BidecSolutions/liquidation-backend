@@ -86,6 +86,7 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::post('/{id}/update', 'update');
         Route::patch('/{id}/toggle', 'toggleStatus');
         Route::delete('/{id}/destroy', 'destroy');
+        Route::delete('/{id}/deleteSubcategories', 'deleteSubcategories');
     });
 
     Route::prefix('promotions')->controller(PromotionController::class)->group(function () {

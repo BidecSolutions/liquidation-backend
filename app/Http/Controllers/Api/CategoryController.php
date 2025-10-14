@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Listing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -395,5 +396,32 @@ class CategoryController extends Controller
                 'data' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function deleteSubcategories($id)
+    {
+        // Recursive function to delete all subcategories and their listings
+        $deleteRecursive = function ($parentId) use (&$deleteRecursive) {
+            $subcategories = Category::where('parent_id', $parentId)->get();
+
+            foreach ($subcategories as $sub) {
+                // Delete listings belonging to this subcategory
+                Listing::where('category_id', $sub->id)->delete();
+
+                // Recursively delete its subcategories
+                $deleteRecursive($sub->id);
+
+                // Finally, delete this subcategory itself
+                $sub->delete();
+            }
+        };
+
+        // Run the recursive deletion starting from the given ID
+        $deleteRecursive($id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All subcategories and their listings have been deleted successfully.',
+        ], 200);
     }
 }
