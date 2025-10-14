@@ -1073,7 +1073,7 @@ class ListingController extends Controller
             }
             $listing = Listing::create($data);
             // Send email notification to the listing creator
-            Mail::send('emails.notifications.listing_createdz', [
+            Mail::send('emails.notifications.listing_created', [
                 'user' => $creator,
                 'listing' => $listing,
             ], function ($message) use ($creator, $listing) {

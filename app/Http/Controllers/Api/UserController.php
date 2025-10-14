@@ -53,10 +53,12 @@ class UserController extends Controller
     }
     public function userSummary($userId)
     {
-        $user = User::with(['listings.category', 'listings.views', 'watchlist', 'feedbacks',])->find($userId);
+        $user = User::with(['listings.category', 'listings.views', 'listings.images', 'watchlist', 'feedbacks',])->find($userId);
 
-        $allListings = $user->listings()->latest()->get();
-
+        $allListings = $user->listings()
+        ->with(['category', 'views', 'images'])
+        ->latest()
+        ->get();
 
         if (!$user) {
             return response()->json([
