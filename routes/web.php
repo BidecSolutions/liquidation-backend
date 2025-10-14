@@ -212,7 +212,7 @@ Route::get('seed-promotions', function () {
         'total' => DB::table('promotions')->count(),
     ];
 });
-Route::get('delete-subcategory/{id}', function () {
+Route::get('delete-subcategory/{id}', function ($id) {
     $seeder = new DeleteSubcategory();
     $seeder->run($id);
 
