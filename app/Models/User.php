@@ -174,6 +174,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserFeedback::class, 'reviewed_user_id');
     }
+    
     public function comments(){
         return $this->hasMany(Comment::class);
     }

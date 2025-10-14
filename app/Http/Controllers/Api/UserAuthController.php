@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ListingView;
 use App\Models\SearchHistory;
 use App\Models\User;
+use App\Models\UserFeedback;
 use App\Services\UserDeletionService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -992,10 +993,26 @@ class UserAuthController extends Controller
     // User profile
     public function profile(Request $request)
     {
+        $user = $request->user();
+
+        // $userFeedback = 
+        $feedbacks = UserFeedback::where('reviewed_user_id', $user->id)->get();
+        $totalFeedback = $feedbacks->count();
+        $positive = $feedbacks->whereIn('rating', [4, 5])->count();
+        $neutral  = $feedbacks->where('rating', 3)->count();
+        $negative = $feedbacks->whereIn('rating', [1, 2])->count();
+        $feedbacks = [
+            'total' => $totalFeedback,
+            'positive' => $positive,
+            'neutral' => $neutral,
+            'negative' => $negative,
+        ];
+        $user->feedback_summary = new \stdClass();
+        $user->feedback_summary = $feedbacks;
         return response()->json([
             'success' => true,
             'message' => 'Successfully Fetched',
-            'data' => $request->user(),
+            'data' => $user,
         ], 200);
     }
 
