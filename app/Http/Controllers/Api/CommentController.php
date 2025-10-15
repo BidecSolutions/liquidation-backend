@@ -19,7 +19,11 @@ class CommentController extends Controller
             ->latest()
             ->get();
 
-        return response()->json(['comments' => $comments]);
+        return response()->json([
+            'status' => true,
+            'message' => "Comments for this listings fetched successfully",
+            'data' => $comments,
+        ]);
     }
 
     public function store(Request $request, Listing $listing)
