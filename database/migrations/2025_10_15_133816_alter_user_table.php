@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         //
-        Schema::table('users', function (Blueprint $table) {
-            if (! Schema::hasColumn('users', 'reset_p_code')) {
+        Schema::table('users', function(Blueprint $table){
+            if(!Schema::hasColumn('users', 'reset_p_code')){
                 $table->string('reset_p_code')->nullable()->after('verification_expires_at');
             }
-            if (! Schema::hasColumn('users', 'reset_p_code_expire_at')) {
+            if(!Schema::hasColumn('users', 'reset_p_code_expire_at')){
                 $table->timestamp('reset_p_code_expire_at')->nullable()->after('reset_p_code');
             }
         });
@@ -28,11 +28,13 @@ return new class extends Migration
     public function down(): void
     {
         //
-        Schema::table('users', function (Blueprint $table) {
-            if (Schema::hasColumn('users', 'reset_p_code')) {
+        Schema::table('users', function(Blueprint $table){
+            if(Schema::hasColumn('users', 'reset_p_code')){
                 $table->dropColumn('reset_p_code');
             }
-
+            if(Schema::hasColumn('users', 'reset_p_code_expire_at')){
+                $table->dropColumn('reset_p_code_expire_at');
+            }
         });
     }
 };
