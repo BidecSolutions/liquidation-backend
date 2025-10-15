@@ -84,7 +84,7 @@ class UserAuthController extends Controller
                     'gender' => $request->gender,
                     'country_id' => $request->country_id,
                     'regions_id' => $request->regions_id,
-                    'governorates_id' => $reuest->governorates_id,
+                    'governorates_id' => $request->governorates_id,
                     'city_id' => $request->city_id,
                     'date_of_birth' => $request->date_of_birth,
                     'billing_address' => $request->billing_address,
