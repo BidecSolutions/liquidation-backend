@@ -37,6 +37,8 @@ class User extends Authenticatable
         'is_verified',
         'verification_code',
         'verification_expires_at',
+        'reset_p_code',
+        'reset_p_code_expire_at',
         'last_name',
         'username',
         'gender',

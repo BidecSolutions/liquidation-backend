@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AppResetCodeMail;
 use App\Models\ListingView;
 use App\Models\SearchHistory;
 use App\Models\User;
@@ -801,41 +802,79 @@ class UserAuthController extends Controller
         try {
             $request->validate([
                 'email' => 'required|email|exists:users,email',
-                'token' => 'required',
                 'password' => 'required|string|min:8|confirmed',
+                // either token or code is required
             ]);
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => false,
-                'errors' => $e->errors(), // shows: "password must be at least 8 characters"
+                'errors' => $e->errors(),
             ], 422);
         }
 
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                    'remember_token' => Str::random(60),
-                ])->save();
+        $email = $request->input('email');
+        $token = $request->input('token');
+        $code = $request->input('code');
 
-                event(new PasswordReset($user));
+        // --- Case 1: Web Reset (token-based) ---
+        if ($token) {
+            $status = Password::reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+                function ($user, $password) {
+                    $user->forceFill([
+                        'password' => Hash::make($password),
+                        'remember_token' => Str::random(60),
+                    ])->save();
+
+                    event(new PasswordReset($user));
+                }
+            );
+
+            if ($status === Password::PASSWORD_RESET) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Password reset successful (web).',
+                ]);
             }
-        );
 
-        if ($status === Password::PASSWORD_RESET) {
+            return response()->json([
+                'status' => false,
+                'message' => __($status),
+            ], 400);
+        }
+
+        // --- Case 2: App Reset (OTP code) ---
+        if ($code) {
+            $user = User::where('email', $email)
+                ->where('reset_p_code', $code)
+                ->where('reset_p_code_expire_at', '>', now())
+                ->first();
+
+            if (! $user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid or expired code.',
+                ], 400);
+            }
+
+            $user->password = Hash::make($request->input('password'));
+            $user->reset_p_code = null;
+            $user->reset_p_code_expire_at = null;
+            $user->remember_token = Str::random(60);
+            $user->save();
+
             return response()->json([
                 'status' => true,
-                'message' => 'Password reset successful.',
+                'message' => 'Password reset successful (app).',
             ]);
         }
 
         return response()->json([
             'status' => false,
-            'message' => __($status),
+            'message' => 'Missing token or code in request.',
         ], 400);
     }
-
+ 
     public function login(Request $request)
     {
         $request->validate([

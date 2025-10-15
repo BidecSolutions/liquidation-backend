@@ -1,25 +1,21 @@
 <?php
 
+use App\Http\Controllers\Api\AppointmentController;
+use App\Http\Controllers\Api\AuctionResultController;
+use App\Http\Controllers\Api\BidController;
+use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\DeliveryAddressController;
+use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\ListingBuyController;
+use App\Http\Controllers\Api\ListingController;
+use App\Http\Controllers\Api\ListingOfferController;
+use App\Http\Controllers\Api\ListingReportController;
+use App\Http\Controllers\Api\ListingReviewController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\UserAuthController;
+use App\Http\Controllers\Api\UserFeedbackController;
+use App\Http\Controllers\Api\WatchlistController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\{
-    AppointmentController,
-    UserAuthController,
-    ListingController,
-    ListingOfferController,
-    BidController,
-    ListingReportController,
-    WatchlistController,
-    UserController,
-    NotificationController,
-    DeliveryAddressController,
-    AuctionResultController,
-    CommentController,
-    FavoriteController,
-    ListingBuyController,
-    UserFeedbackController,
-    ListingReviewController,
-};
-
 
 // User Auth
 // Route::post('/user/login', [AuthController::class, 'login']);
@@ -28,7 +24,7 @@ use App\Http\Controllers\Api\{
 //     Route::post('/user/logout', [AuthController::class, 'logout']);
 // });
 Route::prefix('user')->group(function () {
-    //User Auth Controller works
+    // User Auth Controller works
     Route::controller(UserAuthController::class)->group(function () {
         Route::post('/login', 'login');
         Route::post('/register', 'register');
@@ -37,11 +33,13 @@ Route::prefix('user')->group(function () {
         Route::post('/resend-otp', 'resendOtp');
         Route::post('/request-restore-token', 'requestRestoreToken');
         Route::post('/verify-and-restore', 'verifyAndRestore');
+        Route::post('/forgot-password', 'sendResetLinkEmail');
+        Route::post('/reset-password', 'resetPassword');
     });
 
     Route::middleware('auth:api')->group(function () {
 
-        //User Auth Controller works
+        // User Auth Controller works
         Route::controller(UserAuthController::class)->group(function () {
             Route::get('/profile', 'profile');
             Route::post('/logout', 'logout');
@@ -54,11 +52,6 @@ Route::prefix('user')->group(function () {
             Route::post('/update-name', 'updateName');
             Route::post('/profile-update', 'updateProfileDetails');
             Route::delete('/delete', 'deleteAccount');
-            // Route::post('/forgot-password', 'sendResetLinkEmail');
-            // Route::post('/reset-password', 'resetPassword');
-            
-
-
         });
 
         Route::prefix('listings/offers')->controller(ListingOfferController::class)->group(function () {
@@ -94,10 +87,10 @@ Route::prefix('user')->group(function () {
             Route::delete('/images/{id}', 'deleteImage');
             Route::get('/suggestions', 'suggestions');
             Route::get('/search', 'search');
-            Route::get('/recentview', 'recentViewedListings');            
-            Route::get('/homePastSearches', 'homePastSearches');     
-            Route::get('/searchById/{id}', 'searchById'); 
-            Route::get('/recommendations', 'recommendations');    
+            Route::get('/recentview', 'recentViewedListings');
+            Route::get('/homePastSearches', 'homePastSearches');
+            Route::get('/searchById/{id}', 'searchById');
+            Route::get('/recommendations', 'recommendations');
 
         });
 
@@ -130,7 +123,7 @@ Route::prefix('user')->group(function () {
             Route::post('/{id}/read', 'markAsRead');
         });
 
-        //Delibery address routes
+        // Delibery address routes
         Route::prefix('delivery-addresses')->controller(DeliveryAddressController::class)->group(function () {
             Route::get('/', 'index');
             Route::post('/store', 'store');
@@ -138,13 +131,13 @@ Route::prefix('user')->group(function () {
             Route::delete('/{id}/destroy', 'destroy');
         });
 
-        //Userlisting results
+        // Userlisting results
         Route::prefix('auction-results')->controller(AuctionResultController::class)->group(function () {
             Route::get('/won', 'wonListings');
             Route::get('/lost', 'lostListings');
         });
 
-        //FavouriteController
+        // FavouriteController
         Route::prefix('favorites')->controller(FavoriteController::class)->group(function () {
             Route::post('/category/{id}', 'toggleCategory');         // Toggle category favorite
             Route::post('/seller/{id}', 'toggleSeller');             // Toggle seller favorite
@@ -152,27 +145,27 @@ Route::prefix('user')->group(function () {
             Route::get('/sellers', 'listFavoriteSellers');           // List favorite sellers
         });
 
-        //Feedback Controller
+        // Feedback Controller
         Route::prefix('feedback')->controller(UserFeedbackController::class)->group(function () {
-            Route::post('/store' , 'store');
+            Route::post('/store', 'store');
             Route::patch('{id}/update', 'update');
             Route::get('stats/{user_id}', 'stats');
-            });
-
-        //listing review controller
-        Route::prefix('listing-reviews')->controller(ListingReviewController::class)->group(function (){
-            Route::post('/store', 'store');
-            Route::get('/stats/{listing_id}', 'showStats');
-            Route::get('/' , 'index');
         });
 
-        //Comment Controller Route
+        // listing review controller
+        Route::prefix('listing-reviews')->controller(ListingReviewController::class)->group(function () {
+            Route::post('/store', 'store');
+            Route::get('/stats/{listing_id}', 'showStats');
+            Route::get('/', 'index');
+        });
+
+        // Comment Controller Route
         Route::prefix('comments')->controller(CommentController::class)->group(function () {
-            Route::get('/{listing}',  'index');
-            Route::post('/{listing}/comment',  'store');
+            Route::get('/{listing}', 'index');
+            Route::post('/{listing}/comment', 'store');
             Route::post('/{comment}/reply', 'reply');
-            Route::post('/{comment}/update',  'update');
-            Route::delete('/{comment}/delete',  'destroy');
+            Route::post('/{comment}/update', 'update');
+            Route::delete('/{comment}/delete', 'destroy');
         });
 
     });
