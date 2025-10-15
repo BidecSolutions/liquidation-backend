@@ -77,7 +77,7 @@ Route::get('/run-app-schedule', function () {
     return nl2br($finalOutput);
 });
 
-Route::get('clear', function () {
+Route::get('clear', function () { 
     Artisan::call('optimize:clear');
     Artisan::call('config:clear');
     Artisan::call('route:clear');

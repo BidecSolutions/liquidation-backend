@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ContactMessageController;
 use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\GovernorateController;
@@ -58,6 +59,9 @@ Route::post('countries/list', [CountryController::class, 'list']);
 Route::prefix('contact')->controller(ContactMessageController::class)->group(function () {
     Route::post('message', 'store');
 });
+Route::prefix('comments')->controller(CommentController::class)->group(function () {
+    Route::get('/{listing}', 'index');
+});
 Route::prefix('vehicle')->controller(VehicleController::class)->group(function () {
     Route::post('/', 'list');
 });
@@ -67,6 +71,6 @@ Route::get('governorates', [GovernorateController::class, 'index']);
 Route::get('regions/{region}', [RegionController::class, 'show']);
 Route::get('governorates/{governorate}', [GovernorateController::class, 'show']);
 
-//forgot password routes 
-Route::post('/forgot-password', [UserAuthController::class,'sendResetLinkEmail']);
-Route::post('/reset-password', [UserAuthController::class,'resetPassword']);
+// forgot password routes
+Route::post('/forgot-password', [UserAuthController::class, 'sendResetLinkEmail']);
+Route::post('/reset-password', [UserAuthController::class, 'resetPassword']);
