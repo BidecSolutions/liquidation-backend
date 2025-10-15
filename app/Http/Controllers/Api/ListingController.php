@@ -534,7 +534,8 @@ class ListingController extends Controller
 
         // ✅ Pagination
         $perPage = $request->input('pagination.per_page', 20);
-        $listings = $query->paginate($perPage);
+        $page = $request->input('pagination.page', 1);
+        $listings = $query->paginate($perPage, ['*'], 'page', $page);
 
         $listingData = $listings->getCollection()->map(function ($listing) {
             $listingArray = $listing->toArray();
