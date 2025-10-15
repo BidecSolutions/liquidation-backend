@@ -82,6 +82,10 @@ class UserAuthController extends Controller
                     'country' => $request->country,
                     'phone' => $request->phone,
                     'gender' => $request->gender,
+                    'country_id' => $request->country_id,
+                    'regions_id' => $request->regions_id,
+                    'governorates_id' => $reuest->governorates_id,
+                    'city_id' => $request->city_id,
                     'date_of_birth' => $request->date_of_birth,
                     'billing_address' => $request->billing_address,
                     'account_type' => $request->account_type ?? 'personal',
@@ -744,6 +748,7 @@ class UserAuthController extends Controller
         try {
             $request->validate([
                 'email' => 'required|email|exists:users,email',
+                'from' => 'required|in:web,app',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -752,19 +757,41 @@ class UserAuthController extends Controller
             ], 422);
         }
 
-        $status = Password::sendResetLink($request->only('email'));
+        $user = User::where('email', $request->input('email'))->first();
 
-        if ($status === Password::RESET_LINK_SENT) {
+        // --- Case 1: Web (send reset link) ---
+        if ($request->input('from') === 'web') {
+            $status = Password::sendResetLink($request->only('email'));
+
+            if ($status === Password::RESET_LINK_SENT) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Password reset link sent to your email address.',
+                ]);
+            }
+
             return response()->json([
-                'status' => true,
-                'message' => 'Password reset link sent to your email address.',
-            ]);
+                'status' => false,
+                'message' => __($status),
+            ], 400);
         }
 
+        // --- Case 2: App (send OTP code) ---
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $expiration = now()->addMinutes(30);
+
+        $user->reset_p_code = $code;
+        $user->reset_p_code_expire_at = $expiration;
+        $user->save();
+
+        // Send code via email
+        Mail::to($user->email)->send(new AppResetCodeMail($user, $code));
+
         return response()->json([
-            'status' => false,
-            'message' => __($status),
-        ], 400);
+            'status' => true,
+            'message' => 'A 6-digit reset code has been sent to your email address.',
+            'code' => $code, // only for testing, remove in production
+        ]);
     }
 
     // reset password
