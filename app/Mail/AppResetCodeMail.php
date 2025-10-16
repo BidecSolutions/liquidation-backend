@@ -20,7 +20,8 @@ class AppResetCodeMail extends Mailable
      */
     public function __construct()
     {
-        //
+        $this->user = request()->user;
+        $this->code = request()->code;
     }
 
     /**
