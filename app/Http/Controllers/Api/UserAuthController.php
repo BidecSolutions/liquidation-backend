@@ -770,8 +770,7 @@ class UserAuthController extends Controller
 
             if ($status === Password::RESET_LINK_SENT) {
                 return response()->json([
-                    'status' => true,
-                    'message' => 'Password reset link sent to your email address.',
+                    'status' => $status,
                 ]);
             }
 
