@@ -249,3 +249,15 @@ Route::get('/seed-regions', function () {
         'totalGovernorates' => DB::table('governorates')->count(),
     ];
 });
+Route::get('/delete-categories-listings', function () {
+    Artisan::call('db:seed', [
+        '--class' => 'ForRemovingSomeCategories',
+        '--force' => true,
+    ]);
+
+    return [
+        'status' => true,
+        'message' => 'category of motors that are child deleted.',
+        'totalCategories' => DB::table('category')->count(),
+    ];
+});

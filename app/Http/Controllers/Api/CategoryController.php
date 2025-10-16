@@ -408,7 +408,7 @@ class CategoryController extends Controller
                 'message' => 'Category not found.',
             ], 404);
         }
-        
+
         $deleteRecursive = function ($parentId) use (&$deleteRecursive) {
             $subcategories = Category::where('parent_id', $parentId)->get();
 
