@@ -18,10 +18,10 @@ class AppResetCodeMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct($code, $user)
     {
-        $this->user = request()->user;
-        $this->code = request()->code;
+        $this->user = $user;
+        $this->code = $code;
     }
 
     /**
