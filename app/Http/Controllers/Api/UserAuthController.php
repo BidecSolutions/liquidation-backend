@@ -58,7 +58,7 @@ class UserAuthController extends Controller
                         $query->where('status', '!=', 3);
                     }),
                 ],
-                'gender' => 'nullable|string',
+                'gender' => 'nullable|string|in:male,female,other',
                 'date_of_birth' => 'nullable|date',
                 'billing_address' => 'nullable|string|max:500',
                 'customer_number' => 'nullable|string|max:50',
@@ -523,7 +523,7 @@ class UserAuthController extends Controller
                 'email' => 'nullable|email|unique:users,email,'.$user->id,
                 'phone' => 'nullable|string|max:20',
                 'landline' => 'nullable|string|max:20',
-                'gender' => 'nullable|in:male,female,other',
+                'gender' => 'nullable|string|in:male,female,other',
                 'account_type' => 'nullable|in:business,personal',
                 'business_name' => 'nullable|string|max:255',
                 'country' => 'nullable|string|max:100',
