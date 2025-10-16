@@ -1,7 +1,8 @@
 @extends('emails.notifications.layout')
 
 @section('content')
-    <div class="greeting">Hello {{ $user->name ? $user->name : "Sir" }},</div>
+<!-- {{ if (!isset($user)) $user = auth()->user(); }} -->
+    <!-- <div class="greeting">Hello {{ $user->name ? $user->name : "Sir" }},</div> -->
 
     <div class="message">
         <p>You requested to reset your password on the Ma3rood App.</p>
