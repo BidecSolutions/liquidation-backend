@@ -1189,8 +1189,8 @@ class ListingController extends Controller
                 'bids.user',
                 'winningBid.user',
                 'attributes',
-                'comments.user:id,name,profile_photo',
-                'comments.replies.user:id,name,profile_photo',
+                'comments.user:id,username,profile_photo',
+                'comments.replies.user:id,username,profile_photo',
             ])
                 ->withCount('views')
                 ->where('slug', $slug)
