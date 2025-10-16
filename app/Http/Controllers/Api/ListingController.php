@@ -440,7 +440,6 @@ class ListingController extends Controller
                 'category',
                 'creator',
                 'attributes',
-                ''
                 'watchers',
                 'paymentMethod:id,name',
                 'shippingMethod:id,name',
