@@ -56,10 +56,8 @@ class Listing extends Model
         'sold_at' => 'datetime',
     ];
 
-   
-
     protected $appends = [
-        'winning_bid', 
+        'winning_bid',
         'buyer',
         'country_name',
         'region_name',
@@ -87,6 +85,26 @@ class Listing extends Model
     public function cities()
     {
         return $this->belongsTo(City::class, 'city_id');
+    }
+
+    public function getCountryNameAttribute()
+    {
+        return $this->countries ? $this->countries->name : null;
+    }
+
+    public function getRegionNameAttribute()
+    {
+        return $this->regions ? $this->regions->name : null;
+    }
+
+    public function getGovernorateNameAttribute()
+    {
+        return $this->governorates ? $this->governorates->name : null;
+    }
+
+    public function getCityNameAttribute()
+    {
+        return $this->cities ? $this->cities->name : null;
     }
 
     public function category()
@@ -198,7 +216,8 @@ class Listing extends Model
     {
         return $this->hasMany(Comment::class);
     }
-     protected static function boot()
+
+    protected static function boot()
     {
         parent::boot();
 
