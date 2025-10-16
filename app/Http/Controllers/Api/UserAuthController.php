@@ -877,7 +877,7 @@ class UserAuthController extends Controller
             'message' => 'Missing token or code in request.',
         ], 400);
     }
- 
+
     public function login(Request $request)
     {
         $request->validate([
@@ -888,7 +888,7 @@ class UserAuthController extends Controller
         $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $user = User::where($fieldtype, $request->email)->first();
-        if (! $user) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User not found',

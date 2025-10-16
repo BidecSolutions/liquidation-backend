@@ -440,6 +440,7 @@ class ListingController extends Controller
                 'category',
                 'creator',
                 'attributes',
+                ''
                 'watchers',
                 'paymentMethod:id,name',
                 'shippingMethod:id,name',
@@ -506,6 +507,19 @@ class ListingController extends Controller
         if ($request->filled('min_price')) {
             $query->where('buy_now_price', '>=', $request->min_price);
         }
+        if($request->filled('country_id')){
+            $query->where('country_id', $request->country_id);
+        }
+        if($request->filled('regions_id')){
+            $query->where('regions_id', $request->regions_id);
+        }
+        if($request->filled('governorates_id')){
+            $query->where('governorates_id', $request->governorates_id);
+        }
+        if($request->filled('city_id')){
+            $query->where('city_id', $request->city_id);
+        }
+
         if ($request->filled('max_price')) {
             $query->where('buy_now_price', '<=', $request->max_price);
         }
@@ -1012,6 +1026,10 @@ class ListingController extends Controller
                 'description' => 'required|string',
                 'listing_type' => 'required|string',
                 'condition' => ['required', new Enum(ListingCondition::class)],
+                'country_id' => 'nullable|max:20|exists:countries,id',
+                'regions_id' => 'nullable|max:20|exists:regions,id',
+                'governorates_id' => 'nullable|max:20|exists:governorates,id',
+                'city_id' => 'nullable|max:20|exists:cities,id',
                 'start_price' => 'nullable|numeric|min:0',
                 'reserve_price' => 'nullable|numeric|min:0',
                 'buy_now_price' => 'nullable|numeric|min:0',

@@ -58,9 +58,36 @@ class Listing extends Model
 
    
 
-    protected $appends = ['winning_bid', 'buyer'];
+    protected $appends = [
+        'winning_bid', 
+        'buyer',
+        'country_name',
+        'region_name',
+        'governorate_name',
+        'city_name',
+    ];
 
     // 🔗 Relationships
+
+    public function countries()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+
+    public function regions()
+    {
+        return $this->belongsTo(Regions::class, 'regions_id');
+    }
+
+    public function governorates()
+    {
+        return $this->belongsTo(Governorates::class, 'governorates_id');
+    }
+
+    public function cities()
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
 
     public function category()
     {
