@@ -491,6 +491,33 @@ class ListingController extends Controller
         // if ($request->filled('type')) {
         //     $query->where('listing_type', $request->type);
         // }
+        // ✅ Address filter (matches partial address text from Google)
+        if (
+            $request->filled('country') ||
+            $request->filled('region') ||
+            $request->filled('governorate') ||
+            $request->filled('city')
+        ) {
+            $country = $request->input('country');
+            $region = $request->input('region');
+            $governorate = $request->input('governorate');
+            $city = $request->input('city');
+
+            $query->where(function ($q) use ($country, $region, $governorate, $city) {
+                if ($country) {
+                    $q->orWhere('address', 'LIKE', "%{$country}%");
+                }
+                if ($region) {
+                    $q->orWhere('address', 'LIKE', "%{$region}%");
+                }
+                if ($governorate) {
+                    $q->orWhere('address', 'LIKE', "%{$governorate}%");
+                }
+                if ($city) {
+                    $q->orWhere('address', 'LIKE', "%{$city}%");
+                }
+            });
+        }
 
         // ✅ Predefined keys that should use range logic (besides price)
         $rangeKeys = ['year', 'odometer', 'land_size', 'bedrooms', 'bathrooms'];
