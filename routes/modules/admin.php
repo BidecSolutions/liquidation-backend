@@ -136,6 +136,7 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::get('/', 'index');
         Route::get('/views', 'views');
         Route::get('/{slug}/show', 'show');
+        Route::get('/{slug}/update', 'update');
         Route::delete('/{slug}/destroy', 'destroy');
         Route::put('/{slug}/approve', 'approve');
         Route::put('/{slug}/reject', 'reject');

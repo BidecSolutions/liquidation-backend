@@ -13,6 +13,7 @@ use App\Models\ListingView;
 use App\Models\SearchHistory;
 use App\Models\User;
 use App\Models\UserFeedback;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -1363,6 +1364,17 @@ class ListingController extends Controller
                     'message' => 'Listing not found',
                     'data' => null,
                 ], 404);
+            }
+            if($request->has('expire_at')){
+                $expire_at = $request->input('expire_at');
+
+                $data = ['expire_at' => $expire_at];
+                $listing->update($data);
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Listing expiration updated successfully',
+                    'data' => $listing,
+                ]);
             }
 
             $validator = Validator::make($request->all(), [
