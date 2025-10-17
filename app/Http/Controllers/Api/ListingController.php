@@ -685,6 +685,46 @@ class ListingController extends Controller
         ]);
     }
 
+    public function locationfilering(Request $request){
+        $latitude = $request->latitude;
+        $longitude = $request->longitude;
+        $radius = $request->input('radius', 10); // Default 10 km
+
+        $haversine = "(6371 * acos(cos(radians($latitude)) 
+                * cos(radians(latitude)) 
+                * cos(radians(longitude) - radians($longitude)) 
+                + sin(radians($latitude)) 
+                * sin(radians(latitude))))";
+
+        $listings = Listing::with(
+                    'images',
+                    'category',
+                    'creator',
+                    'attributes',
+            )
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->select('*', DB::raw("$haversine AS distance"))
+            ->having('distance', '<=', $radius)
+            ->orderBy('distance', 'asc')
+            ->get();
+
+        
+        $listingsData = $listings->getColection()->map(function ($listing) {
+            $listingArray = $listing->toArray();
+            unset($listingArray['attributes']);
+            $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
+            return array_merge($listingArray, $attributes);
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Listings fetched based on location successfully',
+            'data' => $listingsData,
+            'radius' => $radius,
+        ]);
+    }
+
     public function search(Request $request)
     {
         $request->validate([

@@ -39,6 +39,7 @@ Route::get('instructions', [InstructionController::class, 'list']);
 Route::prefix('listings')->controller(ListingController::class)->group(function () {
     Route::get('/', 'index');
     Route::post('/filters', 'filterListings');
+    Route::post('/locationfilering', 'locationfilering');
     Route::get('/filters-metadata', 'filtersMetadata');
     Route::get('/{slug}/show', 'show');
     Route::get('/suggestions', 'suggestions');
