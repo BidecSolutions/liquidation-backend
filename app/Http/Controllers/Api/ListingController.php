@@ -467,6 +467,25 @@ class ListingController extends Controller
         } else {
             $query->where('status', 1);
         }
+        // ✅ Location filter (Haversine formula)
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $latitude = $request->latitude;
+            $longitude = $request->longitude;
+            $radius = $request->input('radius', 10); // Default 10 km
+
+            $haversine = "(6371 * acos(cos(radians($latitude)) 
+                    * cos(radians(latitude)) 
+                    * cos(radians(longitude) - radians($longitude)) 
+                    + sin(radians($latitude)) 
+                    * sin(radians(latitude))))";
+
+            // ✅ Exclude listings with NULL coordinates to prevent SQL errors
+            $query->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->select('*', DB::raw("$haversine AS distance"))
+                ->having('distance', '<=', $radius)
+                ->orderBy('distance', 'asc');
+        }
 
         // // ✅ Filter by category_type (join with categories table)
         // if ($request->filled('type')) {
@@ -506,16 +525,16 @@ class ListingController extends Controller
         if ($request->filled('min_price')) {
             $query->where('buy_now_price', '>=', $request->min_price);
         }
-        if($request->filled('country_id')){
+        if ($request->filled('country_id')) {
             $query->where('country_id', $request->country_id);
         }
-        if($request->filled('regions_id')){
+        if ($request->filled('regions_id')) {
             $query->where('regions_id', $request->regions_id);
         }
-        if($request->filled('governorates_id')){
+        if ($request->filled('governorates_id')) {
             $query->where('governorates_id', $request->governorates_id);
         }
-        if($request->filled('city_id')){
+        if ($request->filled('city_id')) {
             $query->where('city_id', $request->city_id);
         }
 
@@ -1038,6 +1057,17 @@ class ListingController extends Controller
                 'pickup_option' => 'nullable|in:no_pickup,pickup_available,must_pickup',
                 'shipping_method_id' => 'nullable|exists:shipping_methods,id',
                 'payment_method_id' => 'nullable|exists:payment_methods,id',
+                'longitude' => [
+                    'nullable',
+                    'numeric',
+                    'between:-180,180',
+                ],
+                'latitude' => [
+                    'nullable',
+                    'numeric',
+                    'between:-90,90',
+                ],
+                'address' => 'nullable|string|max:255',
                 'color' => 'nullable|string|max:100',
                 'size' => 'nullable|string|max:100',
                 'brand' => 'nullable|string|max:100',
