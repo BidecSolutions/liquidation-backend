@@ -710,7 +710,7 @@ class ListingController extends Controller
             ->orderBy('distance', 'asc')
             ->get();
 
-        $listingsData = $listings->getColection()->map(function ($listing) {
+        $listingsData = $listings->getCollection()->map(function ($listing) {
             $listingArray = $listing->toArray();
             unset($listingArray['attributes']);
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
@@ -1107,7 +1107,7 @@ class ListingController extends Controller
         return $categoryIds;
     }
 
-    public function recentViewedListings() {}
+    // public function recentViewedListings() {}
 
     public function store(Request $request)
     {
