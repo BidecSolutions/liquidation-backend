@@ -13,7 +13,6 @@ use App\Models\ListingView;
 use App\Models\SearchHistory;
 use App\Models\User;
 use App\Models\UserFeedback;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -447,8 +446,7 @@ class ListingController extends Controller
             ])->withCount('views', 'watchers', 'bids')
             ->where('listing_type', $request->listing_type) // ✅ Only listings with the requested type
             ->where('status', 1)
-            ->where('is_active', 1)
-            ->where('expire_at', '>=', now());
+            ->where('is_active', 1);
         // ✅ Filter by category_id
         $categoryTree = null;
         if ($request->filled('category_id')) {
@@ -467,6 +465,12 @@ class ListingController extends Controller
             $query->where('status', $request->status);
         } else {
             $query->where('status', 1);
+        }
+        if($request->input('listing_type') != 'property'){
+            $query->where(function ($q){
+                $q->whereNull('expire_at')
+                ->orWhere('expire_at', '>=', now());
+            });
         }
         // ✅ Location filter (Haversine formula)
         if ($request->filled('latitude') && $request->filled('longitude')) {
@@ -506,18 +510,19 @@ class ListingController extends Controller
 
             $query->where(function ($q) use ($country, $region, $governorate, $city) {
                 if ($country) {
-                    $q->orWhere('address', 'LIKE', "%{$country}%");
+                    $q->where('address', 'LIKE', "%{$country}%");
                 }
                 if ($region) {
-                    $q->orWhere('address', 'LIKE', "%{$region}%");
+                    $q->where('address', 'LIKE', "%{$region}%");
                 }
                 if ($governorate) {
-                    $q->orWhere('address', 'LIKE', "%{$governorate}%");
+                    $q->where('address', 'LIKE', "%{$governorate}%");
                 }
                 if ($city) {
-                    $q->orWhere('address', 'LIKE', "%{$city}%");
+                    $q->where('address', 'LIKE', "%{$city}%");
                 }
             });
+
         }
 
         // ✅ Predefined keys that should use range logic (besides price)
@@ -1365,11 +1370,12 @@ class ListingController extends Controller
                     'data' => null,
                 ], 404);
             }
-            if($request->has('expire_at')){
+            if ($request->has('expire_at')) {
                 $expire_at = $request->input('expire_at');
 
                 $data = ['expire_at' => $expire_at];
                 $listing->update($data);
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Listing expiration updated successfully',
