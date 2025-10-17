@@ -510,19 +510,18 @@ class ListingController extends Controller
 
             $query->where(function ($q) use ($country, $region, $governorate, $city) {
                 if ($country) {
-                    $q->where('address', 'LIKE', "%{$country}%");
+                    $q->orWhere('address', 'LIKE', "%{$country}%");
                 }
                 if ($region) {
-                    $q->where('address', 'LIKE', "%{$region}%");
+                    $q->orWhere('address', 'LIKE', "%{$region}%");
                 }
                 if ($governorate) {
-                    $q->where('address', 'LIKE', "%{$governorate}%");
+                    $q->orWhere('address', 'LIKE', "%{$governorate}%");
                 }
                 if ($city) {
-                    $q->where('address', 'LIKE', "%{$city}%");
+                    $q->orWhere('address', 'LIKE', "%{$city}%");
                 }
             });
-
         }
 
         // ✅ Predefined keys that should use range logic (besides price)
