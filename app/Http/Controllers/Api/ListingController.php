@@ -466,10 +466,10 @@ class ListingController extends Controller
         } else {
             $query->where('status', 1);
         }
-        if($request->input('listing_type') != 'property'){
-            $query->where(function ($q){
+        if ($request->input('listing_type') != 'property') {
+            $query->where(function ($q) {
                 $q->whereNull('expire_at')
-                ->orWhere('expire_at', '>=', now());
+                    ->orWhere('expire_at', '>=', now());
             });
         }
         // ✅ Location filter (Haversine formula)
@@ -685,7 +685,8 @@ class ListingController extends Controller
         ]);
     }
 
-    public function locationfilering(Request $request){
+    public function locationfilering(Request $request)
+    {
         $latitude = $request->latitude;
         $longitude = $request->longitude;
         $radius = $request->input('radius', 10); // Default 10 km
@@ -697,11 +698,11 @@ class ListingController extends Controller
                 * sin(radians(latitude))))";
 
         $listings = Listing::with(
-                    'images',
-                    'category',
-                    'creator',
-                    'attributes',
-            )
+            'images',
+            'category',
+            'creator',
+            'attributes',
+        )
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->select('*', DB::raw("$haversine AS distance"))
@@ -709,11 +710,11 @@ class ListingController extends Controller
             ->orderBy('distance', 'asc')
             ->get();
 
-        
         $listingsData = $listings->getColection()->map(function ($listing) {
             $listingArray = $listing->toArray();
             unset($listingArray['attributes']);
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
+
             return array_merge($listingArray, $attributes);
         });
 
@@ -1298,6 +1299,7 @@ class ListingController extends Controller
                 ->withCount('views')
                 ->where('slug', $slug)
                 ->first();
+
             if (! $listing) {
                 return response()->json([
                     'status' => false,
@@ -1309,8 +1311,7 @@ class ListingController extends Controller
             $listing->bid_count = $listing->bids()->count();
             $listing->view_count = $listing->views()->count();
 
-            // Log listing view with caching
-            // Log listing view with caching
+            // ✅ Cache listing views
             $cacheKey = 'listing_viewed_'.$listing->id.'_'.request()->ip();
             if (! Cache::has($cacheKey)) {
                 $data = [
@@ -1321,7 +1322,6 @@ class ListingController extends Controller
                 if (auth('api')->check()) {
                     $data['user_id'] = auth('api')->id();
                 } else {
-                    // fallback to guest_id (you must have guest auth/identifier logic)
                     $data['guest_id'] = request()->header('X-Guest-Id') ?? session()->getId();
                 }
 
@@ -1347,7 +1347,7 @@ class ListingController extends Controller
                 }
             }
 
-            // calculate positive feedback percentage
+            // ✅ Calculate feedback percentage
             $totalFeedbackCount = UserFeedback::where('reviewed_user_id', $listing->created_by)->count();
             $positiveFeedbackCount = UserFeedback::where('reviewed_user_id', $listing->created_by)
                 ->whereIn('rating', [4, 5])
@@ -1361,22 +1361,43 @@ class ListingController extends Controller
             $listingData = array_merge($listing->toArray(), $attributes);
             unset($listingData['attributes']);
 
+            // ✅ Dealer's other listings
             $dealersListing = Listing::with('images:id,listing_id,image_path')
-                ->when(
-                    $listingData['created_by'] ?? null,
-                    fn ($q, $created_by) => $q->where('created_by', $created_by)
-                )
-                ->when(
-                    $listingData['listing_type'] ?? null,
-                    fn ($q, $listingType) => $q->where('listing_type', $listingType)
-                )
-                ->when(
-                    $listingData['is_active'] ?? null,
-                    fn ($q, $IsActive) => $q->where('is_active', $IsActive)
-                )
+                ->when($listingData['created_by'] ?? null, fn ($q, $created_by) => $q->where('created_by', $created_by))
+                ->when($listingData['listing_type'] ?? null, fn ($q, $listingType) => $q->where('listing_type', $listingType))
+                ->when($listingData['is_active'] ?? null, fn ($q, $IsActive) => $q->where('is_active', $IsActive))
                 ->select('id', 'title', 'slug', 'description', 'listing_type', 'condition', 'start_price', 'buy_now_price', 'created_by')
                 ->limit(4)
                 ->get();
+
+            // ✅ Nearby listings (only for property type)
+            $nearbyListings = collect();
+
+            if (
+                strtolower($listing->listing_type) === 'property' &&
+                ! is_null($listing->latitude) &&
+                ! is_null($listing->longitude)
+            ) {
+                $latitude = $listing->latitude;
+                $longitude = $listing->longitude;
+                $radius = request()->input('radius', 5); // Default 10 km
+
+                $haversine = "(6371 * acos(cos(radians($latitude)) 
+                        * cos(radians(latitude)) 
+                        * cos(radians(longitude) - radians($longitude)) 
+                        + sin(radians($latitude)) 
+                        * sin(radians(latitude))))";
+
+                $nearbyListings = Listing::select('id', 'title', 'slug', 'latitude', 'longitude', 'buy_now_price', 'listing_type', DB::raw("$haversine AS distance"))
+                    ->where('id', '!=', $listing->id)
+                    ->where('listing_type', 'property')
+                    ->whereNotNull('latitude')
+                    ->whereNotNull('longitude')
+                    ->having('distance', '<=', $radius)
+                    ->orderBy('distance', 'asc')
+                    ->limit(10)
+                    ->get();
+            }
 
             return response()->json([
                 'status' => true,
@@ -1387,6 +1408,7 @@ class ListingController extends Controller
                     'selling_offers' => $sellingOffers,
                     'creator_feedback_percentage' => $positiveFeedbackPercentage,
                     'dealers_other_listings' => $dealersListing,
+                    'nearby_listings' => $nearbyListings, // ✅ Added nearby listings
                 ],
             ]);
         } catch (\Throwable $e) {
