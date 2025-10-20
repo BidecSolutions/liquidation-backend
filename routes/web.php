@@ -77,13 +77,28 @@ Route::get('/run-app-schedule', function () {
     return nl2br($finalOutput);
 });
 
-Route::get('clear', function () { 
+Route::get('clear', function () {
     Artisan::call('optimize:clear');
     Artisan::call('config:clear');
     Artisan::call('route:clear');
     Artisan::call('cache:clear');
     Artisan::call('view:clear');
     echo 'All optimizations clear successfully';
+});
+Route::get('/run-app-schedule', function () {
+    // Run first command and capture output
+    Artisan::call('app:close-expired-listings');
+    $output1 = Artisan::output();
+
+    // Run second command and capture output
+    Artisan::call('offers:expire');
+    $output2 = Artisan::output();
+
+    // Combine both outputs with headers and line breaks
+    $finalOutput = "✅ app:close-expired-listings Output:\n".$output1;
+    $finalOutput .= "\n\n✅ offers:expire Output:\n".$output2;
+
+    return nl2br($finalOutput);
 });
 
 Route::get('seed-locations', function () {
@@ -213,7 +228,7 @@ Route::get('seed-promotions', function () {
     ];
 });
 Route::get('delete-subcategory/{id}', function ($id) {
-    $seeder = new DeleteSubcategory();
+    $seeder = new DeleteSubcategory;
     $seeder->run($id);
 
     return [
