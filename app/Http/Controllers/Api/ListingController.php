@@ -1387,7 +1387,7 @@ class ListingController extends Controller
                         + sin(radians($latitude)) 
                         * sin(radians(latitude))))";
 
-                $nearbyListings = Listing::select('id', 'title', 'slug', 'latitude', 'longitude', 'buy_now_price', 'listing_type', DB::raw("$haversine AS distance"))
+                $nearbyListings = Listing::select('id', 'title', 'slug', 'latitude', 'longitude', 'images:listing_id,image_path,alt_text,order', 'buy_now_price', 'listing_type', DB::raw("$haversine AS distance"))
                     ->where('id', '!=', $listing->id)
                     ->where('listing_type', 'property')
                     ->whereNotNull('latitude')
