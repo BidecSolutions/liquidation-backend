@@ -1388,7 +1388,7 @@ class ListingController extends Controller
                         * sin(radians(latitude))))";
 
                 $nearbyListings = Listing::select('id', 'title', 'slug', 'latitude', 'longitude',  'buy_now_price', 'listing_type', DB::raw("$haversine AS distance"))
-                    ->with('images:id,listing_id,image_path')
+                    ->with('images:id,listing_id,image_path', 'attributes')
                     ->where('id', '!=', $listing->id)
                     ->where('listing_type', 'property')
                     ->whereNotNull('latitude')
@@ -1397,6 +1397,14 @@ class ListingController extends Controller
                     ->orderBy('distance', 'asc')
                     ->limit(10)
                     ->get();
+
+                    $nearbyListings = $nearbyListings->map(function ($tem){
+                        $listingsArray = $tem->toArray();
+                        unset($listingsArray['attributes']);
+                        $attributes = $tem->attributes->pluck('value', 'key')->toArray();
+
+                        return array_merge($listingsArray, $attributes);
+                    });
             }
 
             return response()->json([
