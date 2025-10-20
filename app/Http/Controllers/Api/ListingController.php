@@ -1379,7 +1379,7 @@ class ListingController extends Controller
             ) {
                 $latitude = $listing->latitude;
                 $longitude = $listing->longitude;
-                $radius = request()->input('radius', 5); // Default 10 km
+                $radius = request()->input('radius', 20); // Default 10 km
 
                 $haversine = "(6371 * acos(cos(radians($latitude)) 
                         * cos(radians(latitude)) 
