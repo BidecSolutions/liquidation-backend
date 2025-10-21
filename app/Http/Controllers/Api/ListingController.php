@@ -567,16 +567,28 @@ class ListingController extends Controller
             $query->where('buy_now_price', '>=', $request->min_price);
         }
         if ($request->filled('country_id')) {
-            $query->where('country_id', $request->country_id);
+            $country_id = $request->country_id;
+            $query->wherHas('creator', function ($q) use ($country_id) {
+                $q->where('country_id', $country_id);
+            });
         }
         if ($request->filled('regions_id')) {
-            $query->where('regions_id', $request->regions_id);
+            $regions_id = $request->regions_id;
+            $query->wherHas('creator', function ($q) use ($regions_id) {
+                $q->where('regions_id', $regions_id);
+            });
         }
         if ($request->filled('governorates_id')) {
-            $query->where('governorates_id', $request->governorates_id);
+            $governorates_id = $request->governorates_id;
+            $query->wherHas('creator', function ($q) use ($governorates_id) {
+                $q->where('governorates_id', $governorates_id);
+            });
         }
         if ($request->filled('city_id')) {
-            $query->where('city_id', $request->city_id);
+            $city_id = $request->city_id;
+            $query->wherHas('creator', function ($q) use ($city_id) {
+                $q->where('city_id', $city_id);
+            });
         }
 
         if ($request->filled('max_price')) {
