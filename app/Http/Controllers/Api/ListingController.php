@@ -258,7 +258,7 @@ class ListingController extends Controller
             $listings = $query->latest()->paginate(20);
 
             $listings->each(function ($listing) use ($authUserId) {
-                $listing->bid_count = $listing->bids()->count();
+                $listing->bids_count = $listing->bids()->count();
                 $listing->view_count = $listing->views()->count();
 
                 // 💼 Offers made by user
@@ -568,25 +568,25 @@ class ListingController extends Controller
         }
         if ($request->filled('country_id')) {
             $country_id = $request->country_id;
-            $query->wherHas('creator', function ($q) use ($country_id) {
+            $query->whereHas('creator', function ($q) use ($country_id) {
                 $q->where('country_id', $country_id);
             });
         }
         if ($request->filled('regions_id')) {
             $regions_id = $request->regions_id;
-            $query->wherHas('creator', function ($q) use ($regions_id) {
+            $query->whereHas('creator', function ($q) use ($regions_id) {
                 $q->where('regions_id', $regions_id);
             });
         }
         if ($request->filled('governorates_id')) {
             $governorates_id = $request->governorates_id;
-            $query->wherHas('creator', function ($q) use ($governorates_id) {
+            $query->whereHas('creator', function ($q) use ($governorates_id) {
                 $q->where('governorates_id', $governorates_id);
             });
         }
         if ($request->filled('city_id')) {
             $city_id = $request->city_id;
-            $query->wherHas('creator', function ($q) use ($city_id) {
+            $query->whereHas('creator', function ($q) use ($city_id) {
                 $q->where('city_id', $city_id);
             });
         }
@@ -1328,8 +1328,8 @@ class ListingController extends Controller
                 ], 404);
             }
 
-            $listing->bid_count = $listing->bids()->count();
-            $listing->view_count = $listing->views()->count();
+            $listing->setAttribute('bids_count', $listing->bids()->count());
+            $listing->setAttribute('view_count', $listing->views()->count());
 
             // ✅ Cache listing views
             $cacheKey = 'listing_viewed_'.$listing->id.'_'.request()->ip();
