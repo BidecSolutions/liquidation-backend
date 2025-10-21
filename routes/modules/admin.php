@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\{
     PromotionController,
     RegionController,
 };
+use App\Http\Controllers\BlogsController;
 
 // Admin Auth
 Route::prefix('admin')->controller(AdminAuthController::class)->group(function () {
@@ -89,6 +90,13 @@ Route::middleware('auth:admin-api')->prefix('admin')->group(function () {
         Route::delete('/{id}/deleteSubcategories', 'deleteSubcategories');
     });
 
+    Route::prefix('blogs')->controller(BlogsController::class)->group(function () {
+        Route::get('/index', 'index');
+        Route::post('/store', 'store');
+        Route::get('/{id}/show', 'show');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}', 'destroy');
+    });
     Route::prefix('promotions')->controller(PromotionController::class)->group(function () {
         Route::get('/index', 'index');
         Route::post('/store', 'store');

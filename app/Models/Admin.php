@@ -19,4 +19,8 @@ class Admin extends Authenticatable
         'name', 'email', 'password', 'phone', 'status', 'created_by',
     ];
 
+    public function blogs(){
+        return $this->hasMany(Blog::class, 'created_by');
+    }
+
 }

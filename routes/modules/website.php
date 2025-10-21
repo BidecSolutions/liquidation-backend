@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\RegionController;
 use App\Http\Controllers\Api\ShippingMethodController;
 use App\Http\Controllers\Api\UserAuthController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,7 @@ Route::prefix('options')->group(function () {
 });
 Route::get('user/summary/{userId}', [UserController::class, 'userSummary']);
 Route::get('promotions', [PromotionController::class, 'list']);
+Route::get('/blogs', [BlogsController::class, 'index']);
 Route::get('instructions', [InstructionController::class, 'list']);
 // ListingController works
 Route::prefix('listings')->controller(ListingController::class)->group(function () {
