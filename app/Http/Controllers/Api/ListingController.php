@@ -142,22 +142,25 @@ class ListingController extends Controller
             ->withCount('views', 'watchers as watch_count', 'bids')
             ->where('expire_at', '>=', now())
             ->where('status', 1)
-            ->when(count($keywords), function ($q) use ($keywords) {
-                $q->where(function ($q) use ($keywords) {
-                    foreach ($keywords as $word) {
-                        $q->orWhere('title', 'LIKE', "%{$word}%")
-                            ->orWhere('description', 'LIKE', "%{$word}%");
-                    }
-                });
-            })
-            ->when(count($allCategoryIds), fn ($q) => $q->orWhereIn('category_id', $allCategoryIds))
-            ->when(
-                function ($q) use ($listingType) {
-                    if ($listingType != null) {
-                        $q->where('listing_type', $listingType);
-                    }
+            ->where(function ($q) use ($keywords, $allCategoryIds) {
+                // Keyword-based filtering
+                if (count($keywords)) {
+                    $q->where(function ($sub) use ($keywords) {
+                        foreach ($keywords as $word) {
+                            $sub->orWhere('title', 'LIKE', "%{$word}%")
+                                ->orWhere('description', 'LIKE', "%{$word}%");
+                        }
+                    });
                 }
-            )
+
+                // Category-based filtering
+                if (count($allCategoryIds)) {
+                    $q->orWhereIn('category_id', $allCategoryIds);
+                }
+            })
+            ->when($listingType, function ($q, $listingType) {
+                $q->where('listing_type', $listingType);
+            })
             ->limit($limit)
             ->offset($offset)
             ->get();
