@@ -98,7 +98,7 @@ class ListingController extends Controller
         return $listings;
     }
 
-    private function getRecommendedListings($userId = null, $guestId = null, $limit = 20, $offset = 0)
+    private function getRecommendedListings($userId = null, $guestId = null, $limit = 20, $offset = 0, $listingType = null)
     {
         // 1. Get latest keywords/categories from search history
         $searchHistories = SearchHistory::query()
@@ -151,6 +151,13 @@ class ListingController extends Controller
                 });
             })
             ->when(count($allCategoryIds), fn ($q) => $q->orWhereIn('category_id', $allCategoryIds))
+            ->when(
+                function ($q) use ($listingType) {
+                    if ($listingType != null) {
+                        $q->where('listing_type', $listingType);
+                    }
+                }
+            )
             ->limit($limit)
             ->offset($offset)
             ->get();
@@ -371,6 +378,7 @@ class ListingController extends Controller
     {
         $limit = $request->input('limit', 20);
         $offset = $request->input('offset', 0);
+        $listingType = $request->input('listing_type', null);
 
         $userId = auth('api')->id();
         $guestId = $request->header('X-Guest-ID');
@@ -383,7 +391,7 @@ class ListingController extends Controller
             ], 400);
         }
 
-        $recommendations = $this->getRecommendedListings($userId, $guestId, $limit, $offset);
+        $recommendations = $this->getRecommendedListings($userId, $guestId, $limit, $offset, $listingType);
 
         return response()->json([
             'status' => true,
@@ -441,6 +449,7 @@ class ListingController extends Controller
                 'creator',
                 'attributes',
                 'watchers',
+                'bids.user',
                 'paymentMethod:id,name',
                 'shippingMethod:id,name',
             ])->withCount('views', 'watchers', 'bids')
@@ -1387,7 +1396,7 @@ class ListingController extends Controller
                         + sin(radians($latitude)) 
                         * sin(radians(latitude))))";
 
-                $nearbyListings = Listing::select('id', 'title', 'slug', 'latitude', 'longitude',  'buy_now_price', 'listing_type', DB::raw("$haversine AS distance"))
+                $nearbyListings = Listing::select('id', 'title', 'slug', 'latitude', 'longitude', 'buy_now_price', 'listing_type', DB::raw("$haversine AS distance"))
                     ->with('images:id,listing_id,image_path', 'attributes')
                     ->where('id', '!=', $listing->id)
                     ->where('listing_type', 'property')
@@ -1398,13 +1407,13 @@ class ListingController extends Controller
                     ->limit(10)
                     ->get();
 
-                    $nearbyListings = $nearbyListings->map(function ($tem){
-                        $listingsArray = $tem->toArray();
-                        unset($listingsArray['attributes']);
-                        $attributes = $tem->attributes->pluck('value', 'key')->toArray();
+                $nearbyListings = $nearbyListings->map(function ($tem) {
+                    $listingsArray = $tem->toArray();
+                    unset($listingsArray['attributes']);
+                    $attributes = $tem->attributes->pluck('value', 'key')->toArray();
 
-                        return array_merge($listingsArray, $attributes);
-                    });
+                    return array_merge($listingsArray, $attributes);
+                });
             }
 
             return response()->json([
