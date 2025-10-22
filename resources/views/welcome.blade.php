@@ -38,7 +38,7 @@
 <body>
     <h1>Hello from Laravel 👋</h1>
     <div class="currency">$</div>
-    <img src="http://ma3rood.datainovate.com/backend/images/RialSign.png" 
+    <img src="http://ma3rood.datainovate.com/backend/public/images/RialSign.png" 
      alt="SAR" 
      width="14" 
      height="14" 
