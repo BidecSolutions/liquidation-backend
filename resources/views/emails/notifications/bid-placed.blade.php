@@ -4,7 +4,7 @@
     <div class="greeting">Hello {{ $notifiable->name }},</div>
     
     <div class="message">
-        <p>Great news! <strong>{{ $bid->user->name }}</strong> has placed a bid of <strong><img src="http://ma3rood.datainovate.com/backend/public/images/RialSign.png" 
+        <p>Great news! <strong>{{ $bid->user->name }}</strong> has placed a bid of <strong><img src="http://ma3rood.datainovate.com/backend/public/images/RialSignn.png" 
             alt="SAR" 
             width="14" 
             height="14" 

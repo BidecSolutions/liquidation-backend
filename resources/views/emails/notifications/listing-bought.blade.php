@@ -12,7 +12,7 @@
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">{{ $listing->title }}</h3>
-            <p style="margin: 0; color: #666;">Price: <img src="http://ma3rood.datainovate.com/backend/public/images/RialSign.png" 
+            <p style="margin: 0; color: #666;">Price: <img src="http://ma3rood.datainovate.com/backend/public/images/RialSignn.png" 
             alt="SAR" 
             width="14" 
             height="14" 
