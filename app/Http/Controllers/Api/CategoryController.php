@@ -401,7 +401,7 @@ class CategoryController extends Controller
     public function deleteSubcategories($id)
     {
         // Recursive function to delete all subcategories and their listings
-        $category = Category::where('id', $id)->get();
+        $category = Category::where('id', $id);
         if ($category->isEmpty()) {
             return response()->json([
                 'success' => false,
@@ -412,6 +412,9 @@ class CategoryController extends Controller
         $deleteRecursive = function ($parentId) use (&$deleteRecursive) {
             $subcategories = Category::where('parent_id', $parentId)->get();
 
+            if($subcategories->isEmpty()) {
+                return;
+            }
             foreach ($subcategories as $sub) {
                 // Delete listings belonging to this subcategory
                 Listing::where('category_id', $sub->id)->delete();
