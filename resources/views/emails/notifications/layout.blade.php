@@ -97,7 +97,7 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <div class="logo"><img height="20" width="20" src="http://ma3rood.datainovate.com/backend/public/images/icon.png" alt=""></div>
+            <div class="logo"><img height="50" width="50" src="http://ma3rood.datainovate.com/backend/public/images/icon.png" alt=""></div>
             <div class="tagline">Find Everything You Need in One Place</div>
         </div>
         
