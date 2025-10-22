@@ -1217,10 +1217,11 @@ class ListingController extends Controller
                 ]);
             }
             $listing = Listing::create($data);
+            $emailListing = Listing::where('id', $listing->id)->with('category')->first();
             // Send email notification to the listing creator
             Mail::send('emails.notifications.listing_created', [
                 'user' => $creator,
-                'listing' => $listing,
+                'listing' => $emailListing,
             ], function ($message) use ($creator, $listing) {
                 $message->to($creator->email)
                     ->subject('🎉 Your Listing "'.$listing->title.'" Has Been Created Successfully!');

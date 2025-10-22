@@ -54,8 +54,17 @@
     <div class="message">
         <p>You can view or manage your listing using the button below:</p>
     </div>
+    @php
+    $marketplaceurl = config('app.frontend_url') . '/marketplace/' . $listing->category->name . '/' . $listing->slug;
+    $motorsurl = config('app.frontend_url') . '/motors/' . $listing->slug;
+    @endphp
 
-    <a href="{{ config('app.frontend_url') }}/listing/{{ $listing->slug }}" class="button">View Listing</a>
+    @if ($listing->listing_type === 'marketplace')
+        <a href="{{ $marketplaceurl }}" class="button">View Listing</a>
+    @endif
+    @if ($listing->listing_type === 'motors')
+        <a href="{{ $motorsurl }}" class="button">View Listing</a>
+    @endif
 
     <div class="message">
         <p>Thank you for choosing <strong>Ma3rood</strong> — we’re excited to help your listing reach potential buyers!</p>
