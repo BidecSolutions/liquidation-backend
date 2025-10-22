@@ -83,7 +83,7 @@
         }
         @font-face {
             font-family: 'SaudiRial';
-            src: url('/fonts/SaudiRial.woff2') format('woff2');
+            src: url('/fonts/SaudiRial.ttf') format('woff2');
             font-weight: normal;
             font-style: normal;
         }
