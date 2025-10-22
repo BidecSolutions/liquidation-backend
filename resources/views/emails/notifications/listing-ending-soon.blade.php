@@ -9,7 +9,7 @@
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">{{ $listing->title }}</h3>
             <p style="margin: 0; color: #666;">Time remaining: {{ $timeLeft }}</p>
-            <p style="margin: 0; color: #666;">Current highest bid: ${{ number_format($currentHighestBid ?? 0, 2) }}</p>
+            <p style="margin: 0; color: #666;">Current highest bid: <span class="currency">$</span>{{ number_format($currentHighestBid ?? 0, 2) }}</p>
         </div>
         
         <p>Don't miss out on this opportunity! Place your bid now.</p>

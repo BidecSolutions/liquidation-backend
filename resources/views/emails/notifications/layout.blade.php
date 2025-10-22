@@ -81,6 +81,17 @@
             color: #999;
             font-size: 12px;
         }
+        @font-face {
+            font-family: 'SaudiRial';
+            src: url('/fonts/SaudiRial.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        .currency {
+            font-family: 'SaudiRial', sans-serif;
+        }
+
     </style>
 </head>
 <body>

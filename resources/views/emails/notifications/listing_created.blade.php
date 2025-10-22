@@ -30,7 +30,7 @@
         @if($listing->buy_now_price)
         <tr>
             <td style="padding: 10px; border: 1px solid #e9ecef; font-weight: bold;">Buy Now Price</td>
-            <td style="padding: 10px; border: 1px solid #e9ecef;">${{ number_format($listing->buy_now_price, 2) }}</td>
+            <td style="padding: 10px; border: 1px solid #e9ecef;"><span class="currency">$</span>{{ number_format($listing->buy_now_price, 2) }}</td>
         </tr>
         @endif
         <tr>

@@ -4,7 +4,7 @@
     <div class="greeting">Hello {{ $notifiable->name }},</div>
     
     <div class="message">
-        <p>Great news! <strong>{{ $bid->user->name }}</strong> has placed a bid of <strong>${{ number_format($bid->amount, 2) }}</strong> on your listing:</p>
+        <p>Great news! <strong>{{ $bid->user->name }}</strong> has placed a bid of <strong><span class="currency">$</span>{{ number_format($bid->amount, 2) }}</strong> on your listing:</p>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">{{ $bid->listing->title }}</h3>

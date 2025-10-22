@@ -8,7 +8,7 @@
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">{{ $offer->listing->title }}</h3>
-            <p style="margin: 0; color: #666;">Expired offer: ${{ number_format($offer->amount, 2) }}</p>
+            <p style="margin: 0; color: #666;">Expired offer: <span class="currency">$</span>{{ number_format($offer->amount, 2) }}</p>
         </div>
         
         <p>Don't worry! You can always place a new offer on this listing if it's still available.</p>
