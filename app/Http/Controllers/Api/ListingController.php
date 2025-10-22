@@ -264,13 +264,17 @@ class ListingController extends Controller
                 $listing->bids_count = $listing->bids()->count();
                 $listing->view_count = $listing->views()->count();
 
+                $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
+                $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
+                $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
+
                 // highest bid
                 $highestBid = $listing->bids()->orderByDesc('amount')->first();
-                if($highestBid){
+                if ($highestBid) {
                     $listing->highest_bid_amount = $highestBid->amount;
                     $listing->highest_bid_id = $highestBid->id;
                     $listing->highest_bidder_name = $highestBid->user->name ?? $highestBid->user->username;
-                }else{
+                } else {
                     $listing->highest_bid_amount = null;
                     $listing->highest_bid_id = null;
                     $listing->highest_bidder_name = null;
@@ -638,6 +642,9 @@ class ListingController extends Controller
         $listings = $query->paginate($perPage, ['*'], 'page', $page);
 
         $listingData = $listings->getCollection()->map(function ($listing) {
+            $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
+            $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
+            $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
             $listingArray = $listing->toArray();
             unset($listingArray['attributes']);
             $attributes = collect($listing->attributes)->pluck('value', 'key')->toArray();
@@ -1228,9 +1235,6 @@ class ListingController extends Controller
                     'data' => [],
                 ]);
             }
-            $data['start_price'] = number_format($data['start_price'] ?? '0', 2, '.', ',');
-            $data['reserve_price'] = number_format($data['reserve_price'] ?? '0', 2, '.', ',');
-            $data['buy_now_price'] = number_format($data['buy_now_price'] ?? '0', 2, '.', ',');
             $listing = Listing::create($data);
             $emailListing = Listing::where('id', $listing->id)->with('category')->first();
             // Send email notification to the listing creator
@@ -1349,7 +1353,9 @@ class ListingController extends Controller
 
             $listing->setAttribute('bids_count', $listing->bids()->count());
             $listing->setAttribute('view_count', $listing->views()->count());
-
+            $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
+            $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
+            $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
             // ✅ Cache listing views
             $cacheKey = 'listing_viewed_'.$listing->id.'_'.request()->ip();
             if (! Cache::has($cacheKey)) {
