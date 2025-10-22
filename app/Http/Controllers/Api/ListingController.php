@@ -268,9 +268,11 @@ class ListingController extends Controller
                 $highestBid = $listing->bids()->orderByDesc('amount')->first();
                 if($highestBid){
                     $listing->highest_bid_amount = $highestBid->amount;
+                    $listing->highest_bid_id = $highestBid->id;
                     $listing->highest_bidder_name = $highestBid->user->name ?? $highestBid->user->username;
                 }else{
                     $listing->highest_bid_amount = null;
+                    $listing->highest_bid_id = null;
                     $listing->highest_bidder_name = null;
                 }
 
