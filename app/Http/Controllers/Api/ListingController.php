@@ -1228,9 +1228,9 @@ class ListingController extends Controller
                     'data' => [],
                 ]);
             }
-            $data['start_price'] = number_format($data['start_price'] ?? 2, '.', ',');
-            $data['reserve_price'] = number_format($data['reserve_price'] ?? 2, '.', ',');
-            $data['buy_now_price'] = number_format($data['buy_now_price'] ?? 2, '.', ',');
+            $data['start_price'] = number_format($data['start_price'] ?? '0', 2, '.', ',');
+            $data['reserve_price'] = number_format($data['reserve_price'] ?? '0', 2, '.', ',');
+            $data['buy_now_price'] = number_format($data['buy_now_price'] ?? '0', 2, '.', ',');
             $listing = Listing::create($data);
             $emailListing = Listing::where('id', $listing->id)->with('category')->first();
             // Send email notification to the listing creator
