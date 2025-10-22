@@ -264,6 +264,16 @@ class ListingController extends Controller
                 $listing->bids_count = $listing->bids()->count();
                 $listing->view_count = $listing->views()->count();
 
+                // highest bid
+                $highestBid = $listing->bids()->orderByDesc('amount')->first();
+                if($highestBid){
+                    $listing->highest_bid_amount = $highestBid->amount;
+                    $listing->highest_bidder_name = $highestBid->user->name ?? $highestBid->user->username;
+                }else{
+                    $listing->highest_bid_amount = null;
+                    $listing->highest_bidder_name = null;
+                }
+
                 // 💼 Offers made by user
                 $listing->buying_offers = $authUserId
                     ? ListingOffer::with(['user'])->where('listing_id', $listing->id)
