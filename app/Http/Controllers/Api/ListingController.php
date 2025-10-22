@@ -79,8 +79,15 @@ class ListingController extends Controller
         // if ($userId) {
         //     $query->where('created_by', $userId);
         // }
+        $listingsdata = $listings->map(function ($listing) {
+            $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
+            $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
+            $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
 
-        return $listings;
+            return $listing;
+        });
+
+        return $listingsdata;
     }
 
     private function getIsFeatured($userId = null, $limit = 10, $offset = 0)
@@ -94,6 +101,11 @@ class ListingController extends Controller
         // if ($userId) {
         //     $query->where('created_by', $userId);
         // }
+        foreach ($listings as $listing) {
+            $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
+            $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
+            $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
+        }
 
         return $listings;
     }
@@ -164,6 +176,12 @@ class ListingController extends Controller
             ->limit($limit)
             ->offset($offset)
             ->get();
+
+        $recommendations->each(function ($listing) {
+            $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
+            $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
+            $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
+        });
 
         return $recommendations;
     }
@@ -274,10 +292,12 @@ class ListingController extends Controller
                     $listing->highest_bid_amount = $highestBid->amount;
                     $listing->highest_bid_id = $highestBid->id;
                     $listing->highest_bidder_name = $highestBid->user->name ?? $highestBid->user->username;
+                    $listing->highest_bid_type = $highestBid->type;
                 } else {
                     $listing->highest_bid_amount = null;
                     $listing->highest_bid_id = null;
                     $listing->highest_bidder_name = null;
+                    $listing->highest_bid_type = null;
                 }
 
                 // 💼 Offers made by user
