@@ -12,7 +12,11 @@
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">{{ $listing->title }}</h3>
-            <p style="margin: 0; color: #666;">Price: <span class="currency">$</span>{{ number_format($listing->buy_now_price, 2) }}</p>
+            <p style="margin: 0; color: #666;">Price: <img src="http://ma3rood.datainovate.com/backend/public/images/RialSign.png" 
+            alt="SAR" 
+            width="14" 
+            height="14" 
+            style="vertical-align:middle;">{{ number_format($listing->buy_now_price, 2) }}</p>
         </div>
         
         @if($role === 'buyer')

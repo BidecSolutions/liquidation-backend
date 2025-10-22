@@ -8,7 +8,11 @@
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">{{ $listing->title }}</h3>
-            <p style="margin: 0; color: #666;">Winning bid: <span class="currency">$</span>{{ number_format($winningBid->amount, 2) }}</p>
+            <p style="margin: 0; color: #666;">Winning bid: <img src="http://ma3rood.datainovate.com/backend/public/images/RialSign.png" 
+            alt="SAR" 
+            width="14" 
+            height="14" 
+            style="vertical-align:middle;">{{ number_format($winningBid->amount, 2) }}</p>
             <p style="margin: 0; color: #666;">Winner: {{ $winningBid->user->name }}</p>
         </div>
         
