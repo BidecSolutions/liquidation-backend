@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 //     Route::get('/user/profile', [AuthController::class, 'user']);
 //     Route::post('/user/logout', [AuthController::class, 'logout']);
 // });
+Route::get('/user/token/test', [UserAuthController::class, 'testToken']);
 Route::prefix('user')->group(function () {
     // User Auth Controller works
     Route::controller(UserAuthController::class)->group(function () {

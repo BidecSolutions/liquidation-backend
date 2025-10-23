@@ -294,7 +294,7 @@ class UserController extends Controller
 
             $user->status = 1; // 1 = Active
             $user->save();
-
+            
             return response()->json([
                 'success' => true,
                 'message' => 'User account has been restored successfully.',

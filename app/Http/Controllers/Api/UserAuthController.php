@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class UserAuthController extends Controller
 {
@@ -888,7 +889,7 @@ class UserAuthController extends Controller
         $fieldtype = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $user = User::where($fieldtype, $request->email)->first();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User not found',
@@ -1056,6 +1057,49 @@ class UserAuthController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Your account has been marked for deletion.',
+        ]);
+    }
+
+    public function testToken(Request $request)
+    {
+        // Get token from Authorization header
+        $authHeader = $request->header('Authorization');
+
+        if (! $authHeader || ! str_starts_with($authHeader, 'Bearer ')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Authorization token missing or invalid format.',
+            ], 401);
+        }
+
+        // Extract the token value
+        $token = substr($authHeader, 7);
+
+        // Try to find the token in the database
+        $accessToken = PersonalAccessToken::findToken($token);
+
+        if (! $accessToken) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Token is invalid or expired.',
+            ], 401);
+        }
+
+        $user = $accessToken->tokenable;
+
+        // Optional: Check if user account is active
+        if (! $user || $user->status == 3) { // 3 = deleted, as per your logic
+            return response()->json([
+                'status' => false,
+                'message' => 'User account is inactive or deleted.',
+            ], 403);
+        }
+
+        // If token and user are valid
+        return response()->json([
+            'status' => true,
+            'message' => 'Token is valid.',
+            'user' => $user,
         ]);
     }
 
