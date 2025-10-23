@@ -33,7 +33,7 @@ class AddMemberId extends Seeder
             $user->memberId = $memberId;
             $user->save();
 
-            echo "Updated User ID {$user->id} with user_code: {$memberId}\n";
+            echo "Updated User ID {$user->id} with memberId: {$memberId}\n";
         }
         echo "✅ MemberId updated successfully!\n";
     }
