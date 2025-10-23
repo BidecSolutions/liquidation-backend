@@ -163,6 +163,29 @@ Route::get('seed-username', function () {
         ], 500);
     }
 });
+Route::get('seed-memberId', function () {
+    // dd('here');
+    try {
+        Artisan::call('db:seed', [
+            '--class' => 'AddMemberId',
+            '--force' => true,
+        ]);
+
+        $output = Artisan::output();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Seeder of member id executed successfully.',
+            'output' => $output,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Seeder of Member id failed to execute.',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
 Route::get('seed-admin', function () {
     // dd('here');
     try {
