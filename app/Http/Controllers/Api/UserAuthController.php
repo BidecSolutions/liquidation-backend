@@ -637,6 +637,7 @@ class UserAuthController extends Controller
         try {
             $request->validate([
                 'new_name' => 'required|string|max:255',
+                'username' => 'nullable|string|max:50',
                 'password' => 'required',
             ]);
 
@@ -656,6 +657,9 @@ class UserAuthController extends Controller
             }
 
             $user->name = $request->new_name;
+            if ($request->filled('username')) {
+                $user->username = $request->username;
+            }
             $user->save();
 
             return response()->json([
