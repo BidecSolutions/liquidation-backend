@@ -279,7 +279,8 @@ class ListingController extends Controller
                 $query->where('start_price', '<=', $request->price_to);
             }
 
-            $listings = $query->latest()->paginate(20);
+            // $listings = $query->latest()->paginate(20);
+            $listings = $query->latest()->get();
 
             $listings->each(function ($listing) use ($authUserId) {
                 $listing->bids_count = $listing->bids()->count();
@@ -1359,7 +1360,6 @@ class ListingController extends Controller
                 'bids.user',
                 'winningBid.user',
                 'attributes',
-                'buyer',
                 'comments.user:id,username,profile_photo',
                 'comments.replies.user:id,username,profile_photo',
             ])
