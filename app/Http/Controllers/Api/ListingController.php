@@ -197,7 +197,7 @@ class ListingController extends Controller
                     : explode(',', $request->status);
                 $query->whereIn('status', $statuses);
             }
-            return $query->count();
+            return $query->get();
 
             // 🔒 Filter by creator if authenticated (user guard)
             $authUserId = auth('api')->check() ? auth('api')->id() : null;
