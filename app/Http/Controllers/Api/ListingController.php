@@ -190,6 +190,7 @@ class ListingController extends Controller
     {
         try {
             $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes', 'paymentMethod:id,name', 'shippingMethod:id,name'])->withCount('views');
+            return $query->get();
 
             // 🔒 Filter by creator if authenticated (user guard)
             $authUserId = auth('api')->check() ? auth('api')->id() : null;
