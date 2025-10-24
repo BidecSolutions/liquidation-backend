@@ -170,7 +170,7 @@ class UserAuthController extends Controller
     /**
      * Sends a verification token to a user to initiate account restoration.
      */
-    /* public function requestRestoreToken(Request $request)
+    public function requestRestoreToken(Request $request)
     {
         try {
             $request->validate(['email' => 'required|email']);
@@ -209,12 +209,12 @@ class UserAuthController extends Controller
                 'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
             ], 500);
         }
-    } */
+    }
 
     /**
      * Verifies the restoration token, restores the account, and logs the user in.
      */
-    /* public function verifyAndRestore(Request $request)
+    public function verifyAndRestore(Request $request)
     {
         try {
             $request->validate([
@@ -250,7 +250,7 @@ class UserAuthController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'An error occurred during account restoration.'], 500);
         }
-    } */
+    }
 
     public function resendOtp(Request $request)
     {
@@ -1045,7 +1045,7 @@ class UserAuthController extends Controller
         }
 
         // Optional: purge user activity here using UserDeletionService
-        UserDeletionService::purgeUserData($user);
+        // UserDeletionService::purgeUserData($user);
 
         // Mark account as deleted and clear verification data
         $user->update([
