@@ -279,12 +279,12 @@ class ListingController extends Controller
                 $query->where('start_price', '<=', $request->price_to);
             }
 
-            // $listings = $query->latest()->paginate(20);
-            $listings = $query->latest()->get();
+            $listings = $query->latest()->paginate(20);
+            // $listings = $query->latest()->get();
 
             $listings->each(function ($listing) use ($authUserId) {
-                $listing->bids_count = $listing->bids()->count();
-                $listing->view_count = $listing->views()->count();
+                $listing->setAttribute('bids_count', $listing->bids()->count());
+                $listing->setAttribute('view_count', $listing->views()->count());
 
                 $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
                 $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
