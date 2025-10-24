@@ -150,7 +150,7 @@ class ListingController extends Controller
         $allCategoryIds = array_unique(array_merge($categoryIds, $viewedCategories));
 
         // 3. Build recommended listings query
-        $recommendations = Listing::with(['images', 'category', 'creator'])
+        $recommendations = Listing::with(['images', 'category', 'creator', 'attributes'])
             ->withCount('views', 'watchers as watch_count', 'bids')
             ->where('expire_at', '>=', now())
             ->where('status', 1)
@@ -182,8 +182,15 @@ class ListingController extends Controller
             $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
             $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
         });
+        $listings = $recommendations->map(function($recomend){
+            $mainlisting = $recomend->toArray();
+            unset($mainlisting['attributes']);
+            $attributes = collect($recomend->attributes)->pluck('value', 'key')->toArray();
 
-        return $recommendations;
+            return array_merge($mainlisting, $attributes);
+        });
+
+        return $listings;
     }
 
     public function index(Request $request)
