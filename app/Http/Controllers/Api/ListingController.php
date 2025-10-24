@@ -1356,12 +1356,12 @@ class ListingController extends Controller
                 'bids.user',
                 'winningBid.user',
                 'attributes',
+                'buyer',
                 'comments.user:id,username,profile_photo',
                 'comments.replies.user:id,username,profile_photo',
             ])
                 ->withCount('views')
-                ->where('slug', $slug)
-                ->first();
+                ->where('slug', $slug)->first();
 
             if (! $listing) {
                 return response()->json([
@@ -1370,6 +1370,13 @@ class ListingController extends Controller
                     'data' => null,
                 ], 404);
             }
+            if(auth('api')->check()){
+                $userId = auth('api')->id();
+                $listing = $listing->where('created_by', $userId);
+                
+            }
+
+            // $listing = $listing->first();
 
             $listing->setAttribute('bids_count', $listing->bids()->count());
             $listing->setAttribute('view_count', $listing->views()->count());
