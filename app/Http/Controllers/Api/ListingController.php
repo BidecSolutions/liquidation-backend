@@ -189,14 +189,15 @@ class ListingController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes', 'paymentMethod:id,name', 'shippingMethod:id,name'])->withCount('views');
+            // $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes', 'paymentMethod:id,name', 'shippingMethod:id,name'])->withCount('views');
+            $query = Listing::query();
              if ($request->has('status')) {
                 $statuses = is_array($request->status)
                     ? $request->status
                     : explode(',', $request->status);
                 $query->whereIn('status', $statuses);
             }
-            return $query->get();
+            return $query->count();
 
             // 🔒 Filter by creator if authenticated (user guard)
             $authUserId = auth('api')->check() ? auth('api')->id() : null;
