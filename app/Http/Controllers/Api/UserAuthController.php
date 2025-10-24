@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\MinimumPayType;
+use App\Enums\WorkType;
 use App\Http\Controllers\Controller;
 use App\Mail\AppResetCodeMail;
+use App\Models\JobProfile;
 use App\Models\ListingView;
 use App\Models\SearchHistory;
 use App\Models\User;
@@ -178,7 +181,7 @@ class UserAuthController extends Controller
             $user = User::where('email', $request->email)->first();
 
             // Ensure user exists and is marked as deleted
-            if (!$user || $user->status !== 3) {
+            if (! $user || $user->status !== 3) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No deleted account found for this email.',
@@ -188,7 +191,7 @@ class UserAuthController extends Controller
             // Generate and save a new verification code
             $code = (string) random_int(100000, 999999);
             $user->forceFill([
-                'verification_code'       => $code,
+                'verification_code' => $code,
                 'verification_expires_at' => now()->addMinutes(30),
             ])->save();
 
@@ -206,7 +209,7 @@ class UserAuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send restoration code.',
-                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+                'error' => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -218,13 +221,13 @@ class UserAuthController extends Controller
     {
         try {
             $request->validate([
-                'email'             => 'required|email',
+                'email' => 'required|email',
                 'verification_code' => 'required|digits:6',
             ]);
 
             $user = User::where('email', $request->email)->where('status', 3)->first();
 
-            if (!$user || !$user->verification_code || $user->verification_code !== $request->verification_code) {
+            if (! $user || ! $user->verification_code || $user->verification_code !== $request->verification_code) {
                 return response()->json(['success' => false, 'message' => 'Invalid verification code.'], 400);
             }
 
@@ -244,8 +247,8 @@ class UserAuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Your account has been restored successfully.',
-                'data'    => $user,
-                'token'   => $token,
+                'data' => $user,
+                'token' => $token,
             ]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'An error occurred during account restoration.'], 500);
@@ -1136,6 +1139,37 @@ class UserAuthController extends Controller
             'message' => 'Successfully Fetched',
             'data' => $user,
         ], 200);
+    }
+
+    public function createOrUpdateJobProfile(Request $request)
+    {
+        $userId = auth('api')->id();
+
+        $validated = $request->validate([
+            'summary' => 'nullable|string|max:2000',
+            'preferred_role' => 'nullable|string|max:255',
+            'open_to_all_roles' => 'nullable|in:0,1',
+            'industry_id' => 'nullable|string|max:255|exists:categories,id',
+            'preferred_locations' => 'nullable|string|max:255',
+            'right_to_work_in_saudi' => 'nullable|in:0,1',
+            'minimum_pay_type' => ['nullable', Rule::in(MinimumPayType::values())],
+            'minimum_pay_amount' => 'nullable|numeric|min:0',
+            'notice_period' => 'nullable|string|max:255',
+            'work_type' => ['nullable', Rule::in(WorkType::values())],
+        ]);
+        $user = User::find($userId);
+
+        $profile = JobProfile::updateOrCreate(
+            ['user_id' => $user->id],
+            array_merge($validated, ['status' => 1])
+        );
+        
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Job profile saved successfully.',
+            'data' => $profile->makeHidden(['industry']),
+        ]);
     }
 
     // Upload profile photo

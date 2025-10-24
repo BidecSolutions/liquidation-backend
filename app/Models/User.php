@@ -176,8 +176,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserFeedback::class, 'reviewed_user_id');
     }
-    
-    public function comments(){
+
+    public function comments()
+    {
         return $this->hasMany(Comment::class);
     }
 
@@ -221,5 +222,30 @@ class User extends Authenticatable
     public function searches()
     {
         return $this->hasMany(SearchHistory::class);
+    }
+
+    public function jobProfile()
+    {
+        return $this->hasOne(JobProfile::class);
+    }
+
+    public function jobExperiences()
+    {
+        return $this->hasMany(JobExperience::class);
+    }
+
+    public function jobCvs()
+    {
+        return $this->hasMany(JobCv::class);
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
+    public function educations()
+    {
+        return $this->hasMany(Education::class);
     }
 }

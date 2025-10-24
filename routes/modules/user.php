@@ -15,6 +15,10 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\UserAuthController;
 use App\Http\Controllers\Api\UserFeedbackController;
 use App\Http\Controllers\Api\WatchlistController;
+use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\EducationController;
+use App\Http\Controllers\JobCvController;
+use App\Http\Controllers\JobExperienceController;
 use Illuminate\Support\Facades\Route;
 
 // User Auth
@@ -43,6 +47,7 @@ Route::prefix('user')->group(function () {
         // User Auth Controller works
         Route::controller(UserAuthController::class)->group(function () {
             Route::get('/profile', 'profile');
+            Route::post('/job/profile', 'createOrUpdateJobProfile');
             Route::post('/logout', 'logout');
             Route::post('/{id}/edit-contact-details', 'updateProfile');
             Route::post('/upgrade-to-business', 'upgradeToBusiness');
@@ -53,6 +58,33 @@ Route::prefix('user')->group(function () {
             Route::post('/update-name', 'updateName');
             Route::post('/profile-update', 'updateProfileDetails');
             Route::delete('/delete', 'deleteAccount');
+        });
+        Route::prefix('job-experience')->controller(JobExperienceController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/views', 'views');
+            Route::post('/store', 'store');
+            Route::delete('/{id}/destroy', 'destroy');
+            Route::post('/{id}/update', 'update');
+        });
+        Route::prefix('education')->controller(EducationController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::post('/store', 'store');
+            Route::delete('/{id}/destroy', 'destroy');
+            Route::post('/{id}/update', 'update');
+        });
+        Route::prefix('job-cv')->controller(JobCvController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/views', 'views');
+            Route::post('/store', 'store');
+            Route::get('/{slug}/show', 'show');
+            Route::post('/{slug}/update', 'update');
+        });
+        Route::prefix('job-certificate')->controller(CertificateController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/views', 'views');
+            Route::post('/store', 'store');
+            Route::get('/{slug}/show', 'show');
+            Route::post('/{slug}/update', 'update');
         });
 
         Route::prefix('listings/offers')->controller(ListingOfferController::class)->group(function () {
