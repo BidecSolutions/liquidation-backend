@@ -12,7 +12,11 @@
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">{{ $bid->listing->title }}</h3>
-            <p style="margin: 0; color: #666;">Current highest bid: ${{ number_format($bid->amount, 2) }}</p>
+            <p style="margin: 0; color: #666;">Current highest bid: <img src="http://ma3rood.datainovate.com/backend/public/images/RialSignn.png" 
+            alt="SAR" 
+            width="14" 
+            height="14" 
+            style="vertical-align:middle;">{{ number_format($bid->amount, 2) }}</p>
         </div>
         
         <p>Keep an eye on your listing to see if more bids come in!</p>
