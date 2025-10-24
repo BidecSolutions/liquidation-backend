@@ -190,6 +190,12 @@ class ListingController extends Controller
     {
         try {
             $query = Listing::with(['category', 'creator', 'images', 'bids.user', 'winningBid.user', 'buyNowPurchases.buyer', 'attributes', 'paymentMethod:id,name', 'shippingMethod:id,name'])->withCount('views');
+             if ($request->has('status')) {
+                $statuses = is_array($request->status)
+                    ? $request->status
+                    : explode(',', $request->status);
+                $query->whereIn('status', $statuses);
+            }
             return $query->get();
 
             // 🔒 Filter by creator if authenticated (user guard)
@@ -240,12 +246,7 @@ class ListingController extends Controller
             //     $query->orWhere('status', $request->pending_reserve_approval);
             // }
 
-            if ($request->has('status')) {
-                $statuses = is_array($request->status)
-                    ? $request->status
-                    : explode(',', $request->status);
-                $query->whereIn('status', $statuses);
-            }
+           
 
             if ($request->has('not_equal_status')) {
                 $query->where('status', '!=', $request->not_equal_status);
