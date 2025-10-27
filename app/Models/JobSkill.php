@@ -10,13 +10,13 @@ class JobSkill extends Model
     use HasFactory;
 
     protected $fillable = [
-        'job_profile_id',
+        'user_id',
         'name',
         'status',
     ];
 
-    public function jobProfile()
+    public function user()
     {
-        return $this->belongsTo(JobProfile::class);
+        return $this->belongsTo(User::class);
     }
 }

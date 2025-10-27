@@ -45,9 +45,4 @@ class JobProfile extends Model
     {
         return $this->hasMany(JobProfileRole::class);
     }
-
-    public function skills()
-    {
-        return $this->hasMany(JobSkill::class);
-    }
 }

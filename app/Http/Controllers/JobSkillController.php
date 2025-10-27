@@ -31,9 +31,8 @@ class JobSkillController extends Controller
         ]);
 
         $user = $request->user();
-        $profile = $user->jobProfile;
 
-        if (! $profile) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please create a job profile first.',
@@ -41,18 +40,15 @@ class JobSkillController extends Controller
         }
 
         // Clear existing skills and reinsert
-        $profile->skills()->delete();
+        $user->skills()->delete();
         foreach ($validated['skills'] as $skillName) {
-            $profile->skills()->create([
-                'name' => $skillName,
-                'status' => 1,
-            ]);
+            $user->skills()->create(['name' => $skillName, 'status' => 1]);
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Skills updated successfully.',
-            'data' => $profile->skills()->pluck('name'),
+            'data' => $user->skills()->pluck('name'),
         ]);
     }
 

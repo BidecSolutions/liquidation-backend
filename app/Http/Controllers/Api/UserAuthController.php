@@ -1198,7 +1198,7 @@ class UserAuthController extends Controller
         $user->load([
             'jobProfile.industry:id,name',
             'jobProfile.preferredRoles:id,job_profile_id,role_name,status',
-            'jobProfile.skills:id,job_profile_id,name,status',
+            'skills:id,name',
             'jobExperiences',
             'jobCvs',
             'educations',
