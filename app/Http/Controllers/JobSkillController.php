@@ -58,16 +58,15 @@ class JobSkillController extends Controller
     public function destroy($id)
     {
         $user = auth('api')->user();
-        $profile = $user->jobProfile;
 
-        if (! $profile) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please create a job profile first.',
             ], 400);
         }
 
-        $skill = $profile->skills()->where('id', $id)->first();
+        $skill = $user->skills()->where('id', $id)->first();
 
         if (! $skill) {
             return response()->json([
