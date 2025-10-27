@@ -1201,7 +1201,7 @@ class ListingController extends Controller
                 'allow_offers' => 'boolean',
                 'quantity' => 'integer|min:1',
                 'authenticated_bidders_only' => 'boolean',
-                'pickup_option' => 'nullable|in:no_pickup,pickup_available,must_pickup',
+                'pickup_option' => 'nullable|in:1',
                 'shipping_method_id' => 'nullable|exists:shipping_methods,id',
                 'payment_method_id' => 'nullable|exists:payment_methods,id',
                 'longitude' => [
