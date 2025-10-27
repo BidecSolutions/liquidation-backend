@@ -1360,7 +1360,8 @@ class ListingController extends Controller
     public function show($slug)
     {
         try {
-            $listing = Listing::with([
+            // Build the query first
+            $query = Listing::with([
                 'category',
                 'creator',
                 'images',
@@ -1372,18 +1373,18 @@ class ListingController extends Controller
             ])
                 ->withCount('views')
                 ->where('slug', $slug);
-
+            // if (auth('api')->check()) {
+            //     $userId = auth('api')->id();
+            //     $query->where('created_by', $userId);
+            // }
+            // ✅ Get actual model instance
+            $listing = $query->first();
             if (! $listing) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Listing not found',
                     'data' => null,
                 ], 404);
-            }
-            if (auth('api')->check()) {
-                $userId = auth('api')->id();
-                $listing = $listing->where('created_by', $userId);
-
             }
 
             // $listing = $listing->first();

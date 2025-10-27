@@ -33,6 +33,7 @@ class CertificateController extends Controller
         if ($validated->fails()) {
             return response()->json(['success' => false, 'message' => $validated->errors()->first()], 422);
         }
+        $data = $validated->validated();
 
         $path = null;
         if ($request->hasFile('document')) {
@@ -41,13 +42,13 @@ class CertificateController extends Controller
 
         $certificate = Certificate::create([
             'user_id' => auth('api')->id(),
-            'certificate_name' => $validated['certificate_name'],
-            'issuer' => $validated['issuer'] ?? null,
-            'issue_date' => $validated['issue_date'] ?? null,
-            'expiry_date' => $validated['expiry_date'] ?? null,
-            'no_expiry' => $validated['no_expiry'] ?? false,
+            'certificate_name' => $data['certificate_name'],
+            'issuer' => $data['issuer'] ?? null,
+            'issue_date' => $data['issue_date'] ?? null,
+            'expiry_date' => $data['expiry_date'] ?? null,
+            'no_expiry' => $data['no_expiry'] ?? false,
             'document_path' => $path,
-            'status' => $validated['status'] ?? 1,
+            'status' => $data['status'] ?? 1,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Certificate added successfully.', 'data' => $certificate]);
