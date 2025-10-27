@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\JobProfile;
+use Illuminate\Http\Request;
+
+class JobSkillController extends Controller
+{
+
+    public function index(){
+        $userId = auth('api')->id();
+        $JobProfile = JobProfile::where('user_id', $userId)->first();
+        if(!$JobProfile){
+            return response()->json([
+                'status' => false,
+                'message' => 'Job profile not found.',
+            ], 404);
+        }
+        $skills = $JobProfile->skills()->where('status', 1)->get();
+        return response()->json([
+            'status' => true,
+            'data' => $skills,
+        ]);
+    }
+    public function storeSkills(Request $request)
+    {
+        $validated = $request->validate([
+            'skills' => 'required|array|max:30',
+            'skills.*' => 'string|max:255',
+        ]);
+
+        $user = $request->user();
+        $profile = $user->jobProfile;
+
+        if (! $profile) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please create a job profile first.',
+            ], 400);
+        }
+
+        // Clear existing skills and reinsert
+        $profile->skills()->delete();
+        foreach ($validated['skills'] as $skillName) {
+            $profile->skills()->create([
+                'name' => $skillName,
+                'status' => 1,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Skills updated successfully.',
+            'data' => $profile->skills()->pluck('name'),
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $user = auth('api')->user();
+        $profile = $user->jobProfile;
+
+        if (! $profile) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please create a job profile first.',
+            ], 400);
+        }
+
+        $skill = $profile->skills()->where('id', $id)->first();
+
+        if (! $skill) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Skill not found.',
+            ], 404);
+        }
+
+        $skill->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Skill deleted successfully.',
+        ]);
+    }
+}

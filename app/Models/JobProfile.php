@@ -30,7 +30,7 @@ class JobProfile extends Model
     {
         return $this->industry?->name ?? null;
     }
-    
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -44,5 +44,10 @@ class JobProfile extends Model
     public function preferredRoles()
     {
         return $this->hasMany(JobProfileRole::class);
+    }
+
+    public function skills()
+    {
+        return $this->hasMany(JobSkill::class);
     }
 }

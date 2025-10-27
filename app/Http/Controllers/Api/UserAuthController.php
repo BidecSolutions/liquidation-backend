@@ -1152,9 +1152,10 @@ class UserAuthController extends Controller
 
         $validated = $request->validate([
             'summary' => 'nullable|string|max:2000',
-            'preferred_role' => 'nullable|string|max:255',
+            'preferred_role' => 'nullable|array',
+            'preferred_role.*' => 'nullable|string|max:255',
             'open_to_all_roles' => 'nullable|in:0,1',
-            'industry_id' => 'nullable|string|max:255|exists:categories,id',
+            'industry_id' => 'nullable|integer|exists:categories,id',
             'preferred_locations' => 'nullable|string|max:255',
             'right_to_work_in_saudi' => 'nullable|in:0,1',
             'minimum_pay_type' => ['nullable', Rule::in(MinimumPayType::values())],
@@ -1162,26 +1163,42 @@ class UserAuthController extends Controller
             'notice_period' => 'nullable|string|max:255',
             'work_type' => ['nullable', Rule::in(WorkType::values())],
         ]);
-        $user = User::find($userId);
 
+        $user = User::findOrFail($userId);
+
+        // Create or update job profile
         $profile = JobProfile::updateOrCreate(
             ['user_id' => $user->id],
             array_merge($validated, ['status' => 1])
         );
 
+        // Handle preferred roles
+        if (isset($validated['preferred_role'])) {
+            $profile->preferredRoles()->delete(); // remove old ones
+            foreach ($validated['preferred_role'] as $roleName) {
+                if ($roleName) {
+                    $profile->preferredRoles()->create([
+                        'role_name' => $roleName,
+                        'status' => 1,
+                    ]);
+                }
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Job profile saved successfully.',
-            'data' => $profile->makeHidden(['industry']),
+            'data' => $profile->load('preferredRoles', 'industry'),
         ]);
     }
 
     public function getJobProfile(Request $request)
     {
         $user = $request->user();
-
         $user->load([
             'jobProfile.industry:id,name',
+            'jobProfile.preferredRoles:id,job_profile_id,role_name,status',
+            'jobProfile.skills:id,job_profile_id,name,status',
             'jobExperiences',
             'jobCvs',
             'educations',
@@ -1208,7 +1225,8 @@ class UserAuthController extends Controller
                 'job_profile' => [
                     'id' => $profile->id,
                     'summary' => $profile->summary,
-                    'preferred_role' => $profile->preferred_role,
+                    'preferred_roles' => $profile->preferredRoles->pluck('role_name'),
+                    'skills' => $profile->skills->pluck('name'),
                     'open_to_all_roles' => $profile->open_to_all_roles,
                     'industry' => $profile->industry?->name,
                     'preferred_locations' => $profile->preferred_locations,

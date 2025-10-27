@@ -5,8 +5,8 @@ namespace App\Enums;
 enum WorkType : string
 {
     //
-    case FULL_TIME = 'full_time';
-    case PART_TIME = 'part_time';
+    case FULL_TIME = 'full';
+    case PART_TIME = 'part';
     case CONTRACT = 'contract';
     case FREELANCE = 'freelance';
 

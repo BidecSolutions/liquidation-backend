@@ -19,6 +19,7 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\EducationController;
 use App\Http\Controllers\JobCvController;
 use App\Http\Controllers\JobExperienceController;
+use App\Http\Controllers\JobSkillController;
 use Illuminate\Support\Facades\Route;
 
 // User Auth
@@ -81,6 +82,13 @@ Route::prefix('user')->group(function () {
             Route::get('/{id}/show', 'show');
         });
         Route::prefix('/job-certificate')->controller(CertificateController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/views', 'views');
+            Route::post('/store', 'store');
+            Route::get('/{slug}/show', 'show');
+            Route::post('/{slug}/update', 'update');
+        });
+        Route::prefix('/job-skills')->controller(JobSkillController::class)->group(function () {
             Route::get('/', 'index');
             Route::get('/views', 'views');
             Route::post('/store', 'store');
