@@ -72,6 +72,8 @@ class User extends Authenticatable
         'background_photo',
         'status',
         'last_login_at',
+        'current_job_title',
+        'job_profile_visibility',
     ];
 
     /**
@@ -246,6 +248,6 @@ class User extends Authenticatable
 
     public function educations()
     {
-        return $this->hasMany(Education::class);
+        return $this->hasMany(Educations::class);
     }
 }

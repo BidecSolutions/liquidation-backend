@@ -6,6 +6,7 @@ use App\Models\JobCv;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class JobCvController extends Controller
 {
@@ -18,15 +19,20 @@ class JobCvController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Validator::make($request->all(), [
             'cv_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
             'is_selected' => 'boolean',
             'status' => 'nullable|in:0,1',
         ]);
+        if($validated->fails()){
+            return response()->json(['success' => false, 'message' => $validated->errors()->first()], 422);
+        }
+        
+        // dd('awdawd');
 
         $userId = auth('api')->id();
         $user = User::find($userId);
-        if(!$user) {
+        if (! $user) {
             return response()->json(['success' => false, 'message' => 'User not found.'], 404);
         }
         // Check limit

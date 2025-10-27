@@ -60,27 +60,27 @@ Route::prefix('user')->group(function () {
             Route::post('/profile-update', 'updateProfileDetails');
             Route::delete('/delete', 'deleteAccount');
         });
-        Route::prefix('job-experience')->controller(JobExperienceController::class)->group(function () {
+        Route::prefix('/job-experience')->controller(JobExperienceController::class)->group(function () {
             Route::get('/', 'index');
             Route::get('/views', 'views');
             Route::post('/store', 'store');
             Route::delete('/{id}/destroy', 'destroy');
             Route::post('/{id}/update', 'update');
         });
-        Route::prefix('education')->controller(EducationController::class)->group(function () {
+        Route::prefix('/education')->controller(EducationController::class)->group(function () {
             Route::get('/', 'index');
             Route::post('/store', 'store');
             Route::delete('/{id}/destroy', 'destroy');
             Route::post('/{id}/update', 'update');
         });
-        Route::prefix('job-cv')->controller(JobCvController::class)->group(function () {
+        Route::prefix('/job-cv')->controller(JobCvController::class)->group(function () {
             Route::get('/', 'index');
             Route::get('/views', 'views');
             Route::post('/store', 'store');
             Route::get('/{slug}/show', 'show');
             Route::post('/{slug}/update', 'update');
         });
-        Route::prefix('job-certificate')->controller(CertificateController::class)->group(function () {
+        Route::prefix('/job-certificate')->controller(CertificateController::class)->group(function () {
             Route::get('/', 'index');
             Route::get('/views', 'views');
             Route::post('/store', 'store');

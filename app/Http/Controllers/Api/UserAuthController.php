@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\JobProfileVisibility;
 use App\Enums\MinimumPayType;
 use App\Enums\WorkType;
 use App\Http\Controllers\Controller;
@@ -547,6 +548,8 @@ class UserAuthController extends Controller
                 'city_id' => 'nullable|max:20|exists:cities,id',
                 'state' => 'nullable|string|max:100',
                 'zip_code' => 'nullable|string|max:20',
+                'current_job_title' => 'nullable|string|max:255',
+                'job_profile_visibility' => ['nullable', Rule::in(JobProfileVisibility::values())],
             ]);
 
             $user->update($request->only([
@@ -576,6 +579,8 @@ class UserAuthController extends Controller
                 'city',
                 'state',
                 'zip_code',
+                'current_job_title',
+                'job_profile_visibility',
             ]));
 
             return response()->json([
@@ -1163,7 +1168,6 @@ class UserAuthController extends Controller
             ['user_id' => $user->id],
             array_merge($validated, ['status' => 1])
         );
-        
 
         return response()->json([
             'success' => true,
@@ -1174,21 +1178,53 @@ class UserAuthController extends Controller
 
     public function getJobProfile(Request $request)
     {
-        $userId = auth('api')->id();
-        $user = User::find($userId);
-        if(! $user) {
+        $user = $request->user();
+
+        $user->load([
+            'jobProfile.industry:id,name',
+            'jobExperiences',
+            'jobCvs',
+            'educations',
+            'certificates',
+        ]);
+
+        $profile = $user->jobProfile;
+
+        if (! $profile) {
             return response()->json([
                 'success' => false,
-                'message' => 'User not found.',
+                'message' => 'Job profile not found for this user.',
             ], 404);
         }
-        $profile = JobProfile::where('user_id', $user->id)
-        ->with('user:name,first_name,last_name,username,email,phone,profile_photo')
-        ->first();
+
         return response()->json([
             'success' => true,
-            'message' => 'Job profile fetched successfully.',
-            'data' => $profile ? $profile->makeHidden(['industry']) : null,
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+                'job_profile' => [
+                    'id' => $profile->id,
+                    'summary' => $profile->summary,
+                    'preferred_role' => $profile->preferred_role,
+                    'open_to_all_roles' => $profile->open_to_all_roles,
+                    'industry' => $profile->industry?->name,
+                    'preferred_locations' => $profile->preferred_locations,
+                    'right_to_work_in_saudi' => $profile->right_to_work_in_saudi,
+                    'minimum_pay_type' => $profile->minimum_pay_type,
+                    'minimum_pay_amount' => $profile->minimum_pay_amount,
+                    'notice_period' => $profile->notice_period,
+                    'work_type' => $profile->work_type,
+                    'status' => $profile->status,
+                    'created_at' => $profile->created_at,
+                ],
+                'experiences' => $user->jobExperiences,
+                'cvs' => $user->jobCvs,
+                'educations' => $user->educations,
+                'certificates' => $user->certificates,
+            ],
         ]);
     }
 
