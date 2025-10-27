@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         //
-        Schema::create('job_profile_roles', function (Blueprint $table) {
+        Schema::table('job_profile_roles', function (Blueprint $table) {
             $table->tinyInteger('status')->default(1);
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         //
-        Schema::create('job_profile_roles', function (Blueprint $table) {
+        Schema::table('job_profile_roles', function (Blueprint $table) {
             $table->dropColumn('status');
         });
     }
