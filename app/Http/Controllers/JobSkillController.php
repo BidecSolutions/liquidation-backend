@@ -7,22 +7,24 @@ use Illuminate\Http\Request;
 
 class JobSkillController extends Controller
 {
-
-    public function index(){
+    public function index()
+    {
         $userId = auth('api')->id();
         $JobProfile = JobProfile::where('user_id', $userId)->first();
-        if(!$JobProfile){
+        if (! $JobProfile) {
             return response()->json([
                 'status' => false,
                 'message' => 'Job profile not found.',
             ], 404);
         }
-        $skills = $JobProfile->skills()->where('status', 1)->get();
+        $skills = $JobProfile->where('status', 1)->get();
+
         return response()->json([
             'status' => true,
             'data' => $skills,
         ]);
     }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
