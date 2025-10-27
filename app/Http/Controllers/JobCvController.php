@@ -73,24 +73,6 @@ class JobCvController extends Controller
         return response()->json(['success' => true, 'message' => 'CV uploaded successfully.', 'data' => $cv]);
     }
 
-    public function update(Request $request, $id)
-    {
-        $cv = JobCv::where('user_id', auth('api')->id())->findOrFail($id);
-
-        $validated = $request->validate([
-            'is_selected' => 'boolean',
-            'status' => 'nullable|in:0,1',
-        ]);
-
-        if ($request->boolean('is_selected')) {
-            JobCv::where('user_id', auth('api')->id())->update(['is_selected' => false]);
-        }
-
-        $cv->update($validated);
-
-        return response()->json(['success' => true, 'message' => 'CV updated successfully.', 'data' => $cv]);
-    }
-
     public function destroy($id)
     {
         $cv = JobCv::where('user_id', auth('api')->id())->findOrFail($id);

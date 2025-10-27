@@ -75,10 +75,9 @@ Route::prefix('user')->group(function () {
         });
         Route::prefix('/job-cv')->controller(JobCvController::class)->group(function () {
             Route::get('/', 'index');
-            Route::get('/selected', 'selected');
+            Route::get('/selected/{id}', 'selected');
             Route::post('/store', 'store');
-            Route::get('/{slug}/show', 'show');
-            Route::post('/{slug}/update', 'update');
+            Route::get('/{id}/show', 'show');
         });
         Route::prefix('/job-certificate')->controller(CertificateController::class)->group(function () {
             Route::get('/', 'index');
