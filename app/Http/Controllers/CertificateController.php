@@ -22,7 +22,7 @@ class CertificateController extends Controller
 
     public function store(Request $request)
     {
-        $validated = Validator::make($request->all, [
+        $validated = Validator::make($request->all(), [
             'certificate_name' => 'required|string|max:255',
             'issuer' => 'nullable|string|max:255',
             'issue_date' => 'nullable|date',
@@ -57,7 +57,7 @@ class CertificateController extends Controller
     {
         $certificate = Certificate::where('user_id', auth('api')->id())->findOrFail($id);
 
-        $validated = $request->validate([
+        $validated = Validator::make($request->all(), [
             'certificate_name' => 'sometimes|string|max:255',
             'issuer' => 'nullable|string|max:255',
             'issue_date' => 'nullable|date',
@@ -66,6 +66,9 @@ class CertificateController extends Controller
             'document' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
             'status' => 'nullable|in:0,1',
         ]);
+        if ($validated->fails()) {
+            return response()->json(['success' => false, 'message' => $validated->errors()->first()], 422);
+        }
 
         if ($request->hasFile('document')) {
             if ($certificate->document_path) {
