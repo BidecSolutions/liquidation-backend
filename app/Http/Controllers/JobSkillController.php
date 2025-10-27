@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobProfile;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class JobSkillController extends Controller
@@ -10,14 +11,14 @@ class JobSkillController extends Controller
     public function index()
     {
         $userId = auth('api')->id();
-        $JobProfile = JobProfile::where('user_id', $userId)->first();
-        if (! $JobProfile) {
+        $user = User::where('id', $userId)->first();
+        if (! $user) {
             return response()->json([
                 'status' => false,
                 'message' => 'Job profile not found.',
             ], 404);
         }
-        $skills = $JobProfile->where('status', 1)->get();
+        $skills = $user->skills()->where('status', 1)->get();
 
         return response()->json([
             'status' => true,
