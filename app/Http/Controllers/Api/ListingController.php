@@ -1370,9 +1370,7 @@ class ListingController extends Controller
                 'attributes',
                 'comments.user:id,username,profile_photo',
                 'comments.replies.user:id,username,profile_photo',
-            ])
-                ->withCount('views')
-                ->where('slug', $slug);
+            ])->withCount('views')->where('slug', $slug);
             // if (auth('api')->check()) {
             //     $userId = auth('api')->id();
             //     $query->where('created_by', $userId);
@@ -1391,7 +1389,6 @@ class ListingController extends Controller
 
             $listing->setAttribute('bids_count', $listing->bids()->count());
             $listing->setAttribute('view_count', $listing->views()->count());
-            $listing = $listing->first();
             $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
             $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
             $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
