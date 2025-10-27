@@ -1172,6 +1172,19 @@ class UserAuthController extends Controller
         ]);
     }
 
+    public function getJobProfile(Request $request)
+    {
+        $userId = auth('api')->id();
+        $user = User::find($userId);
+        if(! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found.',
+            ], 404);
+        }
+        $profile = JobProfile::where('user_id', $user->id)->with('user')->first();
+    }
+
     // Upload profile photo
     public function uploadProfilePhoto(Request $request)
     {

@@ -47,7 +47,8 @@ Route::prefix('user')->group(function () {
         // User Auth Controller works
         Route::controller(UserAuthController::class)->group(function () {
             Route::get('/profile', 'profile');
-            Route::post('/job/profile', 'createOrUpdateJobProfile');
+            Route::post('/job/profile/store', 'createOrUpdateJobProfile');
+            Route::get('/job/profile', 'getJobProfile');
             Route::post('/logout', 'logout');
             Route::post('/{id}/edit-contact-details', 'updateProfile');
             Route::post('/upgrade-to-business', 'upgradeToBusiness');
