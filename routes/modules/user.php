@@ -75,7 +75,7 @@ Route::prefix('user')->group(function () {
         });
         Route::prefix('/job-cv')->controller(JobCvController::class)->group(function () {
             Route::get('/', 'index');
-            Route::get('/views', 'views');
+            Route::get('/selected', 'selected');
             Route::post('/store', 'store');
             Route::get('/{slug}/show', 'show');
             Route::post('/{slug}/update', 'update');

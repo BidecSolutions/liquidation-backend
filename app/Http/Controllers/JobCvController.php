@@ -17,6 +17,21 @@ class JobCvController extends Controller
         );
     }
 
+    public function selected($id)
+    {
+        $cv = JobCv::where('user_id', auth('api')->id())->where('id', $id)->first();
+
+        if (! $cv) {
+            return response()->json(['success' => false, 'message' => 'CV not found.'], 404);
+        }
+        $cv->is_selected = true;
+        $cv->save();
+        JobCv::where('user_id', auth('api')->id())->where('id', '!=', $id)->update(['is_selected' => false]);
+
+        return response()->json(['success' => true, 'message' => 'CV selected successfully.', 'data' => $cv]);
+
+    }
+
     public function store(Request $request)
     {
         $validated = Validator::make($request->all(), [
@@ -24,10 +39,10 @@ class JobCvController extends Controller
             'is_selected' => 'boolean',
             'status' => 'nullable|in:0,1',
         ]);
-        if($validated->fails()){
+        if ($validated->fails()) {
             return response()->json(['success' => false, 'message' => $validated->errors()->first()], 422);
         }
-        
+
         // dd('awdawd');
 
         $userId = auth('api')->id();
@@ -51,7 +66,7 @@ class JobCvController extends Controller
         $cv = JobCv::create([
             'user_id' => $user->id,
             'file_path' => $path,
-            'is_selected' => $request->boolean('is_selected'),
+            'is_selected' => $request->boolean('is_selected') ?? 1,
             'status' => $request->status ?? 1,
         ]);
 
