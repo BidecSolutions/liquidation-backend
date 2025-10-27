@@ -23,7 +23,7 @@ class JobSkillController extends Controller
             'data' => $skills,
         ]);
     }
-    public function storeSkills(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'skills' => 'required|array|max:30',
