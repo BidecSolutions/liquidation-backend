@@ -12,9 +12,13 @@ class JobCvController extends Controller
 {
     public function index()
     {
-        return response()->json(
-            JobCv::where('user_id', auth('api')->id())->get()
-        );
+        $Cvs = JobCv::where('user_id', auth('api')->id())->get();
+        
+        return response()->json([
+            'status' => true,
+            'message' => 'All CVs fetched.',
+            'data' => $Cvs,
+        ]);
     }
 
     public function selected($id)
@@ -75,7 +79,10 @@ class JobCvController extends Controller
 
     public function destroy($id)
     {
-        $cv = JobCv::where('user_id', auth('api')->id())->findOrFail($id);
+        $cv = JobCv::where('user_id', auth('api')->id())->find($id);
+        if (! $cv) {
+            return response()->json(['success' => false, 'message' => 'CV not found.'], 404);
+        }
 
         if ($cv->file_path) {
             Storage::disk('public')->delete($cv->file_path);

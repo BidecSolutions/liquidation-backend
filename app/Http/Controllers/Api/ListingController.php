@@ -182,7 +182,7 @@ class ListingController extends Controller
             $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
             $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');
         });
-        $listings = $recommendations->map(function($recomend){
+        $listings = $recommendations->map(function ($recomend) {
             $mainlisting = $recomend->toArray();
             unset($mainlisting['attributes']);
             $attributes = collect($recomend->attributes)->pluck('value', 'key')->toArray();
@@ -1371,7 +1371,7 @@ class ListingController extends Controller
                 'comments.replies.user:id,username,profile_photo',
             ])
                 ->withCount('views')
-                ->where('slug', $slug)->first();
+                ->where('slug', $slug);
 
             if (! $listing) {
                 return response()->json([
@@ -1390,6 +1390,7 @@ class ListingController extends Controller
 
             $listing->setAttribute('bids_count', $listing->bids()->count());
             $listing->setAttribute('view_count', $listing->views()->count());
+            $listing = $listing->first();
             $listing->start_price = number_format($listing->start_price ?? '0', 2, '.', ',');
             $listing->reserve_price = number_format($listing->reserve_price ?? '0', 2, '.', ',');
             $listing->buy_now_price = number_format($listing->buy_now_price ?? '0', 2, '.', ',');

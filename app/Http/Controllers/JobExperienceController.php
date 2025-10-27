@@ -13,7 +13,7 @@ class JobExperienceController extends Controller
 
         // return response()->json($experiences);
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'All Experienced.',
             'data' => $experiences,
         ]);
@@ -38,7 +38,7 @@ class JobExperienceController extends Controller
         ));
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Experience added successfully.',
             'data' => $experience,
         ]);
@@ -62,7 +62,7 @@ class JobExperienceController extends Controller
         $experience->update($validated);
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Experience updated successfully.',
             'data' => $experience,
         ]);

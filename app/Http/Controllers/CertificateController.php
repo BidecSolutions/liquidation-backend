@@ -10,9 +10,13 @@ class CertificateController extends Controller
 {
     public function index()
     {
-        return response()->json(
-            Certificate::where('user_id', auth('api')->id())->get()
-        );
+        $Cvs = Certificate::where('user_id', auth('api')->id())->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'All Cirtifciated Fetched successfull',
+            'data' => $Cvs,
+        ]);
     }
 
     public function store(Request $request)
@@ -22,9 +26,8 @@ class CertificateController extends Controller
             'issuer' => 'nullable|string|max:255',
             'issue_date' => 'nullable|date',
             'expiry_date' => 'nullable|date|after_or_equal:issue_date',
-            'no_expiry' => 'boolean',
+            'no_expiry' => 'nullable|in:0,1',
             'document' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
-            'status' => 'nullable|in:0,1',
         ]);
 
         $path = null;

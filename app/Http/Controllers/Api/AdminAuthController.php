@@ -39,7 +39,7 @@ class AdminAuthController extends Controller
         });
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => "Login Successfully",
             'data' => $admin,
             'token' => $token,
@@ -52,7 +52,7 @@ class AdminAuthController extends Controller
     public function profile(Request $request)
     {
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => "Successfully Fetched",
             'data' => $request->user(),
         ], 200);
@@ -70,7 +70,7 @@ class AdminAuthController extends Controller
         $admin->update($request->all());
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => "Admin updated successfully",
             'data' => $admin
         ], 200);
@@ -96,7 +96,7 @@ class AdminAuthController extends Controller
         $admin->save();
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Password changed successfully',
         ], 200);
     }
@@ -106,7 +106,7 @@ class AdminAuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => "Logged out"
         ], 200);
     }

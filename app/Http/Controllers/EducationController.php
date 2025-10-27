@@ -18,7 +18,7 @@ class EducationController extends Controller
             ]);
         }
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'All Educations fetched.',
             'data' => $educations
         ]);
@@ -41,7 +41,7 @@ class EducationController extends Controller
         ));
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Education added successfully.',
             'data' => $education
         ]);
@@ -63,7 +63,7 @@ class EducationController extends Controller
         $education->update($validated);
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Education updated successfully.',
             'data' => $education
         ]);

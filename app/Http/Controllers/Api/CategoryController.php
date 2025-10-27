@@ -432,7 +432,7 @@ class CategoryController extends Controller
         $category->delete();
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'All subcategories and their listings have been deleted successfully.',
         ], 200);
     }
