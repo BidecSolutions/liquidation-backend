@@ -1182,7 +1182,14 @@ class UserAuthController extends Controller
                 'message' => 'User not found.',
             ], 404);
         }
-        $profile = JobProfile::where('user_id', $user->id)->with('user')->first();
+        $profile = JobProfile::where('user_id', $user->id)
+        ->with('user:name,first_name,last_name,username,email,phone,profile_photo')
+        ->first();
+        return response()->json([
+            'success' => true,
+            'message' => 'Job profile fetched successfully.',
+            'data' => $profile ? $profile->makeHidden(['industry']) : null,
+        ]);
     }
 
     // Upload profile photo
