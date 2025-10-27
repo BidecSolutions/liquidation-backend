@@ -77,6 +77,7 @@ Route::prefix('user')->group(function () {
             Route::get('/', 'index');
             Route::get('/selected/{id}', 'selected');
             Route::post('/store', 'store');
+            Route::delete('/{id}/destroy', 'destroy');
             Route::get('/{id}/show', 'show');
         });
         Route::prefix('/job-certificate')->controller(CertificateController::class)->group(function () {
