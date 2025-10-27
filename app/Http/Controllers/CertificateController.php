@@ -58,7 +58,7 @@ class CertificateController extends Controller
     {
         $certificate = Certificate::where('user_id', auth('api')->id())->findOrFail($id);
 
-        $validated = Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'certificate_name' => 'sometimes|string|max:255',
             'issuer' => 'nullable|string|max:255',
             'issue_date' => 'nullable|date',
@@ -67,20 +67,32 @@ class CertificateController extends Controller
             'document' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
             'status' => 'nullable|in:0,1',
         ]);
-        if ($validated->fails()) {
-            return response()->json(['success' => false, 'message' => $validated->errors()->first()], 422);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
         }
 
+        $data = $validator->validated();
+
+        // ✅ handle file upload safely
         if ($request->hasFile('document')) {
             if ($certificate->document_path) {
                 Storage::disk('public')->delete($certificate->document_path);
             }
-            $validated['document_path'] = $request->file('document')->store('job_certificates', 'public');
+            $data['document_path'] = $request->file('document')->store('job_certificates', 'public');
         }
 
-        $certificate->update($validated);
+        // ✅ update using the validated array
+        $certificate->update($data);
 
-        return response()->json(['success' => true, 'message' => 'Certificate updated successfully.', 'data' => $certificate]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Certificate updated successfully.',
+            'data' => $certificate,
+        ]);
     }
 
     public function destroy($id)
