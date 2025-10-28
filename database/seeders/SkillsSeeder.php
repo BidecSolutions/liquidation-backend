@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Code;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 
 class SkillsSeeder extends Seeder
 {
@@ -12,35 +13,22 @@ class SkillsSeeder extends Seeder
      */
     public function run(): void
     {
-        $skills = [
-            'PHP',
-            'JavaScript',
-            'Python',
-            'Java',
-            'C#',
-            'Ruby',
-            'HTML/CSS',
-            'SQL',
-            'NoSQL',
-            'AWS',
-            'Docker',
-            'Kubernetes',
-            'Machine Learning',
-            'Data Analysis',
-            'Project Management',
-            'Agile Methodologies',
-            'UI/UX Design',
-            'Mobile Development',
-            'DevOps',
-            'Cybersecurity',
-        ];
+        $jsonPath = database_path('data/skills.json');
+        if (! File::exists($jsonPath)) {
+            $this->command->error('json files does not exist');
+        }
+        $json = File::get($jsonPath);
+        $indestries = json_decode($json);
 
-        foreach ($skills as $skill) {
-            $newSkill = Code::updateOrCreate(
-                ['key' => 'skills', 'value' => $skill],
-                ['key' => 'skills', 'value' => $skill, 'status' => 1],
-            );
-            $this->command->info("Seeded Skill: {$newSkill->value}");
+        foreach ($indestries as $indestry => $skillList) {
+            foreach ($skillList as $skill) {
+                $newSkill = Code::updateOrCreate(
+                    ['key' => 'skills', 'value' => $skill],
+                    ['status' => 1],
+                );
+                $this->command->info("Seeded Skill: {$newSkill->value}");
+            }
+            $this->command->info('🎉 All skills have been seeded successfully!');
         }
     }
 }

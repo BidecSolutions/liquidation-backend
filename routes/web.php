@@ -276,6 +276,17 @@ Route::get('seed-instructions', function () {
 
 Route::get('/seed-regions', function () {
     Artisan::call('db:seed', [
+        '--class' => 'SkillsSeeder',
+        '--force' => true,
+    ]);
+
+    return [
+        'status' => true,
+        'message' => 'Skills seeded.',
+    ];
+});
+Route::get('/seed-regions', function () {
+    Artisan::call('db:seed', [
         '--class' => 'RegionsSeeder',
         '--force' => true,
     ]);

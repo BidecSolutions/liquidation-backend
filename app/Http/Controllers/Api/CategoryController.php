@@ -105,7 +105,7 @@ class CategoryController extends Controller
                 $categories = Category::with('childrenRecursive')
                     ->where('category_type', $request->input('category_type'))
                     ->orderBy('order')
-                    ->get();
+                    ->pluck('name');
             } else {
                 $categories = Category::with('childrenRecursive')
                     ->whereNull('parent_id')
