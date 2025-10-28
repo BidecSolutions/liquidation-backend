@@ -1194,6 +1194,7 @@ class UserAuthController extends Controller
 
     public function getJobProfile(Request $request)
     {
+
         $user = $request->user();
         $user->load([
             'jobProfile.industry:id,name',
@@ -1242,8 +1243,87 @@ class UserAuthController extends Controller
                 'skills' => $user->skills,
                 'educations' => $user->educations,
                 'certificates' => $user->certificates,
+                'job_pofile_tier' => $this->calculateProfileTier($user),
             ],
         ]);
+    }
+
+    // calculate the job profile tier
+    private function calculateProfileTier($user)
+    {
+        $score = 0;
+        $missing = [];
+        $profile = $user->jobProfile;
+
+        if ($profile->summary) {
+            $score += 20;
+        } else {
+            $missing[] = 'Add a profile summary';
+        }
+
+        if ($profile->preferredRoles()->count() > 0) {
+            $score += 10;
+        } else {
+            $missing[] = 'Add preferred roles';
+        }
+
+        if ($user->skills()->count() > 0) {
+            $score += 15;
+        } else {
+            $missing[] = 'Add more skills';
+        }
+
+        if ($user->jobExperiences()->count() > 0) {
+            $score += 15;
+        } else {
+            $missing[] = 'Add experience';
+        }
+
+        if ($user->educations()->count() > 0) {
+            $score += 10;
+        } else {
+            $missing[] = 'Add education details';
+        }
+
+        if ($user->certificates()->count() > 0) {
+            $score += 10;
+        } else {
+            $missing[] = 'Upload certificate';
+        }
+
+        if ($user->jobCvs()->count() > 0) {
+            $score += 10;
+        } else {
+            $missing[] = 'Upload CV';
+        }
+
+        if ($profile->right_to_work_in_saudi) {
+            $score += 10;
+        } else {
+            $missing[] = 'Confirm right to work status';
+        }
+
+        // --- Determine Tier ---
+        if ($score >= 80) {
+            $tier = 'Gold';
+            $nextTier = null;
+            $stepsRemaining = 0;
+        } elseif ($score >= 40) {
+            $tier = 'Silver';
+            $nextTier = 'Gold';
+            $stepsRemaining = ceil((80 - $score) / 10);
+        } else {
+            $tier = 'Bronze';
+            $nextTier = 'Silver';
+            $stepsRemaining = ceil((40 - $score) / 10);
+        }
+
+        return [
+            'profile_tier' => $tier,
+            'next_tier' => $nextTier,
+            'steps_remaining' => $stepsRemaining,
+            'missing_fields' => $missing,
+        ];
     }
 
     // Upload profile photo
