@@ -274,7 +274,7 @@ Route::get('seed-instructions', function () {
     ];
 });
 
-Route::get('/seed-regions', function () {
+Route::get('/seed-skills', function () {
     Artisan::call('db:seed', [
         '--class' => 'SkillsSeeder',
         '--force' => true,
