@@ -11,6 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
+        //
+        Schema::dropIfExists('codes');
+        Schema::create('codes', function (Blueprint $table) {
+            $table->id();
+            $table->string('key');
+            $table->string('value', 255)->nullable(); 
+            $table->string('sort_order')->nullable();
+            $table->boolean('status')->default(true);
+            $table->timestamps();
+
+            $table->unique(['key', 'value']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        //
+        Schema::dropIfExists('codes');
         Schema::create('codes', function (Blueprint $table) {
             $table->id();
             $table->string('key');
@@ -19,13 +40,5 @@ return new class extends Migration
             $table->boolean('status')->default(true);
             $table->timestamps();
         });
-    }   
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('codes');
     }
 };

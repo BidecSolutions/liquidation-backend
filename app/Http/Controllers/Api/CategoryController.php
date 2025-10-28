@@ -98,13 +98,20 @@ class CategoryController extends Controller
         }
     }
 
-    public function tree()
+    public function tree(Request $request)
     {
         try {
-            $categories = Category::with('childrenRecursive')
-                ->whereNull('parent_id')
-                ->orderBy('order')
-                ->get();
+            if ($request->input('category_type')) {
+                $categories = Category::with('childrenRecursive')
+                    ->where('category_type', $request->input('category_type'))
+                    ->orderBy('order')
+                    ->get();
+            } else {
+                $categories = Category::with('childrenRecursive')
+                    ->whereNull('parent_id')
+                    ->orderBy('order')
+                    ->get();
+            }
 
             return response()->json([
                 'status' => true,
