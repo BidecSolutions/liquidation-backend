@@ -19,5 +19,5 @@ jobs:
       uses: SamKirkland/FTP-Deploy-Action@4.3.0
       with:
         server: 'ftp.datainovate.com'
-        username: 'u330229012.ma3rood'
+        username: 'u330229012.liquidation'
         password: 'Newpass@2025@'
